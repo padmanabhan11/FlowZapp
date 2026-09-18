@@ -1,0 +1,273 @@
+﻿Issue ID,Parent ID,Issue Type,Summary,Description,Epic Name,Epic Link,Priority,Story Points,Original Estimate (h),Component,Milestone,Labels
+EPIC-A,,Epic,A — Foundation & tenancy,"Auth, workspaces, spaces, folders and the application-layer scoping that isolates every tenant.",Foundation & tenancy,,,31,145,,,epic
+A1,EPIC-A,Story,"As a new user, I can sign up and create a workspace so I have somewhere to put documents.",Email plus magic-link auth. Creating a workspace makes the creator its admin.,,EPIC-A,Highest,5,28,,M0 Foundation,"p0,m0"
+A1-T1,A1,Sub-task,Sanctum SPA session auth plus signed-URL magic links,,,,Highest,,10,Backend,M0 Foundation,backend
+A1-T2,A1,Sub-task,Build sign in / sign up screen (S1),,,,Highest,,8,Frontend,M0 Foundation,frontend
+A1-T3,A1,Sub-task,Workspace creation flow with slug validation (S2),,,,Highest,,6,Full stack,M0 Foundation,full-stack
+A1-T4,A1,Sub-task,Users table and workspace membership model,,,,Highest,,4,Database,M0 Foundation,database
+A2,EPIC-A,Story,"As an admin, I can invite teammates by email with a role so they can join the workspace.",Invite by email with a role assigned at invite time.,,EPIC-A,Highest,5,20,,M0 Foundation,"p0,m0"
+A2-T1,A2,Sub-task,Invite API with signed token and email delivery,,,,Highest,,8,Backend,M0 Foundation,backend
+A2-T2,A2,Sub-task,Invite and accept screens (S3),,,,Highest,,8,Frontend,M0 Foundation,frontend
+A2-T3,A2,Sub-task,Role assignment on invite acceptance,,,,Highest,,4,Backend,M0 Foundation,backend
+A3,EPIC-A,Story,"As a developer, every tenant table is workspace-scoped by default so no query can cross a workspace boundary.","Release blocker. MySQL has no row-level security, so the boundary is application-layer: a missed scope leaks rather than returning nothing.",,EPIC-A,Highest,13,60,,M0 Foundation,"p0,m0"
+A3-T1,A3,Sub-task,Build TenantModel base class with mandatory workspace global scope,,,,Highest,,10,Backend,M0 Foundation,backend
+A3-T2,A3,Sub-task,"Auto-set workspace_id on create from request context, never from payload",,,,Highest,,5,Backend,M0 Foundation,backend
+A3-T3,A3,Sub-task,Laravel Policies for space-level access,,,,Highest,,10,Backend,M0 Foundation,backend
+A3-T4,A3,Sub-task,"Schema conformance test: every tenant table scoped, indexed, non-fillable",,,,Highest,,12,QA,M0 Foundation,qa
+A3-T5,A3,Sub-task,Static analysis rule blocking raw unscoped queries,,,,Highest,,6,Infra,M0 Foundation,infra
+A3-T6,A3,Sub-task,Cross-tenant and cross-table consistency test suite,,,,Highest,,14,QA,M0 Foundation,qa
+A3-T7,A3,Sub-task,Wire all gates into CI as blocking,,,,Highest,,3,Infra,M0 Foundation,infra
+A4,EPIC-A,Story,"As an admin, I can create spaces and folders so documentation matches how the company is organised.","Workspace to space to folder, max depth 5.",,EPIC-A,Highest,5,23,,M0 Foundation,"p0,m0"
+A4-T1,A4,Sub-task,Schema and migrations for spaces and folders,,,,Highest,,5,Database,M0 Foundation,database
+A4-T2,A4,Sub-task,Folder CRUD API including move with depth check,,,,Highest,,8,Backend,M0 Foundation,backend
+A4-T3,A4,Sub-task,"Sidebar tree and space browser (S5, S6)",,,,Highest,,10,Frontend,M0 Foundation,frontend
+A5,EPIC-A,Story,"As a user, I see only the spaces I'm a member of, everywhere in the product.",No greyed-out items hinting at content behind a permission wall.,,EPIC-A,Highest,3,14,,M0 Foundation,"p0,m0"
+A5-T1,A5,Sub-task,Scope sidebar and browser to accessible spaces,,,,Highest,,5,Frontend,M0 Foundation,frontend
+A5-T2,A5,Sub-task,Return 403 not 404 so existence is never leaked,,,,Highest,,5,Backend,M0 Foundation,backend
+A5-T3,A5,Sub-task,Permission visibility tests across surfaces,,,,Highest,,4,QA,M0 Foundation,qa
+EPIC-B,,Epic,B — Editor & document model,"The block editor, the structured SOP model, templates and paste fidelity.",Editor & document model,,,40,163,,,epic
+B1,EPIC-B,Story,"As an editor, I can write a document with headings, lists, tables, callouts and images.","Content stored as structured JSON, never HTML, so diffing and chunking stay reliable.",,EPIC-B,Highest,13,64,,M0 Foundation,"p0,m0"
+B1-T1,B1,Sub-task,Editor foundation and structured JSON document model,,,,Highest,,20,Frontend,M0 Foundation,frontend
+B1-T2,B1,Sub-task,"Core blocks: headings, lists, tables, callouts, code",,,,Highest,,20,Frontend,M0 Foundation,frontend
+B1-T3,B1,Sub-task,"Image upload to object storage, referenced by ID",,,,Highest,,10,Full stack,M0 Foundation,full-stack
+B1-T4,B1,Sub-task,Reader render parity with editor,,,,Highest,,8,Frontend,M0 Foundation,frontend
+B1-T5,B1,Sub-task,Round-trip save/load fidelity tests,,,,Highest,,6,QA,M0 Foundation,qa
+B2,EPIC-B,Story,"As an editor, my work autosaves so I never lose a draft.","Debounced at 2s with an explicit saved indicator, never a spinner.",,EPIC-B,Highest,3,14,,M0 Foundation,"p0,m0"
+B2-T1,B2,Sub-task,Debounced autosave and saved-state indicator,,,,Highest,,6,Frontend,M0 Foundation,frontend
+B2-T2,B2,Sub-task,Optimistic concurrency via expected_updated_at and 409,,,,Highest,,6,Backend,M0 Foundation,backend
+B2-T3,B2,Sub-task,Mid-edit tab close recovery test,,,,Highest,,2,QA,M0 Foundation,qa
+B3,EPIC-B,Story,"As an editor, I can build an SOP with structured steps I can reorder and renumber automatically.","Steps are rows as well as content, so they can be cited by ID.",,EPIC-B,Highest,8,28,,M0 Foundation,"p0,m0"
+B3-T1,B3,Sub-task,document_steps schema and step CRUD API,,,,Highest,,8,Backend,M0 Foundation,backend
+B3-T2,B3,Sub-task,Step editor with drag reorder and live renumber (S8),,,,Highest,,14,Frontend,M0 Foundation,frontend
+B3-T3,B3,Sub-task,Block submit when a SOP has zero steps,,,,Highest,,3,Backend,M0 Foundation,backend
+B3-T4,B3,Sub-task,Reorder and renumber correctness tests,,,,Highest,,3,QA,M0 Foundation,qa
+B4,EPIC-B,Story,"As an editor, I can mark a step critical or a checkpoint so readers see what matters.",Critical steps always appear in chatbot answers about that process.,,EPIC-B,High,3,10,,M0 Foundation,"p1,m0"
+B4-T1,B4,Sub-task,Add critical and checkpoint flags to schema and API,,,,High,,3,Backend,M0 Foundation,backend
+B4-T2,B4,Sub-task,Editor controls and reader amber-rule treatment,,,,High,,7,Frontend,M0 Foundation,frontend
+B5,EPIC-B,Story,"As an editor, I can start from a template (blank, onboarding, playbook, policy).",Workspaces can also save their own templates.,,EPIC-B,High,5,19,,M0 Foundation,"p1,m0"
+B5-T1,B5,Sub-task,Template storage and four seeded templates,,,,High,,6,Backend,M0 Foundation,backend
+B5-T2,B5,Sub-task,Template picker and create-from-template flow,,,,High,,8,Frontend,M0 Foundation,frontend
+B5-T3,B5,Sub-task,Workspace-defined custom templates,,,,High,,5,Full stack,M0 Foundation,full-stack
+B6,EPIC-B,Story,"As an editor, I can paste from Google Docs or Notion without losing structure.","Headings, lists and tables must survive, including nesting.",,EPIC-B,High,5,17,,M0 Foundation,"p1,m0"
+B6-T1,B6,Sub-task,"Paste transformer for headings, lists and tables",,,,High,,12,Frontend,M0 Foundation,frontend
+B6-T2,B6,Sub-task,Nested list and table fidelity tests across sources,,,,High,,5,QA,M0 Foundation,qa
+B7,EPIC-B,Story,"As an editor, I can link to another internal document.",Cross-linking replaces multi-filing; a document lives in one folder.,,EPIC-B,High,3,11,,M0 Foundation,"p1,m0"
+B7-T1,B7,Sub-task,Internal link block and document picker,,,,High,,7,Frontend,M0 Foundation,frontend
+B7-T2,B7,Sub-task,Backlink resolution and broken-link handling,,,,High,,4,Backend,M0 Foundation,backend
+EPIC-C,,Epic,C — Recording capture,"Browser screen capture, resumable upload and honest pipeline status.",Recording capture,,,29,100,,,epic
+C1,EPIC-C,Story,"As a contributor, I can record my screen and voice in the browser and upload it.",Browser capture only for v1. Half of the wedge.,,EPIC-C,Highest,13,43,,M1 Prove the wedge,"p0,m1"
+C1-T1,C1,Sub-task,Screen and mic capture via getDisplayMedia and MediaRecorder,,,,Highest,,14,Frontend,M1 Prove the wedge,frontend
+C1-T2,C1,Sub-task,Permission primer before the browser prompt (S11),,,,Highest,,5,Design,M1 Prove the wedge,design
+C1-T3,C1,Sub-task,Presigned S3 multipart upload direct to Spaces via Flysystem,,,,Highest,,10,Backend,M1 Prove the wedge,backend
+C1-T4,C1,Sub-task,recordings schema and upload registration endpoint,,,,Highest,,6,Backend,M1 Prove the wedge,backend
+C1-T5,C1,Sub-task,"Cross-browser capture verification (Chrome, Edge, Firefox, Safari)",,,,Highest,,8,QA,M1 Prove the wedge,qa
+C2,EPIC-C,Story,"As a contributor, I can drag and drop an existing recording file.","Accepts webm, mp4, mov up to 60 minutes and 2 GB.",,EPIC-C,Highest,3,9,,M1 Prove the wedge,"p0,m1"
+C2-T1,C2,Sub-task,Drop zone with format and size validation,,,,Highest,,6,Frontend,M1 Prove the wedge,frontend
+C2-T2,C2,Sub-task,Server-side format and limit validation,,,,Highest,,3,Backend,M1 Prove the wedge,backend
+C3,EPIC-C,Story,"As a contributor, my upload resumes after a network interruption.",A 45-minute upload must survive one dropped connection.,,EPIC-C,Highest,8,28,,M1 Prove the wedge,"p0,m1"
+C3-T1,C3,Sub-task,Chunked upload with retry and resume,,,,Highest,,14,Frontend,M1 Prove the wedge,frontend
+C3-T2,C3,Sub-task,Multipart completion and integrity check,,,,Highest,,8,Backend,M1 Prove the wedge,backend
+C3-T3,C3,Sub-task,Interrupted-network upload test,,,,Highest,,6,QA,M1 Prove the wedge,qa
+C4,EPIC-C,Story,"As a contributor, I can see the processing status of my recording at every stage.","Determinate progress, and failures that say what to do next.",,EPIC-C,Highest,5,20,,M1 Prove the wedge,"p0,m1"
+C4-T1,C4,Sub-task,pipeline_jobs table and status transitions,,,,Highest,,6,Backend,M1 Prove the wedge,backend
+C4-T2,C4,Sub-task,Status polling and recordings list (S10); Reverb deferred to M3,,,,Highest,,10,Frontend,M1 Prove the wedge,frontend
+C4-T3,C4,Sub-task,Plain-language failure reasons with retry,,,,Highest,,4,Full stack,M1 Prove the wedge,full-stack
+EPIC-D,,Epic,D — AI SOP generation,"The wedge. Recording in, structured draft procedure out.",AI SOP generation,,,52,195,,,epic
+D0,EPIC-D,Story,"As a team, we've chosen a transcription provider on evidence from real recordings.","The Claude API has no speech-to-text endpoint, so the stack does not yet include one. Blocks the wedge.",,EPIC-D,Highest,5,18,,M1 Prove the wedge,"p0,m1"
+D0-T1,D0,Sub-task,"Assemble 10-recording evaluation set spanning length, accent and noise",,,,Highest,,5,QA,M1 Prove the wedge,qa
+D0-T2,D0,Sub-task,Benchmark Whisper API and Deepgram on timestamp accuracy and cost,,,,Highest,,10,AI/Pipeline,M1 Prove the wedge,ai-pipeline
+D0-T3,D0,Sub-task,Confirm zero-retention terms with the chosen provider,,,,Highest,,3,Backend,M1 Prove the wedge,backend
+D1,EPIC-D,Story,"As a system, I transcribe an uploaded recording with word-level timestamps.",Halts with a clear message on very low confidence rather than inventing content.,,EPIC-D,Highest,8,26,,M1 Prove the wedge,"p0,m1"
+D1-T1,D1,Sub-task,Speech-to-text adapter interface and provider implementation,,,,Highest,,10,AI/Pipeline,M1 Prove the wedge,ai-pipeline
+D1-T2,D1,Sub-task,transcripts schema with word-level timestamps,,,,Highest,,5,Database,M1 Prove the wedge,database
+D1-T3,D1,Sub-task,Retry policy and low-confidence halt,,,,Highest,,6,AI/Pipeline,M1 Prove the wedge,ai-pipeline
+D1-T4,D1,Sub-task,Job idempotency via job_key,,,,Highest,,5,Backend,M1 Prove the wedge,backend
+D2,EPIC-D,Story,"As a system, I segment the transcript into distinct actions.",Falls back to paragraph segmentation if action detection fails.,,EPIC-D,Highest,13,48,,M1 Prove the wedge,"p0,m1"
+D2-T1,D2,Sub-task,Transcript cue and pause-based segmentation,,,,Highest,,16,AI/Pipeline,M1 Prove the wedge,ai-pipeline
+D2-T2,D2,Sub-task,Visual scene-change detection,,,,Highest,,14,AI/Pipeline,M1 Prove the wedge,ai-pipeline
+D2-T3,D2,Sub-task,Segment merge logic and paragraph fallback,,,,Highest,,8,AI/Pipeline,M1 Prove the wedge,ai-pipeline
+D2-T4,D2,Sub-task,Segmentation accuracy eval on 20 real recordings,,,,Highest,,10,QA,M1 Prove the wedge,qa
+D3,EPIC-D,Story,"As a system, I extract one deduplicated key frame per detected action.",Continues without screenshots rather than failing the whole generation.,,EPIC-D,Highest,8,24,,M1 Prove the wedge,"p0,m1"
+D3-T1,D3,Sub-task,Frame extraction per segment via ffmpeg,,,,Highest,,10,AI/Pipeline,M1 Prove the wedge,ai-pipeline
+D3-T2,D3,Sub-task,Perceptual dedup of near-identical frames,,,,Highest,,8,AI/Pipeline,M1 Prove the wedge,ai-pipeline
+D3-T3,D3,Sub-task,Store frames as media_assets with step linkage,,,,Highest,,6,Backend,M1 Prove the wedge,backend
+D4,EPIC-D,Story,"As a contributor, a structured draft SOP is generated with purpose, scope, numbered steps, screenshots and outcome.","Always a draft. Never auto-approved, never auto-indexed.",,EPIC-D,Highest,13,52,,M1 Prove the wedge,"p0,m1"
+D4-T1,D4,Sub-task,Generation prompt and structured output schema,,,,Highest,,16,AI/Pipeline,M1 Prove the wedge,ai-pipeline
+D4-T2,D4,Sub-task,Per-segment transcript summarisation for cost control,,,,Highest,,8,AI/Pipeline,M1 Prove the wedge,ai-pipeline
+D4-T3,D4,Sub-task,Draft document and step assembly from model output,,,,Highest,,10,Backend,M1 Prove the wedge,backend
+D4-T4,D4,Sub-task,Re-run creates a new draft and never overwrites edits,,,,Highest,,6,Backend,M1 Prove the wedge,backend
+D4-T5,D4,Sub-task,Generation eval set and scoring harness (20 recordings),,,,Highest,,12,QA,M1 Prove the wedge,qa
+D5,EPIC-D,Story,"As a contributor, each generated step links back to its timestamp in the recording so I can verify it.",Submit stays disabled until every step is verified or edited.,,EPIC-D,Highest,5,27,,M1 Prove the wedge,"p0,m1"
+D5-T1,D5,Sub-task,Persist source timestamps on generated steps,,,,Highest,,3,Backend,M1 Prove the wedge,backend
+D5-T2,D5,Sub-task,Draft review screen with bound scrubber and steps (S9),,,,Highest,,16,Frontend,M1 Prove the wedge,frontend
+D5-T3,D5,Sub-task,Verify control and submit gating,,,,Highest,,8,Frontend,M1 Prove the wedge,frontend
+EPIC-E,,Epic,E — Governance,"Approval workflow, versioning, diffs and the audit trail.",Governance,,,34,123,,,epic
+E1,EPIC-E,Story,"As an owner, I can submit a draft for review and approve or request changes.",Self-approval is off by default. Request changes needs a comment.,,EPIC-E,High,8,30,,M2 Design partners,"p1,m2"
+E1-T1,E1,Sub-task,Approval state machine and transition guards,,,,High,,8,Backend,M2 Design partners,backend
+E1-T2,E1,Sub-task,Self-approval workspace setting enforcement,,,,High,,3,Backend,M2 Design partners,backend
+E1-T3,E1,Sub-task,"Approval review screen, diff as default view (S12)",,,,High,,12,Frontend,M2 Design partners,frontend
+E1-T4,E1,Sub-task,In-app and email review notifications,,,,High,,7,Full stack,M2 Design partners,full-stack
+E2,EPIC-E,Story,"As a reader, I see an approved-by and version badge so I know I can trust it.",The control block above the title.,,EPIC-E,High,3,9,,M2 Design partners,"p1,m2"
+E2-T1,E2,Sub-task,Control block in document reader (S7),,,,High,,6,Frontend,M2 Design partners,frontend
+E2-T2,E2,Sub-task,Expose version and approver metadata via API,,,,High,,3,Backend,M2 Design partners,backend
+E3,EPIC-E,Story,"As an owner, editing an approved document creates a new draft while the approved version stays live.",The most misunderstood behaviour in the product. Needs an on-screen banner.,,EPIC-E,High,8,27,,M2 Design partners,"p1,m2"
+E3-T1,E3,Sub-task,Trigger: edit after approval flips state to draft,,,,High,,6,Database,M2 Design partners,database
+E3-T2,E3,Sub-task,Split working copy from approved version in API,,,,High,,10,Backend,M2 Design partners,backend
+E3-T3,E3,Sub-task,Editor banner explaining the live version (S8),,,,High,,5,Frontend,M2 Design partners,frontend
+E3-T4,E3,Sub-task,Draft-vs-live behaviour tests,,,,High,,6,QA,M2 Design partners,qa
+E4,EPIC-E,Story,"As an owner, I can see the full version history and a block-level diff between any two versions.","Moved blocks marked as moved, not as a delete plus an add.",,EPIC-E,High,8,34,,M2 Design partners,"p1,m2"
+E4-T1,E4,Sub-task,document_versions schema and numbering trigger,,,,High,,6,Database,M2 Design partners,database
+E4-T2,E4,Sub-task,Block-level diff algorithm including move detection,,,,High,,16,Backend,M2 Design partners,backend
+E4-T3,E4,Sub-task,Version history and diff screen (S13),,,,High,,12,Frontend,M2 Design partners,frontend
+E5,EPIC-E,Story,"As an owner, I can restore an old version as a new draft.",Restore never overwrites the live approved version.,,EPIC-E,High,3,7,,M2 Design partners,"p1,m2"
+E5-T1,E5,Sub-task,Restore endpoint creating a draft,,,,High,,4,Backend,M2 Design partners,backend
+E5-T2,E5,Sub-task,Restore confirmation stating the consequence,,,,High,,3,Frontend,M2 Design partners,frontend
+E6,EPIC-E,Story,"As an admin, every state change is written to an append-only audit log.","Insert and select grants only. No update, no delete.",,EPIC-E,High,4,16,,M2 Design partners,"p1,m2"
+E6-T1,E6,Sub-task,audit_log table with append-only grants,,,,High,,4,Database,M2 Design partners,database
+E6-T2,E6,Sub-task,Audit write triggers for state and permission changes,,,,High,,6,Backend,M2 Design partners,backend
+E6-T3,E6,Sub-task,Audit log screen with export (S21),,,,High,,6,Frontend,M2 Design partners,frontend
+EPIC-F,,Epic,F — Permissions,"Roles, folder overrides and immediate revocation.",Permissions,,,21,70,,,epic
+F1,EPIC-F,Story,"As an admin, I can assign admin, approver, editor, reader and guest roles per space.",Space is the primary permission boundary.,,EPIC-F,High,8,26,,M2 Design partners,"p1,m2"
+F1-T1,F1,Sub-task,space_members schema and role enum,,,,High,,4,Database,M2 Design partners,database
+F1-T2,F1,Sub-task,Role assignment API with transition guards,,,,High,,8,Backend,M2 Design partners,backend
+F1-T3,F1,Sub-task,Members and roles screen (S18),,,,High,,10,Frontend,M2 Design partners,frontend
+F1-T4,F1,Sub-task,Consequence-stating confirmation copy,,,,High,,4,Design,M2 Design partners,design
+F2,EPIC-F,Story,"As an admin, I can override permissions at folder level and inspect the effective result per user.",Permission bugs are comprehension failures; the inspector is the fix.,,EPIC-F,High,8,30,,M2 Design partners,"p1,m2"
+F2-T1,F2,Sub-task,Folder override model and resolution logic,,,,High,,12,Backend,M2 Design partners,backend
+F2-T2,F2,Sub-task,Effective permission inspector (S19),,,,High,,12,Frontend,M2 Design partners,frontend
+F2-T3,F2,Sub-task,Resolution correctness test matrix,,,,High,,6,QA,M2 Design partners,qa
+F3,EPIC-F,Story,"As an admin, removing someone's access immediately removes those documents from their search and chat.",No cache window in which a removed user still gets answers.,,EPIC-F,High,5,14,,M2 Design partners,"p1,m2"
+F3-T1,F3,Sub-task,Synchronous retrieval-scope update on membership change,,,,High,,8,Backend,M2 Design partners,backend
+F3-T2,F3,Sub-task,No-cache-window revocation verification test,,,,High,,6,QA,M2 Design partners,qa
+EPIC-G,,Epic,G — Search & retrieval,"Provider selection, chunking, embedding, hybrid ranking and in-query permission filtering.",Search & retrieval,,,47,155,,,epic
+G0,EPIC-G,Story,"As a team, we've chosen an embeddings provider and a vector store, and proven them on real content.",Claude has no embeddings endpoint and MySQL 8.4 has no VECTOR type. Both are open decisions.,,EPIC-G,High,5,21,,M3 Retrieval layer,"p1,m3"
+G0-T1,G0,Sub-task,Benchmark Voyage AI and OpenAI embeddings on the retrieval eval set,,,,High,,10,AI/Pipeline,M3 Retrieval layer,ai-pipeline
+G0-T2,G0,Sub-task,Stand up Qdrant on DigitalOcean and compare against managed Pinecone,,,,High,,8,Infra,M3 Retrieval layer,infra
+G0-T3,G0,Sub-task,Record embed_model per chunk so a provider change is a targetable re-embed,,,,High,,3,Backend,M3 Retrieval layer,backend
+G1,EPIC-G,Story,"As a system, I chunk approved documents by step and section and embed them on approval.","Chunking on semantic boundaries, not fixed token windows. Runs on approval only.",,EPIC-G,High,13,43,,M3 Retrieval layer,"p1,m3"
+G1-T1,G1,Sub-task,Semantic chunking by step and section,,,,High,,12,AI/Pipeline,M3 Retrieval layer,ai-pipeline
+G1-T2,G1,Sub-task,document_chunks schema with section_ref,,,,High,,5,Database,M3 Retrieval layer,database
+G1-T3,G1,Sub-task,Embedding job and vector upsert on approval,,,,High,,10,AI/Pipeline,M3 Retrieval layer,ai-pipeline
+G1-T4,G1,Sub-task,Vector store adapter (Pinecone or Qdrant),,,,High,,10,AI/Pipeline,M3 Retrieval layer,ai-pipeline
+G1-T5,G1,Sub-task,Unindexed-approved-document monitor and alert,,,,High,,6,Infra,M3 Retrieval layer,infra
+G2,EPIC-G,Story,"As a user, I can search by meaning and find documents phrased differently from my query.","p95 under 800ms on a 5,000-document workspace.",,EPIC-G,High,8,24,,M3 Retrieval layer,"p1,m3"
+G2-T1,G2,Sub-task,Query embedding and vector search path,,,,High,,8,AI/Pipeline,M3 Retrieval layer,ai-pipeline
+G2-T2,G2,Sub-task,Search results screen (S14),,,,High,,10,Frontend,M3 Retrieval layer,frontend
+G2-T3,G2,Sub-task,Relevance eval set of 50 query/document pairs,,,,High,,6,QA,M3 Retrieval layer,qa
+G3,EPIC-G,Story,"As a user, results are hybrid-ranked across semantic and keyword matching.",Reciprocal rank fusion over vector and full-text results.,,EPIC-G,High,8,28,,M3 Retrieval layer,"p1,m3"
+G3-T1,G3,Sub-task,"MySQL FULLTEXT index, custom stopwords, min token size config",,,,High,,10,Backend,M3 Retrieval layer,backend
+G3-T2,G3,Sub-task,"Reciprocal rank fusion by position, not raw score, with weight tuning",,,,High,,12,AI/Pipeline,M3 Retrieval layer,ai-pipeline
+G3-T3,G3,Sub-task,Ranking quality eval,,,,High,,6,QA,M3 Retrieval layer,qa
+G4,EPIC-G,Story,"As a user, I can filter results by space, owner, type and date.",,,EPIC-G,High,5,13,,M3 Retrieval layer,"p1,m3"
+G4-T1,G4,Sub-task,Filter parameters on search API,,,,High,,5,Backend,M3 Retrieval layer,backend
+G4-T2,G4,Sub-task,Filter rail UI,,,,High,,8,Frontend,M3 Retrieval layer,frontend
+G5,EPIC-G,Story,"As a system, retrieval filters by permission inside the query, never after.",Release blocker. Two independent checks must both fail for a leak to occur.,,EPIC-G,High,8,26,,M3 Retrieval layer,"p1,m3"
+G5-T1,G5,Sub-task,"Workspace, space and state metadata filters on vector query",,,,High,,8,AI/Pipeline,M3 Retrieval layer,ai-pipeline
+G5-T2,G5,Sub-task,Policy-backed chunk scoping in the query layer,,,,High,,6,Backend,M3 Retrieval layer,backend
+G5-T3,G5,Sub-task,Adversarial retrieval leak tests including existence probing,,,,High,,12,QA,M3 Retrieval layer,qa
+EPIC-H,,Epic,H — Chatbot,"Answers from approved content only, cited, with designed refusal.",Chatbot,,,42,124,,,epic
+H1,EPIC-H,Story,"As an employee, I can ask a question in plain language and get an answer from our own documents.",p95 first token under 2 seconds.,,EPIC-H,High,13,44,,M3 Retrieval layer,"p1,m3"
+H1-T1,H1,Sub-task,Retrieval to context assembly,,,,High,,10,AI/Pipeline,M3 Retrieval layer,ai-pipeline
+H1-T2,H1,Sub-task,Answer generation prompt requiring citations,,,,High,,12,AI/Pipeline,M3 Retrieval layer,ai-pipeline
+H1-T3,H1,Sub-task,SSE streaming endpoint,,,,High,,8,Backend,M3 Retrieval layer,backend
+H1-T4,H1,Sub-task,Ask screen with streaming render (S15),,,,High,,14,Frontend,M3 Retrieval layer,frontend
+H2,EPIC-H,Story,"As an employee, every answer cites the source SOP, version and step, and links to it.","An answer with zero citations is a bug, not a valid response.",,EPIC-H,High,8,22,,M3 Retrieval layer,"p1,m3"
+H2-T1,H2,Sub-task,"Citation resolution to document, version and step",,,,High,,8,Backend,M3 Retrieval layer,backend
+H2-T2,H2,Sub-task,Citation chips with deep link to step,,,,High,,10,Frontend,M3 Retrieval layer,frontend
+H2-T3,H2,Sub-task,Block answers that carry no citation,,,,High,,4,AI/Pipeline,M3 Retrieval layer,ai-pipeline
+H3,EPIC-H,Story,"As an employee, when no approved document covers my question, the bot says so instead of guessing.","Refusal is a designed state with actions attached, not a fallback.",,EPIC-H,High,8,24,,M3 Retrieval layer,"p1,m3"
+H3-T1,H3,Sub-task,Confidence threshold and refusal path,,,,High,,8,AI/Pipeline,M3 Retrieval layer,ai-pipeline
+H3-T2,H3,Sub-task,Refusal UI with record and request actions,,,,High,,8,Design,M3 Retrieval layer,design
+H3-T3,H3,Sub-task,Refusal eval: 15 deliberately unanswerable questions,,,,High,,8,QA,M3 Retrieval layer,qa
+H4,EPIC-H,Story,"As an employee, I can ask follow-up questions in the same conversation.",,,EPIC-H,High,5,12,,M3 Retrieval layer,"p1,m3"
+H4-T1,H4,Sub-task,Session history and context window management,,,,High,,8,Backend,M3 Retrieval layer,backend
+H4-T2,H4,Sub-task,Multi-turn context retention tests,,,,High,,4,QA,M3 Retrieval layer,qa
+H5,EPIC-H,Story,"As an employee, I can rate an answer helpful or not.",,,EPIC-H,High,3,6,,M3 Retrieval layer,"p1,m3"
+H5-T1,H5,Sub-task,Rating endpoint and storage on chat_messages,,,,High,,3,Backend,M3 Retrieval layer,backend
+H5-T2,H5,Sub-task,Rating control in answer UI,,,,High,,3,Frontend,M3 Retrieval layer,frontend
+H6,EPIC-H,Story,"As an admin, I can see which questions were refused, so I know which SOP to record next.",Turns the chatbot's failures into the customer's content roadmap.,,EPIC-H,High,5,16,,M3 Retrieval layer,"p1,m3"
+H6-T1,H6,Sub-task,Refused query aggregation and ranking,,,,High,,6,Backend,M3 Retrieval layer,backend
+H6-T2,H6,Sub-task,Knowledge gaps screen with Record-this action (S20),,,,High,,10,Frontend,M3 Retrieval layer,frontend
+EPIC-I,,Epic,I — AI utilities,"Rewrite, translation and instant answers.",AI utilities,,,26,67,,,epic
+I1,EPIC-I,Story,"As an editor, I can have AI rewrite rough notes into clear procedure language, shown as a proposal I accept or reject.",Never applied silently. The server never mutates a document from an AI call.,,EPIC-I,High,8,24,,M4 Open paid tiers,"p1,m4"
+I1-T1,I1,Sub-task,Rewrite endpoint returning a proposal,,,,High,,8,AI/Pipeline,M4 Open paid tiers,ai-pipeline
+I1-T2,I1,Sub-task,Side-by-side accept and reject panel,,,,High,,12,Frontend,M4 Open paid tiers,frontend
+I1-T3,I1,Sub-task,Never-auto-apply guard and regression test,,,,High,,4,QA,M4 Open paid tiers,qa
+I2,EPIC-I,Story,"As an editor, I can translate a document with one click into a linked translation.",Creates a linked translation rather than replacing the source.,,EPIC-I,High,8,21,,M4 Open paid tiers,"p1,m4"
+I2-T1,I2,Sub-task,Translation endpoint creating a linked document,,,,High,,8,AI/Pipeline,M4 Open paid tiers,ai-pipeline
+I2-T2,I2,Sub-task,Translation UI and language picker,,,,High,,8,Frontend,M4 Open paid tiers,frontend
+I2-T3,I2,Sub-task,Bidirectional translation link model,,,,High,,5,Database,M4 Open paid tiers,database
+I3,EPIC-I,Story,"As an editor, a translation is flagged stale when its source is re-approved.",,,EPIC-I,Medium,5,9,,M4 Open paid tiers,"p2,m4"
+I3-T1,I3,Sub-task,Stale trigger on source re-approval,,,,Medium,,4,Database,M4 Open paid tiers,database
+I3-T2,I3,Sub-task,Stale indicator in reader and document list,,,,Medium,,5,Frontend,M4 Open paid tiers,frontend
+I4,EPIC-I,Story,"As a user, search shows a direct instant answer above the result list.","Styled as a document extract, not a chat bubble.",,EPIC-I,Medium,5,13,,M4 Open paid tiers,"p2,m4"
+I4-T1,I4,Sub-task,Instant answer generation from top result,,,,Medium,,6,AI/Pipeline,M4 Open paid tiers,ai-pipeline
+I4-T2,I4,Sub-task,Instant answer block in search (S14),,,,Medium,,7,Frontend,M4 Open paid tiers,frontend
+EPIC-J,,Epic,J — Handbook & acknowledgements,Policy distribution and proof that people read it.,Handbook & acknowledgements,,,21,58,,,epic
+J1,EPIC-J,Story,"As an HR manager, I can designate a space as the employee handbook with an ordered reader view.",,,EPIC-J,High,5,15,,M4 Open paid tiers,"p1,m4"
+J1-T1,J1,Sub-task,is_handbook flag and ordered view API,,,,High,,5,Backend,M4 Open paid tiers,backend
+J1-T2,J1,Sub-task,Handbook reader with contents rail (S16),,,,High,,10,Frontend,M4 Open paid tiers,frontend
+J2,EPIC-J,Story,"As an HR manager, I can require acknowledgement of a policy from assigned employees.","Acknowledgement binds to a version, not a document.",,EPIC-J,High,8,23,,M4 Open paid tiers,"p1,m4"
+J2-T1,J2,Sub-task,"acknowledgements schema, unique per version and user",,,,High,,5,Database,M4 Open paid tiers,database
+J2-T2,J2,Sub-task,Assign acknowledgement targets API,,,,High,,6,Backend,M4 Open paid tiers,backend
+J2-T3,J2,Sub-task,"Acknowledgement tracking screen, both views (S17)",,,,High,,12,Frontend,M4 Open paid tiers,frontend
+J3,EPIC-J,Story,"As an employee, I can acknowledge a policy and it records the version and timestamp.",,,EPIC-J,High,3,8,,M4 Open paid tiers,"p1,m4"
+J3-T1,J3,Sub-task,Acknowledge endpoint,,,,High,,3,Backend,M4 Open paid tiers,backend
+J3-T2,J3,Sub-task,Sticky acknowledgement bar and confirmation,,,,High,,5,Frontend,M4 Open paid tiers,frontend
+J4,EPIC-J,Story,"As an HR manager, publishing a new version re-triggers acknowledgement.",,,EPIC-J,Medium,3,7,,M4 Open paid tiers,"p2,m4"
+J4-T1,J4,Sub-task,Supersede trigger on new approved version,,,,Medium,,4,Database,M4 Open paid tiers,database
+J4-T2,J4,Sub-task,Re-trigger behaviour tests,,,,Medium,,3,QA,M4 Open paid tiers,qa
+J5,EPIC-J,Story,"As an HR manager, I can export the acknowledgement record to CSV.",One row per user per document version with timestamp.,,EPIC-J,Medium,2,5,,M4 Open paid tiers,"p2,m4"
+J5-T1,J5,Sub-task,CSV export endpoint,,,,Medium,,5,Backend,M4 Open paid tiers,backend
+EPIC-K,,Epic,K — Billing & plans,"Free, Pro and Team tiers with honest limit enforcement.",Billing & plans,,,21,72,,,epic
+K1,EPIC-K,Story,"As a workspace, I start on Free with 3 users and 50 documents.","Free is capped on documents, not features, so AI value is visible before the paywall.",,EPIC-K,High,5,14,,M4 Open paid tiers,"p1,m4"
+K1-T1,K1,Sub-task,subscriptions and usage_counters schema,,,,High,,5,Database,M4 Open paid tiers,database
+K1-T2,K1,Sub-task,Default plan assignment on workspace creation,,,,High,,3,Backend,M4 Open paid tiers,backend
+K1-T3,K1,Sub-task,Usage counting hooks across billable actions,,,,High,,6,Backend,M4 Open paid tiers,backend
+K2,EPIC-K,Story,"As an admin, I can upgrade to Pro or Team and manage billing.",,,EPIC-K,High,8,32,,M4 Open paid tiers,"p1,m4"
+K2-T1,K2,Sub-task,Payment provider integration and webhooks,,,,High,,14,Backend,M4 Open paid tiers,backend
+K2-T2,K2,Sub-task,"Plan change, seat handling and proration",,,,High,,8,Backend,M4 Open paid tiers,backend
+K2-T3,K2,Sub-task,Billing and usage screen (S22),,,,High,,10,Frontend,M4 Open paid tiers,frontend
+K3,EPIC-K,Story,"As a system, plan limits are enforced with a clear message, not a silent failure.",429 with plan_limit_exceeded and the counter in details.,,EPIC-K,High,5,18,,M4 Open paid tiers,"p1,m4"
+K3-T1,K3,Sub-task,Limit enforcement returning 429 across endpoints,,,,High,,8,Backend,M4 Open paid tiers,backend
+K3-T2,K3,Sub-task,Approaching-limit notice in the app shell,,,,High,,5,Frontend,M4 Open paid tiers,frontend
+K3-T3,K3,Sub-task,Per-tier limit enforcement tests,,,,High,,5,QA,M4 Open paid tiers,qa
+K4,EPIC-K,Story,"As an admin, I can see usage against my plan limits.",,,EPIC-K,High,3,8,,M4 Open paid tiers,"p1,m4"
+K4-T1,K4,Sub-task,Usage endpoint returning counters against caps,,,,High,,3,Backend,M4 Open paid tiers,backend
+K4-T2,K4,Sub-task,Usage-against-caps display,,,,High,,5,Frontend,M4 Open paid tiers,frontend
+EPIC-L,,Epic,L — Analytics & operations,"Admin insight, review cadence and pipeline health.",Analytics & operations,,,18,48,,,epic
+L1,EPIC-L,Story,"As an admin, I see documents by state, approval throughput and chat volume.",,,EPIC-L,Medium,5,16,,M5 Scale,"p2,m5"
+L1-T1,L1,Sub-task,Analytics aggregation queries,,,,Medium,,8,Backend,M5 Scale,backend
+L1-T2,L1,Sub-task,Analytics section of insights screen (S20),,,,Medium,,8,Frontend,M5 Scale,frontend
+L2,EPIC-L,Story,"As an admin, I can see stale documents past their review date.",,,EPIC-L,Medium,5,12,,M5 Scale,"p2,m5"
+L2-T1,L2,Sub-task,review_due_at and workspace review cadence setting,,,,Medium,,4,Backend,M5 Scale,backend
+L2-T2,L2,Sub-task,Past-review list and owner dashboard,,,,Medium,,8,Frontend,M5 Scale,frontend
+L3,EPIC-L,Story,"As an operator, I'm alerted when an approved document has no current index entry.",Correctness invariant: approved implies indexed.,,EPIC-L,Medium,5,11,,M5 Scale,"p2,m5"
+L3-T1,L3,Sub-task,Monitor job comparing approved documents to chunks,,,,Medium,,6,Infra,M5 Scale,infra
+L3-T2,L3,Sub-task,Alert routing and runbook,,,,Medium,,5,Infra,M5 Scale,infra
+L4,EPIC-L,Story,"As an operator, I can see cost per generated SOP by workspace.",Margin signal. Watch during design-partner phase before pricing decisions.,,EPIC-L,Medium,3,9,,M5 Scale,"p2,m5"
+L4-T1,L4,Sub-task,LLM cost logging per workspace and job,,,,Medium,,5,Backend,M5 Scale,backend
+L4-T2,L4,Sub-task,Internal cost-per-SOP view,,,,Medium,,4,Backend,M5 Scale,backend
+EPIC-M,,Epic,M — Platform & delivery,"Design system, Aura theming, environments, CI/CD and observability. Prerequisites, not overhead.",Platform & delivery,,,28,111,,,epic
+M1,EPIC-M,Story,"As a developer, I have design tokens and a component library so screens are consistent and fast to build.",Smaller than v1.0 assumed: PrimeNG supplies the generic controls. Document surfaces stay custom.,,EPIC-M,Highest,5,26,,M0 Foundation,"p0,m0"
+M1-T1,M1,Sub-task,"Token system: colour, type, spacing from screen spec",,,,Highest,,8,Design,M0 Foundation,design
+M1-T2,M1,Sub-task,"Custom document surfaces: reader, step list, control block, diff view",,,,Highest,,14,Frontend,M0 Foundation,frontend
+M1-T3,M1,Sub-task,"State pill component, word always present alongside colour",,,,Highest,,4,Frontend,M0 Foundation,frontend
+M2,EPIC-M,Story,"As a developer, CI runs lint, type-check, tests and build on every push.",,,EPIC-M,Highest,5,16,,M0 Foundation,"p0,m0"
+M2-T1,M2,Sub-task,"CI: Pint, PHPStan, PHPUnit, ESLint, Angular build",,,,Highest,,8,Infra,M0 Foundation,infra
+M2-T2,M2,Sub-task,"CD to staging on merge, production behind a manual gate",,,,Highest,,8,Infra,M0 Foundation,infra
+M3,EPIC-M,Story,"As a developer, environments are separated and schema changes ship as versioned migrations.","No manual production SQL, ever.",,EPIC-M,Highest,5,25,,M0 Foundation,"p0,m0"
+M3-T1,M3,Sub-task,App Platform spec in infra/do/app.yaml: web plus worker components,,,,Highest,,10,Infra,M0 Foundation,infra
+M3-T2,M3,Sub-task,Managed MySQL and Valkey per environment with TLS enforced,,,,Highest,,6,Infra,M0 Foundation,infra
+M3-T3,M3,Sub-task,"Laravel migrations as a pre-deploy job, with rollback drill",,,,Highest,,6,Infra,M0 Foundation,infra
+M3-T4,M3,Sub-task,FFmpeg in the worker image for frame extraction,,,,Highest,,3,Infra,M0 Foundation,infra
+M4,EPIC-M,Story,"As an operator, I can see pipeline health and get alerted before users notice.",,,EPIC-M,High,5,23,,M1 Prove the wedge,"p1,m1"
+M4-T1,M4,Sub-task,Sentry SDK wired into Laravel and Angular with release tagging,,,,High,,5,Infra,M1 Prove the wedge,infra
+M4-T2,M4,Sub-task,Structured logging per pipeline stage to stdout,,,,High,,5,Infra,M1 Prove the wedge,infra
+M4-T3,M4,Sub-task,"Metrics and dashboards: success rate, latency, cost per SOP",,,,High,,8,Infra,M1 Prove the wedge,infra
+M4-T4,M4,Sub-task,"Alerts: generation failures, embedding backlog, unindexed approved docs",,,,High,,5,Infra,M1 Prove the wedge,infra
+M5,EPIC-M,Story,"As a developer, the PrimeNG Aura preset is configured to the Hub brand without colliding with document state.","Gold and draft amber share a hue family, and Aura paints primary across every control. Left at default this breaks the rule that colour means state.",,EPIC-M,Highest,8,21,,M0 Foundation,"p0,m0"
+M5-T1,M5,Sub-task,Override Aura primary palette to navy #1E2761,,,,Highest,,6,Frontend,M0 Foundation,frontend
+M5-T2,M5,Sub-task,Map ice #CADCFC to selection and focus; confine gold to brand surfaces,,,,Highest,,5,Design,M0 Foundation,design
+M5-T3,M5,Sub-task,Override Aura radius and density toward the controlled-document look,,,,Highest,,6,Frontend,M0 Foundation,frontend
+M5-T4,M5,Sub-task,Verify review-blue pill against navy chrome and check AA contrast,,,,Highest,,4,QA,M0 Foundation,qa
