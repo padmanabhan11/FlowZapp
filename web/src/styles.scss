@@ -1,0 +1,85 @@
+/*
+ * FlowZapp design tokens — 10-Screen-Specification §1 "The controlled document".
+ *
+ * The one rule: colour means document state. Nothing else.
+ * Buttons, navigation and links are ink (navy). Gold is the brand mark only.
+ */
+@use 'primeicons/primeicons.css';
+
+:root {
+  /* palette */
+  --ink: #1e2761;         /* primary text, primary buttons, interactive chrome */
+  --ink-soft: #5b6b7c;    /* secondary text, metadata */
+  --paper: #ffffff;       /* document canvas, cards */
+  --rail: #f2f4f6;        /* app chrome, sidebars, table headers */
+  --select: #cadcfc;      /* selection, focus halo, row hover — not fills */
+  --line: #dde2e7;        /* borders, rules */
+  --brand-gold: #d9a441;  /* logo, top-bar mark, sign-in, marketing ONLY */
+  --danger: #a32b2b;      /* destructive confirmation only */
+
+  /* document state — load-bearing; do not reuse these hues for anything else */
+  --state-draft: #b8730b;
+  --state-review: #1f5c99;
+  --state-approved: #2f6f4e;
+  --state-archived: #8a94a0;
+
+  /* type */
+  --font-ui: var(--p-font-family, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* structure */
+  --radius-control: 4px;
+  --radius-document: 0;
+  --canvas-width: 720px;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--rail);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+/* Control values only — version numbers, timestamps, step refs, IDs, durations. */
+.control-value {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+/* Document surfaces are paper: no radius, no shadow. */
+.document-surface {
+  background: var(--paper);
+  border-radius: var(--radius-document);
+  border: 1px solid var(--line);
+  max-width: var(--canvas-width);
+  margin-inline: auto;
+}
+
+/* State pill: always carries its word; colour never carries meaning alone. */
+.state-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.1em 0.6em;
+  border-radius: 999px;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #fff;
+
+  &--draft { background: var(--state-draft); }
+  &--in_review { background: var(--state-review); }
+  &--approved { background: var(--state-approved); }
+  &--archived { background: var(--state-archived); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

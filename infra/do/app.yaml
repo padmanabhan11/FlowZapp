@@ -1,0 +1,113 @@
+# DigitalOcean App Platform spec — 03-Technical-Architecture §9.
+# One app per environment (staging, production); this file is the template.
+# Secrets are App Platform encrypted env vars, never in the repo.
+name: flowzapp-staging
+region: nyc
+
+databases:
+  - name: mysql
+    engine: MYSQL
+    version: "8"
+    production: true          # managed cluster; TLS required
+  - name: valkey
+    engine: VALKEY
+    version: "8"
+    production: true
+
+services:
+  - name: web
+    # Laravel API. PHP buildpack; FFmpeg is NOT needed here (only on workers).
+    source_dir: api
+    github:
+      repo: OWNER/FlowZapp
+      branch: main
+      deploy_on_push: true
+    build_command: composer install --no-dev --optimize-autoloader --no-interaction
+    run_command: heroku-php-apache2 public/
+    instance_size_slug: apps-s-1vcpu-1gb
+    instance_count: 1
+    http_port: 8080
+    routes:
+      - path: /api
+    health_check:
+      http_path: /up
+    envs:
+      - key: APP_ENV
+        value: staging
+      - key: APP_KEY
+        type: SECRET
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DATABASE_URL
+        value: ${mysql.DATABASE_URL}
+      - key: MYSQL_ATTR_SSL_CA
+        value: ${mysql.CA_CERT}
+      - key: REDIS_URL
+        value: ${valkey.REDIS_URL}
+      - key: CACHE_STORE
+        value: redis
+      - key: QUEUE_CONNECTION
+        value: redis
+      - key: SESSION_DRIVER
+        value: redis
+      - key: FILESYSTEM_DISK
+        value: spaces
+      - key: DO_SPACES_KEY
+        type: SECRET
+      - key: DO_SPACES_SECRET
+        type: SECRET
+      - key: DO_SPACES_BUCKET
+        value: flowzapp-staging
+      - key: DO_SPACES_REGION
+        value: nyc3
+      - key: ANTHROPIC_API_KEY
+        type: SECRET
+      - key: SENTRY_LARAVEL_DSN
+        type: SECRET
+
+workers:
+  - name: worker-pipeline
+    # Stages 1–4 (transcribe, segment, frames, generate). Needs FFmpeg, so this
+    # component builds from a Dockerfile rather than the PHP buildpack — see
+    # api/Dockerfile.worker once the pipeline lands (03 §5).
+    source_dir: api
+    github:
+      repo: OWNER/FlowZapp
+      branch: main
+    dockerfile_path: api/Dockerfile.worker
+    run_command: php artisan queue:work redis --queue=pipeline --tries=3 --timeout=3600 --max-jobs=50
+    instance_size_slug: apps-s-1vcpu-2gb
+    instance_count: 1
+
+  - name: worker-default
+    # Notifications, invites, nudges, and the `index` queue (stage 5).
+    source_dir: api
+    github:
+      repo: OWNER/FlowZapp
+      branch: main
+    build_command: composer install --no-dev --optimize-autoloader --no-interaction
+    run_command: php artisan queue:work redis --queue=default,index --tries=3 --timeout=600
+    instance_size_slug: apps-s-1vcpu-1gb
+    instance_count: 1
+
+jobs:
+  - name: migrate
+    kind: PRE_DEPLOY
+    source_dir: api
+    github:
+      repo: OWNER/FlowZapp
+      branch: main
+    build_command: composer install --no-dev --optimize-autoloader --no-interaction
+    run_command: php artisan migrate --force
+
+static_sites:
+  - name: app
+    source_dir: web
+    github:
+      repo: OWNER/FlowZapp
+      branch: main
+    build_command: npm ci --legacy-peer-deps && npm run build
+    output_dir: dist/web/browser
+    catchall_document: index.html
+    routes:
+      - path: /
