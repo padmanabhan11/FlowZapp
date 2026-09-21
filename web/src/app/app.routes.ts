@@ -12,6 +12,20 @@ export const routes: Routes = [
       { path: 'first-recording', canActivate: [workspaceGuard], loadComponent: () => import('./features/onboarding/first-recording').then((m) => m.FirstRecording) },
     ],
   },
-  { path: '', pathMatch: 'full', canActivate: [authGuard, workspaceGuard], redirectTo: 'onboarding/first-recording' },
+  {
+    path: '',
+    canActivate: [authGuard, workspaceGuard],
+    loadComponent: () => import('./features/shell/shell').then((m) => m.Shell),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'ask' },
+      { path: 's/:spaceId', loadComponent: () => import('./features/spaces/space-browser').then((m) => m.SpaceBrowser) },
+      { path: 's/:spaceId/f/:folderId', loadComponent: () => import('./features/spaces/space-browser').then((m) => m.SpaceBrowser) },
+      { path: 'ask', loadComponent: () => import('./features/shell/placeholder').then((m) => m.Placeholder), data: { title: 'Ask', milestone: 'M3' } },
+      { path: 'search', loadComponent: () => import('./features/shell/placeholder').then((m) => m.Placeholder), data: { title: 'Search', milestone: 'M3' } },
+      { path: 'recordings', loadComponent: () => import('./features/shell/placeholder').then((m) => m.Placeholder), data: { title: 'Recordings', milestone: 'M1' } },
+      { path: 'handbook', loadComponent: () => import('./features/shell/placeholder').then((m) => m.Placeholder), data: { title: 'Handbook', milestone: 'M4' } },
+      { path: 'admin/members', loadComponent: () => import('./features/shell/placeholder').then((m) => m.Placeholder), data: { title: 'Members & roles', milestone: 'M2' } },
+    ],
+  },
   { path: '**', redirectTo: '' },
 ];

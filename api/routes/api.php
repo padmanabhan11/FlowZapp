@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Auth\MagicLinkController;
+use App\Http\Controllers\Spaces\FolderController;
+use App\Http\Controllers\Spaces\SpaceController;
 use App\Http\Controllers\Workspaces\InviteController;
 use App\Http\Controllers\Workspaces\MemberController;
 use App\Http\Controllers\Workspaces\WorkspaceController;
@@ -41,7 +43,18 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/workspaces/{workspace}/invites/{invite_id}/resend', [InviteController::class, 'resend']);
             Route::delete('/workspaces/{workspace}/invites/{invite_id}', [InviteController::class, 'destroy']);
 
-            Route::get('/spaces', fn () => response()->json(['data' => \App\Models\Space::query()->orderBy('name')->get(['id', 'name', 'description', 'is_handbook'])]));
+            Route::get('/spaces', [SpaceController::class, 'index']);
+            Route::post('/spaces', [SpaceController::class, 'store']);
+            Route::get('/spaces/{id}', [SpaceController::class, 'show']);
+            Route::patch('/spaces/{id}', [SpaceController::class, 'update']);
+            Route::get('/spaces/{id}/members', [SpaceController::class, 'members']);
+            Route::post('/spaces/{id}/members', [SpaceController::class, 'grant']);
+            Route::delete('/spaces/{id}/members/{user_id}', [SpaceController::class, 'revoke']);
+
+            Route::get('/folders', [FolderController::class, 'index']);
+            Route::post('/folders', [FolderController::class, 'store']);
+            Route::patch('/folders/{id}', [FolderController::class, 'update']);
+            Route::delete('/folders/{id}', [FolderController::class, 'destroy']);
         });
     });
 });

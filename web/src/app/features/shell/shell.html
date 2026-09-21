@@ -1,0 +1,52 @@
+<div class="shell">
+  <header class="shell__top">
+    <span class="brand-mark" aria-label="FlowZapp">FlowZapp</span>
+    @if (workspaces().length > 1) {
+      <p-select
+        class="shell__workspace"
+        [options]="workspaces()"
+        optionLabel="name"
+        optionValue="id"
+        [ngModel]="current()?.id"
+        (ngModelChange)="switchWorkspace($event)"
+        aria-label="Workspace"
+      />
+    } @else {
+      <span class="shell__workspace-name">{{ current()?.name }}</span>
+    }
+    <form class="shell__omnibox" (ngSubmit)="submitOmnibox()" role="search">
+      <input pInputText id="omnibox" name="q" [ngModel]="query()" (ngModelChange)="query.set($event)" placeholder="Search or ask a question…" aria-label="Search or ask" />
+    </form>
+    <div class="shell__user">
+      <span>{{ user()?.name }}</span>
+      <button pButton type="button" [text]="true" size="small" (click)="signOut()">Sign out</button>
+    </div>
+  </header>
+
+  <nav class="shell__side" aria-label="Main">
+    <a routerLink="/ask" routerLinkActive="is-active" class="shell__nav">Ask</a>
+    @if (canRecord()) {
+      <a routerLink="/recordings" routerLinkActive="is-active" class="shell__nav">Recordings</a>
+    }
+    <hr />
+    @for (s of spaces(); track s.id) {
+      @if (!s.is_handbook) {
+        <a [routerLink]="['/s', s.id]" routerLinkActive="is-active" class="shell__nav">{{ s.name }}</a>
+      }
+    }
+    @if (handbook(); as h) {
+      <a routerLink="/handbook" routerLinkActive="is-active" class="shell__nav">{{ h.name }}</a>
+    }
+    @if (spaces().length === 0) {
+      <p class="shell__empty">No spaces yet.</p>
+    }
+    @if (isAdmin()) {
+      <hr />
+      <a routerLink="/admin/members" routerLinkActive="is-active" class="shell__nav">Admin</a>
+    }
+  </nav>
+
+  <main class="shell__main">
+    <router-outlet />
+  </main>
+</div>

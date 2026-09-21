@@ -1,0 +1,46 @@
+<section class="browser">
+  <nav class="browser__crumbs" aria-label="Breadcrumb">
+    <a [routerLink]="['/s', spaceId()]">{{ space()?.name ?? '…' }}</a>
+    @for (c of crumbs(); track c.id) {
+      <span aria-hidden="true">/</span>
+      <a [routerLink]="['/s', spaceId(), 'f', c.id]">{{ c.name }}</a>
+    }
+  </nav>
+
+  @if (error()) {
+    <p class="browser__error" role="alert">{{ error() }}</p>
+  }
+
+  <div class="browser__list document-surface">
+    @if (children().length === 0) {
+      <p class="browser__empty">Nothing here yet. Record a process, or create a document.</p>
+    }
+    @for (f of children(); track f.id) {
+      <div class="browser__row">
+        @if (renaming()?.id === f.id) {
+          <input
+            pInputText
+            [ngModel]="renaming()!.name"
+            (ngModelChange)="renaming.set({ id: f.id, name: $event })"
+            (keydown.enter)="commitRename()"
+            (keydown.escape)="renaming.set(null)"
+            aria-label="Folder name"
+          />
+          <button pButton type="button" size="small" (click)="commitRename()">Save</button>
+        } @else {
+          <a class="browser__folder" [routerLink]="['/s', spaceId(), 'f', f.id]">📁 {{ f.name }}</a>
+          @if (canEdit()) {
+            <button pButton type="button" [text]="true" size="small" (click)="startRename(f)">Rename</button>
+          }
+        }
+      </div>
+    }
+  </div>
+
+  @if (canEdit()) {
+    <form class="browser__new" (ngSubmit)="createFolder()">
+      <input pInputText name="folder" [ngModel]="newName()" (ngModelChange)="newName.set($event)" placeholder="New folder name" aria-label="New folder name" />
+      <button pButton type="submit" [outlined]="true" [disabled]="!newName().trim()">Create folder</button>
+    </form>
+  }
+</section>

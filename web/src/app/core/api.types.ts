@@ -37,3 +37,13 @@ export interface InviteResult {
   message?: string;
   details?: { limit: string; max: number; used: number };
 }
+
+export interface Folder {
+  id: string;
+  space_id: string;
+  parent_id: string | null;
+  name: string;
+  position: number;
+  depth: number;
+  children?: Folder[];
+}

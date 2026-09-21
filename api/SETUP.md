@@ -68,5 +68,7 @@ they are the tenancy boundary.
 | `app/Billing/PlanLimits.php` | plan limits from doc 05 + the Free-tier decision |
 | `app/Audit/Audit.php`, `Models/AuditEntry.php`, migration `000300` | append-only audit log (FR-414) |
 | `app/Providers/AuthServiceProvider.php` | `workspace-admin/approver/editor` gates from the role ResolveWorkspace stores on the request |
-| `tests/Feature/{Auth,Workspaces}/*` | feature tests for all of the above |
+| `app/Policies/SpacePolicy.php` | space-level access: view/edit/approve/manage, default deny, workspace admins see all (A5) |
+| `Http/Controllers/Spaces/{Space,Folder}Controller.php` | A4: spaces CRUD + members (S19 source column), folder tree with depth ≤ 5, move re-parents the subtree, delete requires a contents strategy (FR-204) |
+| `tests/Feature/{Auth,Workspaces,Spaces}/*` | feature tests for all of the above |
 | `pint.json`, `phpstan.neon` | code style and static analysis config |
