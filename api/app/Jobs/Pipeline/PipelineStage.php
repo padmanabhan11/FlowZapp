@@ -31,7 +31,7 @@ abstract class PipelineStage implements ShouldBeUnique, ShouldQueue
 
     public int $timeout = 3600;
 
-    public function __construct(public readonly string $workspaceId, public readonly string $recordingId, public readonly string $inputHash = '')
+    public function __construct(public string $workspaceId, public string $recordingId, public string $inputHash = '')
     {
         $this->onQueue($this->queueName());
     }

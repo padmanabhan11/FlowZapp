@@ -23,10 +23,10 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function (): void {
     // Auth (no session yet)
     Route::post('/auth/magic-link', [MagicLinkController::class, 'request'])->middleware('throttle:magic-link');
-    Route::get('/auth/magic-link/{nonce}', [MagicLinkController::class, 'consume'])->middleware('signed')->name('auth.magic.consume');
+    Route::get('/auth/magic-link/{nonce}', [MagicLinkController::class, 'consume'])->middleware(['web', 'signed'])->name('auth.magic.consume'); // web: needs the session store
 
     Route::middleware('auth:sanctum')->group(function (): void {
-        Route::post('/auth/logout', [MagicLinkController::class, 'logout']);
+        Route::post('/auth/logout', [MagicLinkController::class, 'logout'])->middleware('web');
         Route::get('/auth/me', [MagicLinkController::class, 'me']);
 
         Route::get('/workspaces', [WorkspaceController::class, 'index']);

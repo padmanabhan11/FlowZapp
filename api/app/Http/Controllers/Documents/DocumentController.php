@@ -112,7 +112,7 @@ final class DocumentController extends Controller
                 $doc->save();
             }
 
-            return $doc;
+            return $doc->refresh(); // pick up DB defaults (state, language)
         });
         Audit::record('document.created', 'document', $doc->id, ['title' => $doc->title, 'template' => $data['template_id'] ?? null]);
 
@@ -221,7 +221,7 @@ final class DocumentController extends Controller
             $copy->body_text = DocumentObserver::flatten($copy->load('steps'));
             $copy->save();
 
-            return $copy;
+            return $copy->refresh();
         });
 
         return response()->json(['data' => $this->full($copy)], 201);

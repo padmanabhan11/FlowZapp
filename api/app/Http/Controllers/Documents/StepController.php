@@ -40,7 +40,7 @@ final class StepController extends Controller
             $position = min(max((int) ($data['position'] ?? $count + 1), 1), $count + 1);
             unset($data['position']);
             // Shift later steps down (high to low, to respect the unique key).
-            $later = $doc->steps()->where('position', '>=', $position)->orderByDesc('position')->get();
+            $later = $doc->steps()->where('position', '>=', $position)->reorder('position', 'desc')->get(); // high→low so the unique key never collides
             foreach ($later as $s) {
                 $s->position++;
                 $s->save();

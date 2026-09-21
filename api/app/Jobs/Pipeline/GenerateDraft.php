@@ -88,7 +88,7 @@ final class GenerateDraft extends PipelineStage
             $doc->body_text = DocumentObserver::flatten($doc->load('steps'));
             $doc->save();
 
-            return $doc;
+            return $doc->refresh();
         });
 
         $rec->forceFill(['document_id' => $doc->id, 'state' => 'draft_ready'])->save();
