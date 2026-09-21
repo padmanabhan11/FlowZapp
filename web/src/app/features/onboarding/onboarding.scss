@@ -1,0 +1,54 @@
+.onboarding {
+  max-width: 480px;
+  margin: 48px auto;
+  padding: 32px;
+
+  &--wide { max-width: 760px; }
+
+  h1 { margin: 0 0 8px; font-size: 1.5rem; }
+
+  &__lead { color: var(--ink-soft); margin: 0 0 24px; }
+
+  &__form {
+    display: grid;
+    gap: 8px;
+    label { font-weight: 600; margin-top: 8px; }
+    button { margin-top: 16px; justify-self: start; }
+  }
+
+  &__slug {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    input { flex: 1; }
+  }
+
+  &__slug-state { min-height: 1.2em; margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
+
+  &__actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+  &__upgrade { margin: 4px 0 12px; }
+}
+
+.invite-rows { display: grid; gap: 8px; }
+
+.invite-row {
+  display: grid;
+  grid-template-columns: minmax(200px, 2fr) 140px minmax(160px, 1.5fr) 40px;
+  gap: 8px;
+  align-items: center;
+
+  &__error { grid-column: 1 / -1; margin: 0; font-size: 0.85rem; color: var(--danger); }
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr 40px;
+    p-select, p-multiselect { grid-column: 1 / -1; }
+  }
+}
+
+.invite-results {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  li { padding: 4px 0; border-top: 1px solid var(--line); }
+}

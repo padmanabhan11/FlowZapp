@@ -111,6 +111,7 @@ final class CrossTenantIsolationTest extends TestCase
             'email' => 'bo@example.test', 'role' => 'reader',
             'token_hash' => str_repeat('0', 64), 'expires_at' => now()->addDay(),
         ]);
+        \App\Audit\Audit::record('test.seeded', 'space', $space->id);
 
         $unseeded = [];
         $this->current()->set($this->b->id);

@@ -23,11 +23,16 @@ ULID user_id). Re-run `php artisan install:api` output: if it recreated
 `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs` are on the conformance
 allowlist.
 
-Then register the tenancy provider and finish wiring:
+The overlay ships its own `bootstrap/app.php` (API routing, Sanctum stateful
+middleware, the doc 05 error envelope) and `bootstrap/providers.php` (App, Auth,
+Tenancy providers) — `rsync --ignore-existing` keeps ours. Then:
 
-1. `bootstrap/providers.php` — add `App\Providers\TenancyServiceProvider::class`.
-2. `.env` — `DB_CONNECTION=mysql`, `MYSQL_ATTR_SSL_CA=/path/to/ca.pem` for DigitalOcean; tests use SQLite in memory via `phpunit.xml` (skeleton default).
-3. `config/database.php` mysql connection: `'charset' => 'utf8mb4', 'collation' => 'utf8mb4_0900_ai_ci'`.
+1. `.env` — `FRONTEND_URL=http://localhost:4200`, `SANCTUM_STATEFUL_DOMAINS=localhost:4200`,
+   `SESSION_DOMAIN=localhost`; `DB_CONNECTION=mysql` and `MYSQL_ATTR_SSL_CA=/path/to/ca.pem`
+   for DigitalOcean. Tests use SQLite in memory via `phpunit.xml` (skeleton default).
+2. `config/database.php` mysql connection: `'charset' => 'utf8mb4', 'collation' => 'utf8mb4_0900_ai_ci'`.
+3. Local dev: `php artisan serve` (port 8000) and `ng serve` in `web/` — the Angular dev
+   proxy forwards `/api` and `/sanctum` to 8000.
 
 Verify the boundary before anything else is built:
 
@@ -36,6 +41,7 @@ php scripts/check-raw-queries.php
 vendor/bin/pint --test
 vendor/bin/phpstan analyse
 php artisan test --filter Tenancy
+php artisan test            # Auth, Workspaces, Tenancy suites
 ```
 
 All four are the CI gate (`.github/workflows/ci.yml`). `SchemaConformanceTest` and
@@ -57,4 +63,10 @@ they are the tenancy boundary.
 | `tests/Feature/Tenancy/SchemaConformanceTest.php` | every non-allowlisted table: NOT NULL `workspace_id`, leading index, `TenantModel`, not fillable |
 | `tests/Feature/Tenancy/CrossTenantIsolationTest.php` | A3 definition of done: reads/writes from the wrong tenant touch nothing |
 | `scripts/check-raw-queries.php` | fails CI on `DB::raw`/`DB::table`/`whereRaw`/`withoutGlobalScope` unless `// allowlisted: <reason>` |
+| `app/Auth/MagicLink.php`, `Http/Controllers/Auth/MagicLinkController.php` | FR-101..103: signed single-use link, identical response for unknown addresses, rate limited |
+| `Http/Controllers/Workspaces/{Workspace,Invite,Member}Controller.php` | A1/A2: create workspace (admin + General space on Free), invites with seat check before send, accept/resend/revoke, members with the last-admin rule (FR-510) |
+| `app/Billing/PlanLimits.php` | plan limits from doc 05 + the Free-tier decision |
+| `app/Audit/Audit.php`, `Models/AuditEntry.php`, migration `000300` | append-only audit log (FR-414) |
+| `app/Providers/AuthServiceProvider.php` | `workspace-admin/approver/editor` gates from the role ResolveWorkspace stores on the request |
+| `tests/Feature/{Auth,Workspaces}/*` | feature tests for all of the above |
 | `pint.json`, `phpstan.neon` | code style and static analysis config |

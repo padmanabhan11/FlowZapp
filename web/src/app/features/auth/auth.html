@@ -1,0 +1,44 @@
+<section class="auth document-surface">
+  <h1 class="auth__title">{{ mode() === 'signin' ? 'Sign in' : 'Create your account' }}</h1>
+
+  @if (inviteToken()) {
+    <p-message severity="info" [text]="'You have been invited to a workspace. Sign in with the address the invitation was sent to.'" />
+  }
+
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  }
+
+  @if (sent()) {
+    <div class="auth__sent" role="status">
+      <h2>Check your email</h2>
+      <p>If that address can sign in, a link is on its way. It works once and expires in 15 minutes.</p>
+      <button pButton type="button" [text]="true" (click)="sent.set(false)">Use a different address</button>
+    </div>
+  } @else {
+    <form class="auth__form" (ngSubmit)="requestLink()" novalidate>
+      <label for="email">Email</label>
+      <input
+        pInputText
+        id="email"
+        name="email"
+        type="email"
+        autocomplete="email"
+        required
+        [ngModel]="email()"
+        (ngModelChange)="email.set($event)"
+        placeholder="you@company.com"
+      />
+      <button pButton type="submit" [disabled]="!emailValid() || sending()" [loading]="sending()">Continue</button>
+      <p class="auth__hint">We will email you a sign-in link. No password needed.</p>
+    </form>
+
+    <p class="auth__toggle">
+      @if (mode() === 'signin') {
+        New here? <a routerLink="/auth" (click)="toggleMode(); $event.preventDefault()">Create an account</a>
+      } @else {
+        Already have an account? <a routerLink="/auth" (click)="toggleMode(); $event.preventDefault()">Sign in</a>
+      }
+    </p>
+  }
+</section>

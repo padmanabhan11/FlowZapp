@@ -1,0 +1,65 @@
+<section class="onboarding onboarding--wide document-surface">
+  <h1>Invite your team to {{ workspaceName() }}</h1>
+  <p class="onboarding__lead">A knowledge base with one user is a notes app. Add the people who will record, approve and read.</p>
+
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  }
+  @if (limitHit(); as l) {
+    <p-message severity="warn" [text]="l.message ?? ''" />
+    <p class="onboarding__upgrade"><a routerLink="/admin/billing">Upgrade</a> to invite more people.</p>
+  }
+
+  <div class="invite-rows" role="group" aria-label="Invitations">
+    @for (r of rows(); track $index; let i = $index) {
+      <div class="invite-row" [class.invite-row--invalid]="rowInvalid(r)">
+        <input
+          pInputText
+          type="email"
+          [attr.aria-label]="'Email ' + (i + 1)"
+          [ngModel]="r.email"
+          (ngModelChange)="patch(i, { email: $event })"
+          (paste)="onPaste(i, $event)"
+          placeholder="name@company.com"
+          [attr.aria-invalid]="rowInvalid(r)"
+        />
+        <p-select [options]="roles" optionLabel="label" optionValue="value" [ngModel]="r.role" (ngModelChange)="patch(i, { role: $event })" [attr.aria-label]="'Role ' + (i + 1)" />
+        <p-multiSelect
+          [options]="spaces()"
+          optionLabel="name"
+          optionValue="id"
+          [ngModel]="r.spaceIds"
+          (ngModelChange)="patch(i, { spaceIds: $event })"
+          placeholder="Spaces"
+          [attr.aria-label]="'Spaces ' + (i + 1)"
+        />
+        <button pButton type="button" icon="pi pi-times" [text]="true" [rounded]="true" aria-label="Remove row" (click)="removeRow(i)" [disabled]="rows().length === 1"></button>
+        @if (rowInvalid(r)) {
+          <p class="invite-row__error">That does not look like an email address.</p>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="onboarding__actions">
+    <button pButton type="button" icon="pi pi-plus" [outlined]="true" (click)="addRow()">Add another</button>
+    <button pButton type="button" (click)="send()" [disabled]="validRows().length === 0 || sending()" [loading]="sending()">Send invites</button>
+    <button pButton type="button" [text]="true" (click)="skip()">Skip for now</button>
+  </div>
+
+  @if (results().length) {
+    <ul class="invite-results" aria-live="polite">
+      @for (res of results(); track res.email) {
+        <li [attr.data-status]="res.status">
+          <span class="control-value">{{ res.email }}</span>
+          @switch (res.status) {
+            @case ('sent') { — invitation sent }
+            @case ('already_member') { — already a member }
+            @case ('already_invited') { — already invited }
+            @case ('plan_limit_exceeded') { — not sent: seat limit reached }
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>

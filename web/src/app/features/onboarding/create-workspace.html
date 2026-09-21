@@ -1,0 +1,29 @@
+<section class="onboarding document-surface">
+  <h1>Create your workspace</h1>
+  <p class="onboarding__lead">A workspace is your company's space. You become its administrator.</p>
+
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  }
+
+  <form (ngSubmit)="submit()" novalidate class="onboarding__form">
+    <label for="name">Workspace name</label>
+    <input pInputText id="name" name="name" required minlength="2" maxlength="60" [ngModel]="name()" (ngModelChange)="name.set($event)" placeholder="Northgate Ops" />
+
+    <label for="slug">Address</label>
+    <div class="onboarding__slug">
+      <span class="control-value">flowzapp.app/</span>
+      <input pInputText id="slug" name="slug" class="control-value" [ngModel]="slug()" (ngModelChange)="onSlugInput($event)" spellcheck="false" />
+    </div>
+    <p class="onboarding__slug-state" aria-live="polite">
+      @switch (slugState()) {
+        @case ('checking') { Checking… }
+        @case ('available') { Available }
+        @case ('taken') { That address is taken. Try another. }
+        @case ('invalid') { Lowercase letters, numbers and hyphens only. }
+      }
+    </p>
+
+    <button pButton type="submit" [disabled]="!canSubmit()" [loading]="submitting()">Continue</button>
+  </form>
+</section>
