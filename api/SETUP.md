@@ -66,6 +66,7 @@ once per environment (the pre-deploy job does it after `migrate`). Tests use the
 | `Http/Controllers/Account/` | profile, per-workspace notification preferences (email only; in-app always), in-app notification list, active sessions (S24) |
 | `app/Console/Commands/` | `documents:review-due` (daily), `notifications:weekly-digest` (Mondays), `workspaces:purge-scheduled` (daily), `vector:ensure-collection` — scheduled in `routes/console.php`, run by the `scheduler` component |
 | `app/Billing/` | `PlanLimits`, `Usage` (counters computed from tables; `assert()` → 429 `plan_limit_exceeded` with the counter in details, 402 for chat off-plan), `GET /usage`, `GET /billing/portal` (501 until `BILLING_PORTAL_URL` — provider is an open decision) |
+| `Http/Controllers/Admin/` | `GET /audit-log` (+ `/export`, filter by entity/actor/action/date, cursor) — read-only by design (S21); `GET /analytics/overview` (S20: state counts, overdue by space, approvals, chat volume, helpful rate, most-read from `document_reads`) |
 | `app/Media/` | `MediaStorage` interface, `SpacesStorage` (presigned multipart, signed GET ≤ 15 min), `FakeMediaStorage` for tests (`MEDIA_DRIVER=fake`) |
 | `Http/Controllers/Recordings/` | upload-url → parts → register → pipeline; list/show/rename/playback-url/retry/generate/delete; plan minutes checked before bytes move |
 | `app/Jobs/Pipeline/` | `PipelineStage` base (idempotent via `pipeline_jobs.job_key`, retry with backoff, plain-language failure), `TranscribeRecording`, `SegmentRecording` (Epic D fills the rest) |

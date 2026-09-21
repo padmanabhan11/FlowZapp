@@ -1,22 +1,25 @@
 <section class="adm">
   <header class="adm__head">
-    <h1>Knowledge gaps</h1>
+    <h1>Insights</h1>
+    <a routerLink="/admin/audit" class="adm__link">Audit log</a>
     <a routerLink="/admin/members" class="adm__link">Members</a>
   </header>
+  @if (error()) {
+    <p class="adm__error" role="alert">{{ error() }}</p>
+  }
+
+  <h2 class="adm__h2">Knowledge gaps</h2>
   <p class="adm__lead">
     Questions the assistant could not answer from approved content, most frequent first. Each one is
     a procedure worth recording.
   </p>
-  @if (error()) {
-    <p class="adm__error" role="alert">{{ error() }}</p>
-  }
   @if (!loading() && gaps().length === 0) {
     <p class="adm__empty">
       No gaps yet. When someone asks a question no approved document covers, it appears here.
     </p>
   }
   @if (gaps().length) {
-    <div class="adm__table adm__table--gaps">
+    <div class="adm__table adm__table--gaps document-surface">
       <div class="adm__row adm__row--head">
         <span>Question</span><span>Asked</span><span>Last asked</span><span></span>
       </div>
@@ -37,6 +40,94 @@
           >
         </div>
       }
+    </div>
+  }
+
+  @if (overview(); as o) {
+    <h2 class="adm__h2">
+      How the knowledge base is doing <span class="adm__hint">last {{ o.window_days }} days</span>
+    </h2>
+    <div class="ins__grid">
+      <div class="ins__card document-surface">
+        <p class="ins__h">Documents by state</p>
+        @for (s of states; track s.key) {
+          <div class="ins__bar-row">
+            <span class="ins__bar-label"
+              ><span class="state-pill" [class]="'state-pill state-pill--' + s.key">{{
+                s.label
+              }}</span></span
+            >
+            <span class="ins__bar"
+              ><span
+                class="ins__fill"
+                [class]="'ins__fill ins__fill--' + s.key"
+                [style.width.%]="pct(o.documents_by_state[s.key], stateMax())"
+              ></span
+            ></span>
+            <span class="control-value">{{ o.documents_by_state[s.key] }}</span>
+          </div>
+        }
+        <p class="adm__hint">
+          <span class="control-value">{{ totalDocs() }}</span> documents in total
+        </p>
+      </div>
+
+      <div class="ins__card document-surface">
+        <p class="ins__h">Past review date, by space</p>
+        @if (o.past_review_by_space.length === 0) {
+          <p class="adm__hint">Nothing is overdue.</p>
+        }
+        @for (s of o.past_review_by_space; track s.space_id) {
+          <div class="ins__bar-row">
+            <span class="ins__bar-label">{{ s.space }}</span>
+            <span class="ins__bar"
+              ><span class="ins__fill" [style.width.%]="pct(s.count, overdueMax())"></span
+            ></span>
+            <span class="control-value">{{ s.count }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="ins__card document-surface ins__metrics">
+        <div>
+          <p class="ins__h">Approvals</p>
+          <p class="ins__num control-value">{{ o.approvals_30d }}</p>
+        </div>
+        <div>
+          <p class="ins__h">Questions</p>
+          <p class="ins__num control-value">{{ o.chat.questions_30d }}</p>
+          <p class="adm__hint">{{ o.chat.unique_askers_30d }} people asking</p>
+        </div>
+        <div>
+          <p class="ins__h">Helpful rate</p>
+          <p class="ins__num control-value">
+            {{ o.chat.helpful_rate_pct === null ? '—' : o.chat.helpful_rate_pct + '%' }}
+          </p>
+          <p class="adm__hint">of rated answers</p>
+        </div>
+        <div>
+          <p class="ins__h">Refused</p>
+          <p class="ins__num control-value">
+            {{ o.chat.refused_rate_pct === null ? '—' : o.chat.refused_rate_pct + '%' }}
+          </p>
+          <p class="adm__hint">of answers</p>
+        </div>
+      </div>
+
+      <div class="ins__card document-surface">
+        <p class="ins__h">Most-read documents</p>
+        @if (o.most_read.length === 0) {
+          <p class="adm__hint">No reads recorded yet.</p>
+        }
+        <ol class="ins__list">
+          @for (d of o.most_read; track d.document_id) {
+            <li>
+              <a [routerLink]="['/d', d.document_id]">{{ d.title }}</a>
+              <span class="control-value">{{ d.reads | number }}</span>
+            </li>
+          }
+        </ol>
+      </div>
     </div>
   }
 </section>

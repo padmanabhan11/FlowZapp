@@ -1,0 +1,80 @@
+@use './admin';
+.ins {
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
+  }
+  &__card {
+    max-width: none;
+    padding: 14px 18px;
+  }
+  &__h {
+    margin: 0 0 8px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+  }
+  &__bar-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 40px;
+    gap: 10px;
+    align-items: center;
+    padding: 4px 0;
+  }
+  &__bar-label {
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  &__bar {
+    display: block;
+    height: 10px;
+    background: var(--rail);
+    border: 1px solid var(--line);
+  }
+  &__fill {
+    display: block;
+    height: 100%;
+    background: var(--ink);
+    &--draft {
+      background: var(--state-draft);
+    }
+    &--in_review {
+      background: var(--state-review);
+    }
+    &--approved {
+      background: var(--state-approved);
+    }
+    &--archived {
+      background: var(--state-archived);
+    }
+  }
+  &__metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  &__num {
+    margin: 0;
+    font-size: 1.6rem;
+  }
+  &__list {
+    margin: 0;
+    padding-left: 20px;
+    li {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 3px 0;
+    }
+  }
+}

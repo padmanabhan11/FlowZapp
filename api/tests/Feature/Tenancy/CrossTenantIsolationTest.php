@@ -120,6 +120,7 @@ final class CrossTenantIsolationTest extends TestCase
         \App\Models\DocumentChunk::create(['space_id' => $space->id, 'document_id' => $doc->id, 'version_id' => $ver->id, 'section_ref' => 'step:1', 'content' => 'Do it']);
         $cs = \App\Models\ChatSession::create(['user_id' => $user->id]);
         \App\Models\ChatMessage::create(['session_id' => $cs->id, 'role' => 'user', 'content' => 'hi']);
+        \App\Models\DocumentRead::create(['document_id' => $doc->id, 'user_id' => $user->id, 'read_on' => now()->toDateString()]);
         \App\Models\AcknowledgementTarget::create(['document_id' => $doc->id, 'user_id' => $user->id, 'assigned_by' => $user->id]);
         \App\Models\Acknowledgement::create(['document_id' => $doc->id, 'version_id' => $ver->id, 'user_id' => $user->id, 'acknowledged_at' => now()]);
         \App\Models\Approval::create(['document_id' => $doc->id, 'requested_by' => $user->id, 'from_state' => 'draft', 'to_state' => 'in_review']);

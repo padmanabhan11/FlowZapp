@@ -11,6 +11,7 @@ use App\Documents\Content;
 use App\Documents\Templates;
 use App\Http\Controllers\Controller;
 use App\Models\Document;
+use App\Models\DocumentRead;
 use App\Models\DocumentStep;
 use App\Models\Folder;
 use App\Models\Space;
@@ -152,6 +153,7 @@ final class DocumentController extends Controller
         if ($v === null) {
             return response()->json(['error' => ['code' => 'not_published', 'message' => 'This document has no approved version yet.']], 409);
         }
+        DocumentRead::query()->firstOrCreate(['document_id' => $doc->id, 'user_id' => request()->user()->id, 'read_on' => now()->toDateString()]);
 
         return response()->json(['data' => [
             'id' => $doc->id, 'title' => $v->title, 'doc_type' => $doc->doc_type, 'state' => $doc->state,

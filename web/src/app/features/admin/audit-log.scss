@@ -1,0 +1,49 @@
+@use './admin';
+.audit {
+  &__filters {
+    display: grid;
+    grid-template-columns: 150px 180px 1fr 150px 150px auto;
+    gap: 8px;
+    margin-bottom: 12px;
+    @media (max-width: 1000px) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  &__table {
+    max-width: none;
+  }
+  &__row {
+    display: grid;
+    grid-template-columns: 170px 180px 200px 180px 1fr;
+    gap: 10px;
+    padding: 7px 14px;
+    border-top: 1px solid var(--line);
+    font-size: 0.9rem;
+    align-items: start;
+    &--head {
+      background: var(--rail);
+      font-weight: 600;
+      border-top: 0;
+    }
+  }
+  &__sub {
+    display: block;
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  &__detail {
+    word-break: break-word;
+  }
+}
+@media print {
+  .audit__filters,
+  .adm__head button,
+  .adm__head a {
+    display: none !important;
+  }
+  .audit__row {
+    break-inside: avoid;
+  }
+}

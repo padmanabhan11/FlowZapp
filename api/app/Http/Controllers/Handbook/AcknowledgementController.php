@@ -103,7 +103,7 @@ final class AcknowledgementController extends Controller
     {
         $data = $request->validate(['space_id' => ['nullable', 'string', 'size:26']]);
         $rows = $this->rows($request->user(), $data);
-        Audit::record('acknowledgement.exported', 'workspace', $request->attributes->get('workspace_id') ?? '', ['rows' => $rows->count()]);
+        Audit::record('acknowledgement.exported', 'workspace', app(\App\Tenancy\CurrentWorkspace::class)->require(), ['rows' => $rows->count()]);
 
         return response()->streamDownload(function () use ($rows): void {
             $out = fopen('php://output', 'w');

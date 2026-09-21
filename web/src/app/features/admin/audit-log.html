@@ -1,0 +1,111 @@
+<section class="adm audit">
+  <header class="adm__head">
+    <h1>Audit log</h1>
+    <button pButton type="button" [outlined]="true" size="small" (click)="exportCsv()">
+      Export CSV
+    </button>
+    <button pButton type="button" [text]="true" size="small" (click)="print()">Print</button>
+    <a routerLink="/admin/members" class="adm__link">Members</a>
+  </header>
+  <p class="adm__lead">
+    Append-only. Auth events, permission changes, approvals, deletions and exports, with actor and
+    timestamp. Nothing here can be edited or removed.
+  </p>
+  @if (error()) {
+    <p class="adm__error" role="alert">{{ error() }}</p>
+  }
+
+  <form class="audit__filters" (ngSubmit)="load(true)">
+    <p-select
+      name="entity"
+      [options]="entityTypes"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="entityType()"
+      (ngModelChange)="entityType.set($event)"
+      placeholder="Entity"
+      [showClear]="true"
+      aria-label="Entity type"
+    />
+    <p-select
+      name="actor"
+      [options]="members()"
+      optionLabel="name"
+      optionValue="user_id"
+      [ngModel]="actorId()"
+      (ngModelChange)="actorId.set($event)"
+      placeholder="Actor"
+      [showClear]="true"
+      [filter]="true"
+      aria-label="Actor"
+    />
+    <p-select
+      name="action"
+      [options]="actions()"
+      [ngModel]="action()"
+      (ngModelChange)="action.set($event)"
+      placeholder="Action"
+      [showClear]="true"
+      [filter]="true"
+      [editable]="true"
+      aria-label="Action"
+    />
+    <input
+      pInputText
+      type="date"
+      name="from"
+      [ngModel]="from()"
+      (ngModelChange)="from.set($event)"
+      aria-label="From date"
+    />
+    <input
+      pInputText
+      type="date"
+      name="to"
+      [ngModel]="to()"
+      (ngModelChange)="to.set($event)"
+      aria-label="To date"
+    />
+    <button pButton type="submit" size="small" [loading]="loading()">Filter</button>
+  </form>
+
+  <div class="audit__table document-surface">
+    <div class="audit__row audit__row--head">
+      <span>Timestamp (UTC)</span><span>Actor</span><span>Action</span><span>Entity</span
+      ><span>Detail</span>
+    </div>
+    @for (r of rows(); track r.id) {
+      <div class="audit__row">
+        <span class="control-value">{{ r.at | date: 'yyyy-MM-dd HH:mm:ss' : 'UTC' }}</span>
+        <span
+          >{{ r.actor?.name ?? 'system' }}<span class="audit__sub">{{ r.actor?.email }}</span></span
+        >
+        <span class="control-value">{{ r.action }}</span>
+        <span
+          >{{ r.entity_type }}<span class="audit__sub control-value">{{ r.entity_id }}</span></span
+        >
+        <span class="audit__detail"
+          >{{ detail(r) }}
+          @if (r.ip) {
+            <span class="audit__sub control-value">{{ r.ip }}</span>
+          }
+        </span>
+      </div>
+    }
+    @if (rows().length === 0 && !loading()) {
+      <p class="adm__empty">No entries match.</p>
+    }
+  </div>
+  @if (cursor()) {
+    <button
+      pButton
+      type="button"
+      [text]="true"
+      size="small"
+      (click)="load(false)"
+      [loading]="loading()"
+    >
+      Load older
+    </button>
+  }
+</section>

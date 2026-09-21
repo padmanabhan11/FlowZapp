@@ -6,6 +6,8 @@ use App\Http\Controllers\Access\FolderPermissionController;
 use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\NotificationController;
 use App\Http\Controllers\Account\SessionController;
+use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Documents\DocumentController;
 use App\Http\Controllers\Documents\StepController;
@@ -129,6 +131,9 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/chat/sessions/{id}/messages', [ChatController::class, 'ask']);
             Route::post('/chat/messages/{id}/rating', [ChatController::class, 'rate']);
             Route::get('/analytics/knowledge-gaps', [ChatController::class, 'gaps']);
+            Route::get('/analytics/overview', [AnalyticsController::class, 'overview']);
+            Route::get('/audit-log', [AuditLogController::class, 'index']);
+            Route::get('/audit-log/export', [AuditLogController::class, 'export']);
 
             Route::get('/usage', [BillingController::class, 'usage']);
             Route::get('/billing/portal', [BillingController::class, 'portal']);
