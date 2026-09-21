@@ -24,7 +24,7 @@ export const routes: Routes = [
       { path: 'd/:id', redirectTo: 'd/:id/edit' },
       { path: 'ask', loadComponent: () => import('./features/shell/placeholder').then((m) => m.Placeholder), data: { title: 'Ask', milestone: 'M3' } },
       { path: 'search', loadComponent: () => import('./features/shell/placeholder').then((m) => m.Placeholder), data: { title: 'Search', milestone: 'M3' } },
-      { path: 'recordings', loadComponent: () => import('./features/shell/placeholder').then((m) => m.Placeholder), data: { title: 'Recordings', milestone: 'M1' } },
+      { path: 'recordings', loadComponent: () => import('./features/recordings/recordings').then((m) => m.Recordings) },
       { path: 'handbook', loadComponent: () => import('./features/shell/placeholder').then((m) => m.Placeholder), data: { title: 'Handbook', milestone: 'M4' } },
       { path: 'admin/members', loadComponent: () => import('./features/shell/placeholder').then((m) => m.Placeholder), data: { title: 'Members & roles', milestone: 'M2' } },
     ],

@@ -1,0 +1,51 @@
+<section class="recs">
+  <header class="recs__head">
+    <h1>Recordings</h1>
+    <div class="recs__actions">
+      <button pButton type="button" (click)="openModal('record')">Record a process</button>
+      <button pButton type="button" [outlined]="true" (click)="openModal('upload')">Upload a file</button>
+    </div>
+  </header>
+
+  @if (error()) {
+    <p class="recs__error" role="alert">{{ error() }}</p>
+  }
+
+  <div class="document-surface recs__table">
+    @if (rows().length === 0) {
+      <p class="recs__empty">No recordings yet. Record the process you explain most often.</p>
+    } @else {
+      <div class="recs__row recs__row--head">
+        <span>Title</span><span>Length</span><span>Status</span><span>Uploaded by</span><span>Draft</span><span></span>
+      </div>
+      @for (r of rows(); track r.id) {
+        <div class="recs__row">
+          <span class="recs__title">{{ r.title }}<br /><small class="control-value">{{ r.created_at | date: 'd MMM y HH:mm' }}</small></span>
+          <span class="control-value">{{ fmt(r.duration_sec) }}</span>
+          <span class="recs__status">
+            @if (r.state === 'failed') {
+              <strong>Failed</strong>
+              <small>{{ r.failure_reason }}</small>
+            } @else if (r.state === 'draft_ready') {
+              <strong>Draft ready</strong>
+            } @else {
+              <span class="recs__bar" role="progressbar" [attr.aria-valuenow]="stage(r).pct" aria-valuemin="0" aria-valuemax="100"><span class="recs__bar-fill" [style.width.%]="stage(r).pct"></span></span>
+              <small>{{ stage(r).label }}…</small>
+            }
+          </span>
+          <span>{{ r.uploaded_by?.name ?? '—' }}</span>
+          <span>
+            @if (r.document_id) { <a [routerLink]="['/d', r.document_id, 'edit']">Open draft</a> } @else { — }
+          </span>
+          <span class="recs__menu">
+            @if (r.state === 'failed') { <button pButton type="button" size="small" (click)="retry(r)">Retry</button> }
+            @if (r.state === 'draft_ready') { <button pButton type="button" [text]="true" size="small" (click)="generateAgain(r)">Generate again</button> }
+            <button pButton type="button" [text]="true" size="small" aria-label="Delete recording" (click)="remove(r)">Delete</button>
+          </span>
+        </div>
+      }
+    }
+  </div>
+
+  <app-record-modal [visible]="modalOpen()" [initialMode]="modalMode()" [initialTitle]="modalTitle()" (closed)="onModalClosed($event)" />
+</section>

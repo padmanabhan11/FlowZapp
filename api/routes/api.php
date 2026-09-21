@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Documents\DocumentController;
 use App\Http\Controllers\Documents\StepController;
+use App\Http\Controllers\Recordings\RecordingController;
 use App\Http\Controllers\Spaces\FolderController;
 use App\Http\Controllers\Spaces\SpaceController;
 use App\Http\Controllers\Workspaces\InviteController;
@@ -73,6 +74,16 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/documents/{id}/steps/reorder', [StepController::class, 'reorder']);
             Route::patch('/documents/{id}/steps/{step_id}', [StepController::class, 'update']);
             Route::delete('/documents/{id}/steps/{step_id}', [StepController::class, 'destroy']);
+
+            Route::post('/recordings/upload-url', [RecordingController::class, 'uploadUrl']);
+            Route::post('/recordings', [RecordingController::class, 'store']);
+            Route::get('/recordings', [RecordingController::class, 'index']);
+            Route::get('/recordings/{id}', [RecordingController::class, 'show']);
+            Route::patch('/recordings/{id}', [RecordingController::class, 'update']);
+            Route::get('/recordings/{id}/playback-url', [RecordingController::class, 'playbackUrl']);
+            Route::post('/recordings/{id}/retry', [RecordingController::class, 'retry']);
+            Route::post('/recordings/{id}/generate', [RecordingController::class, 'generate']);
+            Route::delete('/recordings/{id}', [RecordingController::class, 'destroy']);
         });
     });
 });

@@ -57,6 +57,10 @@ cd ../web && npm ci --legacy-peer-deps && npm start   # :4200, proxies /api and 
 | `Http/Controllers/Spaces/` | spaces (visible-only list, members with role source), folders (depth ≤ 5, delete strategy) |
 | `Http/Controllers/Documents/` | documents (autosave with `expected_updated_at` → 409, approved edit → draft revision), steps |
 | `app/Documents/` | `Content` (structured JSON model + validation), `Templates` |
+| `app/Media/` | `MediaStorage` interface, `SpacesStorage` (presigned multipart, signed GET ≤ 15 min), `FakeMediaStorage` for tests (`MEDIA_DRIVER=fake`) |
+| `Http/Controllers/Recordings/` | upload-url → parts → register → pipeline; list/show/rename/playback-url/retry/generate/delete; plan minutes checked before bytes move |
+| `app/Jobs/Pipeline/` | `PipelineStage` base (idempotent via `pipeline_jobs.job_key`, retry with backoff, plain-language failure), `TranscribeRecording`, `SegmentRecording` (Epic D fills the rest) |
+| `app/Pipeline/` | `Transcriber` driver interface; `NullTranscriber` until D0 picks a provider (`TRANSCRIPTION_DRIVER`) |
 | `app/Policies/` | `SpacePolicy`, `DocumentPolicy` — default deny |
 | `app/Audit/`, `Models/AuditEntry.php` | append-only audit log |
 | `app/Billing/PlanLimits.php` | plan limits (doc 05 + 18 Sep pricing decision) |

@@ -120,3 +120,28 @@ export interface Template {
   doc_type: DocType;
   description: string;
 }
+
+export type RecordingState = 'pending_upload' | 'uploaded' | 'transcribing' | 'segmenting' | 'generating' | 'draft_ready' | 'failed';
+
+export interface Recording {
+  id: string;
+  space_id: string | null;
+  title: string | null;
+  state: RecordingState;
+  failed_stage: string | null;
+  failure_reason: string | null;
+  mime_type: string | null;
+  size_bytes: number | null;
+  duration_sec: number | null;
+  uploaded_by: { id: string; name?: string } | null;
+  document_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UploadTargets {
+  recording_id: string;
+  upload_id: string;
+  part_size: number;
+  parts: { part_number: number; url: string }[];
+}

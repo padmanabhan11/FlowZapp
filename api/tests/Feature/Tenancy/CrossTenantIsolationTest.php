@@ -115,6 +115,11 @@ final class CrossTenantIsolationTest extends TestCase
         $doc = \App\Models\Document::create(['space_id' => $space->id, 'title' => 'Doc', 'content' => \App\Documents\Content::empty(), 'created_by' => $user->id]);
         \App\Models\DocumentStep::create(['document_id' => $doc->id, 'position' => 1, 'instruction' => 'Do it']);
         \App\Models\DocumentVersion::create(['document_id' => $doc->id, 'version_number' => 1, 'title' => 'Doc', 'content' => $doc->content]);
+        $rec = \App\Models\Recording::create(['space_id' => $space->id, 'uploaded_by' => $user->id, 'storage_key' => 'k/source.webm', 'state' => 'uploaded']);
+        \App\Models\Transcript::create(['recording_id' => $rec->id, 'full_text' => 'hi', 'words' => []]);
+        \App\Models\RecordingSegment::create(['recording_id' => $rec->id, 'position' => 1, 'ts_start' => 0, 'ts_end' => 1]);
+        \App\Models\MediaAsset::create(['recording_id' => $rec->id, 'kind' => 'frame', 'storage_key' => 'k/f.jpg']);
+        \App\Models\PipelineJob::create(['recording_id' => $rec->id, 'stage' => 'transcribe', 'job_key' => 'seed:transcribe:0']);
 
         $unseeded = [];
         $this->current()->set($this->b->id);

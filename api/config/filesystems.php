@@ -49,6 +49,19 @@ return [
             'report' => false,
         ],
 
+        // DigitalOcean Spaces (03 §1): private bucket, keys {workspace_id}/{recording_id}/…
+        'spaces' => [
+            'driver' => 's3',
+            'key' => env('DO_SPACES_KEY'),
+            'secret' => env('DO_SPACES_SECRET'),
+            'region' => env('DO_SPACES_REGION', 'nyc3'),
+            'bucket' => env('DO_SPACES_BUCKET'),
+            'endpoint' => env('DO_SPACES_ENDPOINT', 'https://'.env('DO_SPACES_REGION', 'nyc3').'.digitaloceanspaces.com'),
+            'use_path_style_endpoint' => false,
+            'visibility' => 'private',
+            'throw' => true,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
