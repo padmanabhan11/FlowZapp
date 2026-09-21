@@ -1,0 +1,84 @@
+<section class="adm">
+  <header class="adm__head">
+    <a routerLink="/admin/members" class="adm__back">← Admin</a>
+    <h1>{{ space()?.name ?? '…' }} — permissions</h1>
+  </header>
+  @if (error()) { <p class="adm__error" role="alert">{{ error() }}</p> }
+
+  <div class="adm__grid">
+    <div>
+      <h2 class="adm__h2">Members of this space</h2>
+      <div class="document-surface adm__table">
+        <div class="adm__row adm__row--head adm__row--space"><span>Person</span><span>Role here</span><span>Source</span><span></span></div>
+        @for (m of members(); track m.user_id) {
+          <div class="adm__row adm__row--space">
+            <span>{{ m.name ?? m.email }}</span>
+            <span>
+              @if (m.source === 'workspace') { <span>admin</span> } @else {
+                <p-select [options]="roles" optionLabel="label" optionValue="value" [ngModel]="m.role" (ngModelChange)="changeSpaceRole(m, $event)" size="small" [attr.aria-label]="'Space role for ' + (m.name ?? m.email)" />
+              }
+            </span>
+            <span class="adm__muted">{{ m.source === 'workspace' ? 'workspace admin' : 'space grant' }}</span>
+            <span>@if (m.source === 'space') { <button pButton type="button" [text]="true" size="small" (click)="revoke(m)">Revoke</button> }</span>
+          </div>
+        }
+        <div class="adm__row adm__row--space adm__row--add">
+          <p-select [options]="candidates()" optionLabel="label" optionValue="value" [ngModel]="grantUser()" (ngModelChange)="grantUser.set($event)" placeholder="Add a person" size="small" [filter]="true" aria-label="Person to add" />
+          <p-select [options]="roles" optionLabel="label" optionValue="value" [ngModel]="grantRole()" (ngModelChange)="grantRole.set($event)" size="small" aria-label="Role" />
+          <span></span>
+          <button pButton type="button" size="small" [outlined]="true" [disabled]="!grantUser()" (click)="grant()">Grant</button>
+        </div>
+      </div>
+
+      <h2 class="adm__h2">Folder overrides</h2>
+      <p class="adm__muted">Overrides replace the space role for a folder and everything under it. They are always explicit — nothing is implied.</p>
+      <div class="document-surface adm__tree">
+        @if (flat().length === 0) { <p class="adm__empty">No folders yet.</p> }
+        @for (f of flat(); track f.id) {
+          <button type="button" class="adm__folder" [style.padding-left.px]="12 + f.depth * 16" [class.is-selected]="selectedFolder() === f.id" (click)="selectedFolder.set(f.id); inspect()">
+            📁 {{ f.name }}
+            @if (overridesCount(f.id)) { <span class="adm__badge">{{ overridesCount(f.id) }} override{{ overridesCount(f.id) === 1 ? '' : 's' }}</span> }
+          </button>
+        }
+      </div>
+      @if (selectedAcl(); as a) {
+        <div class="document-surface adm__acl">
+          <h3 class="adm__h3">{{ a.folder.name }}</h3>
+          @for (o of a.overrides; track o.user?.id) {
+            <div class="adm__override">
+              <span>{{ o.user?.name ?? o.user?.email }}</span>
+              <span class="adm__pill">{{ o.role === 'none' ? 'no access' : o.role }}</span>
+              <span class="adm__muted">set by {{ o.set_by?.name ?? '—' }}</span>
+              <button pButton type="button" [text]="true" size="small" (click)="removeOverride(o.user!.id)">Remove</button>
+            </div>
+          }
+          <div class="adm__override adm__override--add">
+            <p-select [options]="people()" optionLabel="label" optionValue="value" [ngModel]="overrideUser()" (ngModelChange)="overrideUser.set($event)" placeholder="Person" size="small" [filter]="true" aria-label="Person" />
+            <p-select [options]="overrideRoles" optionLabel="label" optionValue="value" [ngModel]="overrideRole()" (ngModelChange)="overrideRole.set($event)" size="small" aria-label="Override role" />
+            <span></span>
+            <button pButton type="button" size="small" [outlined]="true" [disabled]="!overrideUser()" (click)="setOverride()">Set override</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <aside class="document-surface adm__inspector">
+      <h2 class="adm__h3">Effective permission inspector</h2>
+      <p class="adm__muted">Pick a person to see exactly what they can see here, and why.</p>
+      <p-select [options]="people()" optionLabel="label" optionValue="value" [ngModel]="inspectUser()" (ngModelChange)="inspectUser.set($event); inspect()" placeholder="Person" [filter]="true" aria-label="Person to inspect" />
+      @if (resolution(); as r) {
+        <p class="adm__result">Result: <strong>{{ r.role ?? 'no access' }}</strong> @if (selectedFolder()) { in this folder } @else { in this space }</p>
+        <ol class="adm__chain">
+          @for (c of r.chain; track $index) {
+            <li [class.is-result]="c.level === 'result'">
+              <span class="adm__level">{{ levelLabel(c.level) }}</span>
+              @if (c.name) { <span>{{ c.name }}</span> }
+              <span class="adm__pill">{{ c.role ?? '—' }}</span>
+              @if (c.note) { <span class="adm__muted">{{ c.note }}</span> }
+            </li>
+          }
+        </ol>
+      }
+    </aside>
+  </div>
+</section>

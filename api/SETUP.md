@@ -67,6 +67,8 @@ cd ../web && npm ci --legacy-peer-deps && npm start   # :4200, proxies /api and 
 | `app/Governance/` | `Workflow` (submit with the FR-315 gate, approve → immutable version + steps copied, request-changes, archive, restore), `Diff` (added/removed/modified/moved by id, LCS), `Snapshot` |
 | `Http/Controllers/Governance/ApprovalController.php` | submit, submit-check, approve (stale → 409, self-approval per workspace setting), request-changes, archive, approvals, review, versions, diff, restore |
 | `app/Notifications/{ReviewRequested,ChangesRequested,DocumentApproved}Notification.php` | mail + in-app (database) per doc 11 triggers |
+| `app/Access/Access.php`, `Models/FolderPermission.php`, migration `000800` | effective-permission resolver: workspace admin → space role → nearest folder override ('none' hides a subtree); returns the chain for the inspector (FR-504, FR-508) |
+| `Http/Controllers/Access/FolderPermissionController.php` | `GET/PUT/DELETE /folders/{id}/permissions[/{user_id}]`, `GET /spaces/{id}/access?user_id=` |
 | `app/Policies/` | `SpacePolicy`, `DocumentPolicy` — default deny |
 | `app/Audit/`, `Models/AuditEntry.php` | append-only audit log |
 | `app/Billing/PlanLimits.php` | plan limits (doc 05 + 18 Sep pricing decision) |

@@ -1,6 +1,7 @@
 .browser {
   max-width: 900px;
 
+  &__perm { float: right; font-size: 0.9rem; color: var(--ink-soft); }
   &__crumbs { display: flex; gap: 8px; margin-bottom: 12px; color: var(--ink-soft); a { color: var(--ink); } }
   &__error { color: var(--danger); }
   &__list { max-width: none; }

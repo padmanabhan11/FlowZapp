@@ -46,6 +46,7 @@ export class SpaceBrowser implements OnChanges {
   ];
   readonly newName = signal('');
   readonly renaming = signal<{ id: string; name: string } | null>(null);
+  readonly isAdmin = computed(() => this.session.current()?.role === 'admin');
   readonly canEdit = computed(() => ['admin', 'approver', 'editor'].includes(this.session.current()?.role ?? ''));
 
   private lastLoaded: string | null = null;

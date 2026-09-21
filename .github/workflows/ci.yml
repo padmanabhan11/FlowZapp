@@ -27,10 +27,8 @@ jobs:
         run: php scripts/check-raw-queries.php
       - name: Pint
         run: vendor/bin/pint --test
-        continue-on-error: true   # advisory until the first green run; then make it blocking
       - name: PHPStan
         run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
-        continue-on-error: true   # advisory until the first green run; then make it blocking
       - name: Tenancy suite (schema conformance + cross-tenant isolation)
         run: php artisan test --filter Tenancy
       - name: Full test suite

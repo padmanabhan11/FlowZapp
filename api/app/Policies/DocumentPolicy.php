@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Access\Access;
 use App\Models\Document;
+use App\Models\Folder;
 use App\Models\Space;
 use App\Models\User;
 
@@ -20,16 +22,24 @@ final class DocumentPolicy
 
     public function view(User $user, Document $doc): bool
     {
-        $space = $this->space($doc);
-        if (! $this->spaces->view($user, $space)) {
+        $role = $this->roleFor($user, $doc);
+        if ($role === null) {
             return false;
         }
 
         return match ($doc->state) {
-            'draft' => $this->isAuthorOrOwner($user, $doc) || $this->spaces->approve($user, $space),
-            'archived' => $this->spaces->edit($user, $space),
+            'draft' => $this->isAuthorOrOwner($user, $doc) || Access::atLeast($role, 'approver'),
+            'archived' => Access::atLeast($role, 'editor'),
             default => true,
         };
+    }
+
+    /** Effective role on the document's folder (or space when unfiled), with folder overrides applied (F10). */
+    public function roleFor(User $user, Document $doc): ?string
+    {
+        $folder = $doc->folder_id ? Folder::query()->find($doc->folder_id) : null;
+
+        return Access::resolve($user, $this->space($doc), $folder)['role'];
     }
 
     /** Edit the working copy. Editing an approved document creates a draft revision (FR-408) — same permission. */
@@ -38,12 +48,12 @@ final class DocumentPolicy
         if ($doc->state === 'archived') {
             return false;
         }
-        $space = $this->space($doc);
-        if (! $this->spaces->edit($user, $space)) {
+        $role = $this->roleFor($user, $doc);
+        if (! Access::atLeast($role, 'editor')) {
             return false;
         }
 
-        return $doc->state !== 'draft' || $this->isAuthorOrOwner($user, $doc) || $this->spaces->approve($user, $space);
+        return $doc->state !== 'draft' || $this->isAuthorOrOwner($user, $doc) || Access::atLeast($role, 'approver');
     }
 
     public function create(User $user, Space $space): bool
@@ -53,12 +63,12 @@ final class DocumentPolicy
 
     public function archive(User $user, Document $doc): bool
     {
-        return $this->spaces->approve($user, $this->space($doc));
+        return Access::atLeast($this->roleFor($user, $doc), 'approver');
     }
 
     public function delete(User $user, Document $doc): bool
     {
-        return $this->spaces->approve($user, $this->space($doc)) || $this->isAuthorOrOwner($user, $doc);
+        return Access::atLeast($this->roleFor($user, $doc), 'approver') || ($this->isAuthorOrOwner($user, $doc) && Access::atLeast($this->roleFor($user, $doc), 'editor'));
     }
 
     private function isAuthorOrOwner(User $user, Document $doc): bool

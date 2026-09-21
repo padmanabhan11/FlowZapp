@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Documents;
 
+use App\Access\Access;
 use App\Audit\Audit;
 use App\Documents\Content;
 use App\Documents\Templates;
@@ -40,9 +41,21 @@ final class DocumentController extends Controller
         $isAdmin = $request->attributes->get('workspace_role') === 'admin';
 
         $q = Document::query()->with('owner:id,name');
-        // Space visibility: admins see all; others only their spaces (A5).
+        // Space visibility: admins see all; others their spaces, minus 'none' folder overrides, plus folders granted by override (A5, F10).
         if (! $isAdmin) {
-            $q->whereIn('space_id', SpaceMember::query()->where('user_id', $user->id)->pluck('space_id'));
+            $memberSpaces = SpaceMember::query()->where('user_id', $user->id)->pluck('space_id')->all();
+            $deny = [];
+            $grant = [];
+            $overrideSpaces = Space::query()->whereIn('id', \App\Models\Folder::query()->whereIn('id', \App\Models\FolderPermission::query()->where('user_id', $user->id)->pluck('folder_id'))->pluck('space_id'))->pluck('id')->all();
+            foreach (array_unique(array_merge($memberSpaces, $overrideSpaces)) as $sid) {
+                $o = Access::folderOverridesFor($user, $sid);
+                $deny = array_merge($deny, $o['deny']);
+                $grant = array_merge($grant, $o['grant']);
+            }
+            $q->where(function ($w) use ($memberSpaces, $deny, $grant): void {
+                $w->where(fn ($m) => $m->whereIn('space_id', $memberSpaces)->where(fn ($x) => $x->whereNull('folder_id')->orWhereNotIn('folder_id', $deny)))
+                    ->orWhereIn('folder_id', $grant);
+            });
         }
         // Drafts appear only to their author/owner or space approvers (S6 rules). Archived never for readers.
         $approverSpaces = SpaceMember::query()->where('user_id', $user->id)->whereIn('role', ['admin', 'approver'])->pluck('space_id');

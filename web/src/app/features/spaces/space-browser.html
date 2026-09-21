@@ -1,4 +1,5 @@
 <section class="browser">
+  @if (isAdmin()) { <a class="browser__perm" [routerLink]="['/admin/spaces', spaceId()]">Permissions</a> }
   <nav class="browser__crumbs" aria-label="Breadcrumb">
     <a [routerLink]="['/s', spaceId()]">{{ space()?.name ?? '…' }}</a>
     @for (c of crumbs(); track c.id) {

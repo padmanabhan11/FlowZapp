@@ -106,7 +106,8 @@ final class CrossTenantIsolationTest extends TestCase
         WorkspaceMember::create(['user_id' => $user->id, 'role' => 'admin']);
         $space = Space::create(['name' => 'Ops']);
         \App\Models\SpaceMember::create(['space_id' => $space->id, 'user_id' => $user->id, 'role' => 'editor']);
-        \App\Models\Folder::create(['space_id' => $space->id, 'name' => 'Clients']);
+        $folder = \App\Models\Folder::create(['space_id' => $space->id, 'name' => 'Clients']);
+        \App\Models\FolderPermission::create(['folder_id' => $folder->id, 'user_id' => $user->id, 'role' => 'none']);
         \App\Models\WorkspaceInvite::create([
             'email' => 'bo@example.test', 'role' => 'reader',
             'token_hash' => str_repeat('0', 64), 'expires_at' => now()->addDay(),

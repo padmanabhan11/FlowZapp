@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Access\FolderPermissionController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Documents\DocumentController;
 use App\Http\Controllers\Documents\StepController;
@@ -60,6 +61,10 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/folders', [FolderController::class, 'store']);
             Route::patch('/folders/{id}', [FolderController::class, 'update']);
             Route::delete('/folders/{id}', [FolderController::class, 'destroy']);
+            Route::get('/folders/{id}/permissions', [FolderPermissionController::class, 'show']);
+            Route::put('/folders/{id}/permissions/{user_id}', [FolderPermissionController::class, 'set']);
+            Route::delete('/folders/{id}/permissions/{user_id}', [FolderPermissionController::class, 'unset']);
+            Route::get('/spaces/{id}/access', [FolderPermissionController::class, 'spaceAccess']);
 
             Route::get('/templates', [DocumentController::class, 'templates']);
             Route::get('/documents', [DocumentController::class, 'index']);
