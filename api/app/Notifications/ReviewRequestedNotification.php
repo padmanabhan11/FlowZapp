@@ -7,6 +7,7 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
+use App\Notifications\Support\NotificationPrefs;
 use Illuminate\Notifications\Notification;
 
 final class ReviewRequestedNotification extends Notification implements ShouldQueue
@@ -18,7 +19,7 @@ final class ReviewRequestedNotification extends Notification implements ShouldQu
     /** @return list<string> */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return NotificationPrefs::channels($notifiable, 'review_requested');
     }
 
     public function toMail(object $notifiable): MailMessage

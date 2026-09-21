@@ -7,6 +7,7 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
+use App\Notifications\Support\NotificationPrefs;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -23,7 +24,7 @@ final class AcknowledgementDueNotification extends Notification implements Shoul
     /** @return list<string> */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return NotificationPrefs::channels($notifiable, 'acknowledgement_due');
     }
 
     public function toMail(object $notifiable): MailMessage

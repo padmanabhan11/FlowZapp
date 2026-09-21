@@ -1,0 +1,50 @@
+<div class="ntf">
+  <button
+    type="button"
+    class="ntf__btn"
+    (click)="toggle()"
+    [attr.aria-expanded]="open()"
+    aria-controls="ntf-panel"
+    aria-label="Notifications"
+  >
+    Notifications
+    @if (unread() > 0) {
+      <span class="ntf__count control-value">{{ unread() }}</span>
+    }
+  </button>
+  @if (open()) {
+    <div
+      id="ntf-panel"
+      class="ntf__panel document-surface"
+      role="dialog"
+      aria-label="Notifications"
+    >
+      <div class="ntf__head">
+        <span>Notifications</span>
+        @if (unread() > 0) {
+          <button pButton type="button" [text]="true" size="small" (click)="markAll()">
+            Mark all read
+          </button>
+        }
+      </div>
+      @if (items().length === 0) {
+        <p class="ntf__empty">Nothing yet.</p>
+      }
+      <ul class="ntf__list">
+        @for (n of items(); track n.id) {
+          <li>
+            <button
+              type="button"
+              class="ntf__item"
+              [class.is-unread]="!n.read_at"
+              (click)="openItem(n)"
+            >
+              <span>{{ label(n) }}</span>
+              <span class="ntf__when control-value">{{ n.created_at | date: 'MMM d, HH:mm' }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</div>

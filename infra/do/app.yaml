@@ -90,6 +90,17 @@ workers:
     instance_size_slug: apps-s-1vcpu-1gb
     instance_count: 1
 
+  - name: scheduler
+    # Runs routes/console.php: review-due (daily), weekly digest, scheduled workspace purge.
+    source_dir: api
+    github:
+      repo: OWNER/FlowZapp
+      branch: main
+    build_command: composer install --no-dev --optimize-autoloader --no-interaction
+    run_command: php artisan schedule:work
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_count: 1
+
 jobs:
   - name: migrate
     kind: PRE_DEPLOY

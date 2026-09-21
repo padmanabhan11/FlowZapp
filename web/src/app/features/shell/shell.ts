@@ -8,6 +8,7 @@ import { Space } from '../../core/api.types';
 import { SessionStore } from '../../core/session.store';
 import { SpaceApi } from '../../core/workspace.api';
 import { WorkspaceStore } from '../../core/workspace.store';
+import { Notifications } from './notifications';
 
 /**
  * S5 — App shell. One omnibox for search and chat (question-shaped input →
@@ -16,7 +17,16 @@ import { WorkspaceStore } from '../../core/workspace.store';
  */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, ButtonModule, InputTextModule, SelectModule],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    FormsModule,
+    ButtonModule,
+    InputTextModule,
+    SelectModule,
+    Notifications,
+  ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
 })
@@ -30,7 +40,9 @@ export class Shell {
   readonly workspaces = this.session.workspaces;
   readonly current = this.session.current;
   readonly isAdmin = computed(() => this.current()?.role === 'admin');
-  readonly canRecord = computed(() => ['admin', 'approver', 'editor'].includes(this.current()?.role ?? ''));
+  readonly canRecord = computed(() =>
+    ['admin', 'approver', 'editor'].includes(this.current()?.role ?? ''),
+  );
   readonly spaces = signal<Space[]>([]);
   readonly handbook = computed(() => this.spaces().find((s) => s.is_handbook) ?? null);
   readonly query = signal('');
@@ -57,7 +69,9 @@ export class Shell {
   /** Routing heuristic (S5 rules): ends in ? or starts with an interrogative → Ask; otherwise Search. */
   static isQuestion(q: string): boolean {
     const t = q.trim().toLowerCase();
-    return t.endsWith('?') || /^(how|what|when|where|who|why|which|can|do|does|is|are|should)\b/.test(t);
+    return (
+      t.endsWith('?') || /^(how|what|when|where|who|why|which|can|do|does|is|are|should)\b/.test(t)
+    );
   }
 
   async submitOmnibox(): Promise<void> {

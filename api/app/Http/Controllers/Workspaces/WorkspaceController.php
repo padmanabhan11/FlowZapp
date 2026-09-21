@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Workspaces;
 
+use App\Audit\Audit;
 use App\Http\Controllers\Controller;
 use App\Models\Space;
 use App\Models\SpaceMember;
@@ -81,7 +82,7 @@ final class WorkspaceController extends Controller
     {
         $this->assertCurrent($workspace);
 
-        return response()->json(['data' => $workspace->only(['id', 'name', 'slug', 'plan', 'settings', 'created_at'])]);
+        return response()->json(['data' => $workspace->only(['id', 'name', 'slug', 'plan', 'settings', 'deletion_scheduled_at', 'created_at'])]);
     }
 
     /** PATCH /v1/workspaces/{workspace} — name, settings (admin). */
@@ -103,8 +104,39 @@ final class WorkspaceController extends Controller
             $data['settings'] = array_merge($workspace->settings ?? [], $data['settings']);
         }
         $workspace->fill($data)->save();
+        Audit::record('workspace.settings_updated', 'workspace', $workspace->id, array_keys($data['settings'] ?? []) + (isset($data['name']) ? ['name' => true] : []));
 
-        return response()->json(['data' => $workspace->only(['id', 'name', 'slug', 'plan', 'settings'])]);
+        return response()->json(['data' => $workspace->only(['id', 'name', 'slug', 'plan', 'settings', 'deletion_scheduled_at'])]);
+    }
+
+    /**
+     * DELETE /v1/workspaces/{workspace}  body { confirm_name } — schedules deletion after a
+     * grace period (S23: "Scheduled deletion with a grace period"); nothing is removed now.
+     * workspaces:purge-scheduled deletes for real once the date has passed.
+     */
+    public function destroy(Request $request, Workspace $workspace): JsonResponse
+    {
+        $this->assertCurrent($workspace);
+        $this->authorize('workspace-admin');
+        $data = $request->validate(['confirm_name' => ['required', 'string']]);
+        abort_unless($data['confirm_name'] === $workspace->name, 422, 'Type the workspace name exactly to confirm.');
+
+        $days = (int) config('flowzapp.workspace_deletion_grace_days', 14);
+        $workspace->forceFill(['deletion_scheduled_at' => now()->addDays($days)])->save();
+        Audit::record('workspace.deletion_scheduled', 'workspace', $workspace->id, ['at' => $workspace->deletion_scheduled_at?->toIso8601String()]);
+
+        return response()->json(['data' => ['deletion_scheduled_at' => $workspace->deletion_scheduled_at, 'grace_days' => $days]]);
+    }
+
+    /** POST /v1/workspaces/{workspace}/cancel-deletion — any admin, any time before the date. */
+    public function cancelDeletion(Workspace $workspace): JsonResponse
+    {
+        $this->assertCurrent($workspace);
+        $this->authorize('workspace-admin');
+        $workspace->forceFill(['deletion_scheduled_at' => null])->save();
+        Audit::record('workspace.deletion_cancelled', 'workspace', $workspace->id);
+
+        return response()->json(['data' => ['deletion_scheduled_at' => null]]);
     }
 
     private function assertCurrent(Workspace $workspace): void

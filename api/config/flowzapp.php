@@ -32,4 +32,7 @@ return [
         'retain_recordings' => true,
         'default_language' => 'en',
     ],
+
+    /** S23: workspace deletion is scheduled, never immediate. */
+    'workspace_deletion_grace_days' => (int) env('WORKSPACE_DELETION_GRACE_DAYS', 14),
 ];

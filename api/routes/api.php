@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Access\FolderPermissionController;
+use App\Http\Controllers\Account\AccountController;
+use App\Http\Controllers\Account\NotificationController;
+use App\Http\Controllers\Account\SessionController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Documents\DocumentController;
 use App\Http\Controllers\Documents\StepController;
@@ -34,6 +37,11 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/auth/logout', [MagicLinkController::class, 'logout'])->middleware('web');
         Route::get('/auth/me', [MagicLinkController::class, 'me']);
+        Route::patch('/account', [AccountController::class, 'update']);
+        Route::get('/auth/sessions', [SessionController::class, 'index'])->middleware('web');
+        Route::delete('/auth/sessions/{id}', [SessionController::class, 'destroy'])->middleware('web');
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::post('/notifications/read', [NotificationController::class, 'read']);
 
         Route::get('/workspaces', [WorkspaceController::class, 'index']);
         Route::get('/workspaces/slug-available', [WorkspaceController::class, 'slugAvailable']);
@@ -43,6 +51,10 @@ Route::prefix('v1')->group(function (): void {
         Route::middleware(ResolveWorkspace::class)->group(function (): void {
             Route::get('/workspaces/{workspace}', [WorkspaceController::class, 'show']);
             Route::patch('/workspaces/{workspace}', [WorkspaceController::class, 'update']);
+            Route::delete('/workspaces/{workspace}', [WorkspaceController::class, 'destroy']);
+            Route::post('/workspaces/{workspace}/cancel-deletion', [WorkspaceController::class, 'cancelDeletion']);
+            Route::get('/account/notifications', [AccountController::class, 'notifications']);
+            Route::patch('/account/notifications', [AccountController::class, 'updateNotifications']);
 
             Route::get('/workspaces/{workspace}/members', [MemberController::class, 'index']);
             Route::patch('/workspaces/{workspace}/members/{user_id}', [MemberController::class, 'update']);

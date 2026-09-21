@@ -15,10 +15,19 @@
       <span class="shell__workspace-name">{{ current()?.name }}</span>
     }
     <form class="shell__omnibox" (ngSubmit)="submitOmnibox()" role="search">
-      <input pInputText id="omnibox" name="q" [ngModel]="query()" (ngModelChange)="query.set($event)" placeholder="Search or ask a question…" aria-label="Search or ask" />
+      <input
+        pInputText
+        id="omnibox"
+        name="q"
+        [ngModel]="query()"
+        (ngModelChange)="query.set($event)"
+        placeholder="Search or ask a question…"
+        aria-label="Search or ask"
+      />
     </form>
     <div class="shell__user">
-      <span>{{ user()?.name }}</span>
+      <app-notifications />
+      <a routerLink="/account" class="shell__account">{{ user()?.name }}</a>
       <button pButton type="button" [text]="true" size="small" (click)="signOut()">Sign out</button>
     </div>
   </header>
@@ -31,7 +40,9 @@
     <hr />
     @for (s of spaces(); track s.id) {
       @if (!s.is_handbook) {
-        <a [routerLink]="['/s', s.id]" routerLinkActive="is-active" class="shell__nav">{{ s.name }}</a>
+        <a [routerLink]="['/s', s.id]" routerLinkActive="is-active" class="shell__nav">{{
+          s.name
+        }}</a>
       }
     }
     @if (handbook(); as h) {
@@ -43,6 +54,12 @@
     @if (isAdmin()) {
       <hr />
       <a routerLink="/admin/members" routerLinkActive="is-active" class="shell__nav">Admin</a>
+      <a
+        routerLink="/admin/settings"
+        routerLinkActive="is-active"
+        class="shell__nav shell__nav--sub"
+        >Settings</a
+      >
     }
   </nav>
 

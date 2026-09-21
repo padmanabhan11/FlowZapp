@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+// Doc 11 "Notification triggers" and S23/S24. Times are UTC; the App Platform scheduler runs `php artisan schedule:run` each minute.
+Schedule::command('documents:review-due')->dailyAt('06:00');
+Schedule::command('notifications:weekly-digest')->weeklyOn(1, '07:00');
+Schedule::command('workspaces:purge-scheduled')->dailyAt('03:00');

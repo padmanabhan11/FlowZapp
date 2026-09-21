@@ -1,0 +1,71 @@
+.ntf {
+  position: relative;
+  &__btn {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control);
+    padding: 3px 10px;
+    cursor: pointer;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.9rem;
+    &:hover {
+      background: var(--select);
+    }
+  }
+  &__count {
+    margin-left: 6px;
+  }
+  &__panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    width: 360px;
+    max-width: 90vw;
+    max-height: 70vh;
+    overflow: auto;
+    z-index: 20;
+    box-shadow: 0 4px 16px rgba(30, 39, 97, 0.12);
+  }
+  &__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line);
+    font-weight: 600;
+  }
+  &__empty {
+    padding: 12px;
+    margin: 0;
+    color: var(--ink-soft);
+  }
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  &__item {
+    display: grid;
+    gap: 2px;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 8px 12px;
+    cursor: pointer;
+    color: var(--ink);
+    font: inherit;
+    &:hover {
+      background: var(--select);
+    }
+    &.is-unread {
+      box-shadow: inset 3px 0 0 var(--ink);
+    }
+  }
+  &__when {
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+  }
+}

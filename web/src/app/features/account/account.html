@@ -1,0 +1,100 @@
+<section class="acct">
+  <h1>Account</h1>
+  @if (error()) {
+    <p class="acct__error" role="alert">{{ error() }}</p>
+  }
+  @if (saved()) {
+    <p class="acct__saved control-value" role="status">{{ saved() }}</p>
+  }
+
+  <form class="acct__card document-surface" (ngSubmit)="saveProfile()">
+    <h2>Profile</h2>
+    <label for="acct-name">Name</label>
+    <input
+      pInputText
+      id="acct-name"
+      name="name"
+      [ngModel]="name()"
+      (ngModelChange)="name.set($event)"
+      required
+    />
+    <label for="acct-email">Email</label>
+    <input
+      pInputText
+      id="acct-email"
+      name="email"
+      [value]="session.user()?.email"
+      readonly
+      aria-describedby="acct-email-hint"
+    />
+    <p id="acct-email-hint" class="acct__hint">
+      Changing your email requires re-verification. Ask an admin.
+    </p>
+    <label for="acct-locale">Interface language</label>
+    <p-select
+      inputId="acct-locale"
+      name="locale"
+      [options]="locales"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="locale()"
+      (ngModelChange)="locale.set($event)"
+    />
+    <div><button pButton type="submit" size="small">Save profile</button></div>
+  </form>
+
+  <section class="acct__card document-surface" aria-labelledby="acct-notif-h">
+    <h2 id="acct-notif-h">Email notifications in {{ session.current()?.name }}</h2>
+    <p class="acct__hint">
+      In-app notifications are always shown. These switches control email, and they are set per
+      workspace.
+    </p>
+    @if (prefs(); as p) {
+      @for (row of prefRows; track row.key) {
+        <div class="acct__pref">
+          <div>
+            <label [for]="'pref-' + row.key">{{ row.label }}</label>
+            <p class="acct__hint">
+              {{ row.hint }}
+              @if (locked(row.key)) {
+                Fixed on while you have documents to acknowledge in this workspace.
+              }
+            </p>
+          </div>
+          <p-toggleswitch
+            [inputId]="'pref-' + row.key"
+            [ngModel]="p.prefs[row.key]"
+            (ngModelChange)="setPref(row.key, $event)"
+            [disabled]="locked(row.key)"
+            [attr.aria-label]="row.label"
+          />
+        </div>
+      }
+    }
+  </section>
+
+  <section class="acct__card document-surface" aria-labelledby="acct-sess-h">
+    <h2 id="acct-sess-h">Active sessions</h2>
+    @if (sessions().length === 0) {
+      <p class="acct__hint">Session details are unavailable.</p>
+    }
+    @for (s of sessions(); track s.id) {
+      <div class="acct__sess">
+        <span
+          >{{ s.device }}
+          @if (s.current) {
+            <span class="acct__now">(this device)</span>
+          }
+        </span>
+        <span class="control-value">{{ s.last_seen_at | date: 'medium' }}</span>
+        <span>
+          @if (!s.current) {
+            <button pButton type="button" [text]="true" size="small" (click)="revoke(s)">
+              Sign out
+            </button>
+          }
+        </span>
+      </div>
+    }
+  </section>
+</section>

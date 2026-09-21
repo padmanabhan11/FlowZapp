@@ -1,0 +1,135 @@
+<section class="adm">
+  <header class="adm__head">
+    <h1>Workspace settings</h1>
+    <a routerLink="/admin/members" class="adm__link">Members</a>
+  </header>
+  @if (error()) {
+    <p class="adm__error" role="alert">{{ error() }}</p>
+  }
+  @if (saved()) {
+    <p class="adm__notice control-value" role="status">{{ saved() }}</p>
+  }
+
+  @if (ws(); as w) {
+    @if (w.deletion_scheduled_at) {
+      <div class="adm__danger-banner" role="alert">
+        <span
+          >This workspace is scheduled for deletion on
+          <span class="control-value">{{ w.deletion_scheduled_at | date: 'mediumDate' }}</span
+          >. Everything in it — documents, recordings, answers — goes with it.</span
+        >
+        <button pButton type="button" size="small" [outlined]="true" (click)="cancelDeletion()">
+          Cancel deletion
+        </button>
+      </div>
+    }
+
+    <form class="adm__form document-surface" (ngSubmit)="save()">
+      <label for="ws-name">Workspace name</label>
+      <input
+        pInputText
+        id="ws-name"
+        name="name"
+        [ngModel]="name()"
+        (ngModelChange)="name.set($event)"
+        required
+      />
+      <p class="adm__hint">
+        Address: <span class="control-value">/{{ w.slug }}</span
+        >. The slug does not change with the name, so existing links keep working.
+      </p>
+
+      <div class="adm__switch">
+        <div>
+          <label for="ws-self">Allow self-approval</label>
+          <p class="adm__hint">
+            Off by default. On means a person can approve a document they submitted themselves — the
+            approver and the author can be the same person.
+          </p>
+        </div>
+        <p-toggleswitch
+          inputId="ws-self"
+          name="self"
+          [ngModel]="selfApproval()"
+          (ngModelChange)="selfApproval.set($event)"
+        />
+      </div>
+
+      <label for="ws-cadence">Default review cadence</label>
+      <p-select
+        inputId="ws-cadence"
+        name="cadence"
+        [options]="cadences"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="cadence()"
+        (ngModelChange)="cadence.set($event)"
+      />
+      <p class="adm__hint">
+        Months after approval until a document is marked due for review and surfaced to its owner.
+      </p>
+
+      <label for="ws-retain">Recording retention</label>
+      <p-select
+        inputId="ws-retain"
+        name="retain"
+        [options]="retentions"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="retain()"
+        (ngModelChange)="retain.set($event)"
+      />
+      <p class="adm__hint">
+        Changing this does not delete existing recordings. That is a separate, explicit action per
+        recording.
+      </p>
+
+      <label for="ws-lang">Default document language</label>
+      <p-select
+        inputId="ws-lang"
+        name="lang"
+        [options]="languages"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="language()"
+        (ngModelChange)="language.set($event)"
+      />
+      <p class="adm__hint">Generated drafts are written in this language.</p>
+
+      <div><button pButton type="submit" size="small">Save settings</button></div>
+    </form>
+
+    @if (!w.deletion_scheduled_at) {
+      <section class="adm__form adm__form--danger document-surface" aria-labelledby="ws-del-h">
+        <h2 id="ws-del-h">Delete workspace</h2>
+        <p class="adm__hint">
+          Deletion is scheduled with a grace period, after which every document, version, recording
+          and answer in <strong>{{ w.name }}</strong> is removed for good. Any admin can cancel
+          before then.
+        </p>
+        <label for="ws-confirm">Type the workspace name to confirm</label>
+        <input
+          pInputText
+          id="ws-confirm"
+          name="confirm"
+          [ngModel]="confirmName()"
+          (ngModelChange)="confirmName.set($event)"
+          [placeholder]="w.name"
+          autocomplete="off"
+        />
+        <div>
+          <button
+            pButton
+            type="button"
+            size="small"
+            class="adm__danger-btn"
+            [disabled]="confirmName() !== w.name"
+            (click)="scheduleDeletion()"
+          >
+            Schedule deletion
+          </button>
+        </div>
+      </section>
+    }
+  }
+</section>

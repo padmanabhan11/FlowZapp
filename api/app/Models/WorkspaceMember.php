@@ -10,11 +10,11 @@ class WorkspaceMember extends TenantModel
 {
     public const ROLES = ['admin', 'approver', 'editor', 'reader', 'guest'];
 
-    protected $fillable = ['user_id', 'role', 'invited_by', 'joined_at'];
+    protected $fillable = ['user_id', 'role', 'invited_by', 'joined_at', 'notification_prefs'];
 
     protected function casts(): array
     {
-        return ['joined_at' => 'datetime'];
+        return ['joined_at' => 'datetime', 'notification_prefs' => 'array'];
     }
 
     public function user(): BelongsTo

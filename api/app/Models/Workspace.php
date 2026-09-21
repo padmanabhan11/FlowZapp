@@ -17,12 +17,13 @@ class Workspace extends Model
 {
     use HasUlids;
 
-    protected $fillable = ['name', 'slug', 'plan', 'settings'];
+    protected $fillable = ['name', 'slug', 'plan', 'settings', 'deletion_scheduled_at'];
 
     protected function casts(): array
     {
         return [
             'settings' => 'array',
+            'deletion_scheduled_at' => 'datetime',
         ];
     }
 

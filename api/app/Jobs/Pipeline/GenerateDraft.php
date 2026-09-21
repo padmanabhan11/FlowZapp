@@ -13,7 +13,9 @@ use App\Models\Document;
 use App\Models\DocumentStep;
 use App\Models\PipelineJob;
 use App\Models\Recording;
+use App\Models\User;
 use App\Observers\DocumentObserver;
+use App\Notifications\RecordingDraftReadyNotification;
 use App\Pipeline\PipelineFailed;
 use Illuminate\Support\Facades\DB;
 
@@ -92,6 +94,9 @@ final class GenerateDraft extends PipelineStage
         });
 
         $rec->forceFill(['document_id' => $doc->id, 'state' => 'draft_ready'])->save();
+        if ($rec->uploaded_by) {
+            User::query()->find($rec->uploaded_by)?->notify(new RecordingDraftReadyNotification($doc->title, $rec->id, $doc->id));
+        }
         Audit::record('document.generated', 'document', $doc->id, ['recording_id' => $rec->id, 'steps' => $doc->steps()->count(), 'cost_usd' => $res['cost_usd']]);
     }
 

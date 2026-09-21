@@ -1,0 +1,58 @@
+.acct {
+  max-width: 720px;
+  margin-inline: auto;
+  display: grid;
+  gap: 16px;
+  h1 {
+    margin: 0;
+    font-size: 1.3rem;
+  }
+  h2 {
+    margin: 0 0 8px;
+    font-size: 1.05rem;
+  }
+  &__error {
+    color: var(--danger);
+    margin: 0;
+  }
+  &__saved {
+    color: var(--ink-soft);
+    margin: 0;
+  }
+  &__card {
+    max-width: none;
+    padding: 16px 20px;
+    display: grid;
+    gap: 8px;
+    label {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+  }
+  &__hint {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+  &__pref {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--line);
+  }
+  &__sess {
+    display: grid;
+    grid-template-columns: 1fr 200px auto;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 0;
+    border-top: 1px solid var(--line);
+  }
+  &__now {
+    color: var(--ink-soft);
+    margin-left: 6px;
+    font-size: 0.85rem;
+  }
+}

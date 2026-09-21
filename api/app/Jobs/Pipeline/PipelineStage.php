@@ -6,6 +6,8 @@ namespace App\Jobs\Pipeline;
 
 use App\Models\PipelineJob;
 use App\Models\Recording;
+use App\Models\User;
+use App\Notifications\RecordingFailedNotification;
 use App\Pipeline\PipelineFailed;
 use App\Tenancy\CurrentWorkspace;
 use Illuminate\Bus\Queueable;
@@ -86,6 +88,9 @@ abstract class PipelineStage implements ShouldBeUnique, ShouldQueue
                 $final = $e instanceof PipelineFailed || $this->attempts() >= $this->tries;
                 if ($final) {
                     $rec->forceFill(['state' => 'failed', 'failed_stage' => $this->stage(), 'failure_reason' => mb_substr($this->reasonFor($e), 0, 500)])->save();
+                    if ($rec->uploaded_by) {
+                        User::query()->find($rec->uploaded_by)?->notify(new RecordingFailedNotification($rec->title ?? 'Recording', (string) $rec->failure_reason, $rec->id));
+                    }
                     $this->fail($e);
 
                     return;
