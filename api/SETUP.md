@@ -1,78 +1,68 @@
-# api/ — applying this overlay to a fresh Laravel 12 skeleton
+# api/ — Laravel 12 API
 
-This directory is an *overlay*, not a complete Laravel project: Packagist was not
-reachable from the environment that produced it, so the vendor tree and the
-framework skeleton are created on your machine. One-off, on a Mac with PHP 8.3+
-and Composer:
+A complete Laravel 12 project (skeleton vendored from `laravel/laravel` 12.x, Sanctum
+config and migration from `laravel/sanctum` 4.x) plus the FlowZapp application code.
+Only `vendor/` is missing, as usual — `composer install` creates it.
+
+## Run the tests (the important part)
+
+Nothing here has executed until this passes. Two ways:
+
+**GitHub Actions (no local PHP needed).** Push the repo; `.github/workflows/ci.yml` runs
+`composer install`, the raw-query check, Pint and PHPStan (advisory until first green),
+the tenancy suite and the full PHPUnit suite on SQLite. Read the run, fix, push again.
+
+**Locally** (PHP 8.3+, Composer):
 
 ```bash
 cd api
-composer create-project laravel/laravel /tmp/lv12 "^12.0" --no-interaction
-rsync -a --ignore-existing /tmp/lv12/ ./          # skeleton files that this overlay does not provide
-rm -f database/migrations/0001_01_01_000000_create_users_table.php \
-      database/migrations/0001_01_01_000001_create_cache_table.php \
-      database/migrations/0001_01_01_000002_create_jobs_table.php
-php artisan install:api --no-interaction         # Sanctum + routes/api.php wiring (keep OUR routes/api.php if prompted)
-composer require --dev larastan/larastan
+composer install
+cp .env.example .env && php artisan key:generate
+php scripts/check-raw-queries.php
+php artisan test --filter Tenancy     # the RLS replacement — must be green before anything else
+php artisan test
+vendor/bin/pint --test && vendor/bin/phpstan analyse
 ```
 
-The overlay's own `database/migrations/0001_01_01_000000_create_workspaces_and_users.php`
-replaces the skeleton's users migration (ULID keys, nullable password, sessions with
-ULID user_id). Re-run `php artisan install:api` output: if it recreated
-`0001_01_01_000001_create_cache_table.php` / `..._create_jobs_table.php`, keep them —
-`cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs` are on the conformance
-allowlist.
-
-The overlay ships its own `bootstrap/app.php` (API routing, Sanctum stateful
-middleware, the doc 05 error envelope) and `bootstrap/providers.php` (App, Auth,
-Tenancy providers) — `rsync --ignore-existing` keeps ours. Then:
-
-1. `.env` — `FRONTEND_URL=http://localhost:4200`, `SANCTUM_STATEFUL_DOMAINS=localhost:4200`,
-   `SESSION_DOMAIN=localhost`; `DB_CONNECTION=mysql` and `MYSQL_ATTR_SSL_CA=/path/to/ca.pem`
-   for DigitalOcean. Tests use SQLite in memory via `phpunit.xml` (skeleton default).
-2. `config/database.php` mysql connection: `'charset' => 'utf8mb4', 'collation' => 'utf8mb4_0900_ai_ci'`.
-3. Local dev: `php artisan serve` (port 8000) and `ng serve` in `web/` — the Angular dev
-   proxy forwards `/api` and `/sanctum` to 8000.
-
-Verify the boundary before anything else is built:
+## Local development
 
 ```bash
-php scripts/check-raw-queries.php
-vendor/bin/pint --test
-vendor/bin/phpstan analyse
-php artisan test --filter Tenancy
-php artisan test            # Auth, Workspaces, Tenancy suites
+# MySQL 8.4 + Valkey via Docker, or DigitalOcean managed with MYSQL_ATTR_SSL_CA set
+php artisan migrate
+php artisan serve            # :8000
+cd ../web && npm ci --legacy-peer-deps && npm start   # :4200, proxies /api and /sanctum to :8000
 ```
 
-All four are the CI gate (`.github/workflows/ci.yml`). `SchemaConformanceTest` and
-`CrossTenantIsolationTest` must never be skipped to unblock a release — with MySQL
-they are the tenancy boundary.
+`.env` keys that matter beyond the Laravel defaults: `FRONTEND_URL`, `SANCTUM_STATEFUL_DOMAINS`,
+`SESSION_DOMAIN`, `ANTHROPIC_API_KEY`, and for DigitalOcean `MYSQL_ATTR_SSL_CA`,
+`DO_SPACES_*`. `config/database.php` mysql: `utf8mb4` / `utf8mb4_0900_ai_ci`.
 
-## What is in the overlay
+## Guards that never get skipped
+
+- `tests/Feature/Tenancy/SchemaConformanceTest` — every non-allowlisted table has NOT NULL
+  `workspace_id`, a leading index, a `TenantModel`, and `workspace_id` not fillable.
+- `tests/Feature/Tenancy/CrossTenantIsolationTest` — reads/writes from the wrong tenant touch nothing.
+- `scripts/check-raw-queries.php` — no `DB::raw`/`DB::table`/`whereRaw`/`withoutGlobalScope` in
+  `app/` or `routes/` without `// allowlisted: <reason>`.
+
+## Where things are
 
 | path | purpose |
 |---|---|
-| `app/Tenancy/CurrentWorkspace.php` | the one place the current tenant lives; `require()` on every write path |
-| `app/Tenancy/TenantScope.php` | global scope: scoped when a tenant is set, **zero rows** when it is not |
-| `app/Models/TenantModel.php` | base class for every table with `workspace_id`: ULIDs, scope, write-side guard, immutability |
-| `app/Models/{Workspace,User}.php` | the two global tables |
-| `app/Models/{WorkspaceMember,WorkspaceInvite,Space,SpaceMember,Folder}.php` | first tenant models (Epic A) |
-| `app/Http/Middleware/ResolveWorkspace.php` | session + `X-Workspace-Id` → `CurrentWorkspace`; 403 never 404 |
-| `app/Providers/TenancyServiceProvider.php` | singleton binding |
-| `database/migrations/0001_01_01_*` | workspaces, users, members, invites, spaces, space_members, folders — from 04-Database-Schema |
-| `tests/Feature/Tenancy/SchemaConformanceTest.php` | every non-allowlisted table: NOT NULL `workspace_id`, leading index, `TenantModel`, not fillable |
-| `tests/Feature/Tenancy/CrossTenantIsolationTest.php` | A3 definition of done: reads/writes from the wrong tenant touch nothing |
-| `scripts/check-raw-queries.php` | fails CI on `DB::raw`/`DB::table`/`whereRaw`/`withoutGlobalScope` unless `// allowlisted: <reason>` |
-| `app/Auth/MagicLink.php`, `Http/Controllers/Auth/MagicLinkController.php` | FR-101..103: signed single-use link, identical response for unknown addresses, rate limited |
-| `Http/Controllers/Workspaces/{Workspace,Invite,Member}Controller.php` | A1/A2: create workspace (admin + General space on Free), invites with seat check before send, accept/resend/revoke, members with the last-admin rule (FR-510) |
-| `app/Billing/PlanLimits.php` | plan limits from doc 05 + the Free-tier decision |
-| `app/Audit/Audit.php`, `Models/AuditEntry.php`, migration `000300` | append-only audit log (FR-414) |
-| `app/Providers/AuthServiceProvider.php` | `workspace-admin/approver/editor` gates from the role ResolveWorkspace stores on the request |
-| `app/Policies/SpacePolicy.php` | space-level access: view/edit/approve/manage, default deny, workspace admins see all (A5) |
-| `Http/Controllers/Spaces/{Space,Folder}Controller.php` | A4: spaces CRUD + members (S19 source column), folder tree with depth ≤ 5, move re-parents the subtree, delete requires a contents strategy (FR-204) |
-| `app/Documents/{Content,Templates}.php`, `Observers/DocumentObserver.php` | structured-JSON content model + validation rules, built-in templates, body_text flattening (doc 04) |
-| `Models/{Document,DocumentVersion,DocumentStep}.php`, migration `000400` | working copy vs approved version; steps as rows with the `'0'` working sentinel |
-| `Policies/DocumentPolicy.php` | drafts: author/owner/approvers; archived: editors+; else space viewers (14 §4) |
-| `Http/Controllers/Documents/{Document,Step}Controller.php` | B1–B3, B5: CRUD, published view, autosave with `expected_updated_at` → 409 (FR-210), approved edit → draft revision (FR-408), steps add/edit/reorder/delete with contiguous numbering |
-| `tests/Feature/{Auth,Workspaces,Spaces,Documents}/*` | feature tests for all of the above |
-| `pint.json`, `phpstan.neon` | code style and static analysis config |
+| `app/Tenancy/` | `CurrentWorkspace` (the one place the tenant lives), `TenantScope` (no tenant → zero rows) |
+| `app/Models/TenantModel.php` | base for every table with `workspace_id`: ULIDs, scope, write guard, immutability |
+| `app/Http/Middleware/ResolveWorkspace.php` | session + `X-Workspace-Id` → tenant; 403 never 404 |
+| `app/Auth/`, `Http/Controllers/Auth/` | magic-link sign-in (FR-101..103) |
+| `Http/Controllers/Workspaces/` | workspaces, invites (seat check before send), members (last-admin rule) |
+| `Http/Controllers/Spaces/` | spaces (visible-only list, members with role source), folders (depth ≤ 5, delete strategy) |
+| `Http/Controllers/Documents/` | documents (autosave with `expected_updated_at` → 409, approved edit → draft revision), steps |
+| `app/Documents/` | `Content` (structured JSON model + validation), `Templates` |
+| `app/Policies/` | `SpacePolicy`, `DocumentPolicy` — default deny |
+| `app/Audit/`, `Models/AuditEntry.php` | append-only audit log |
+| `app/Billing/PlanLimits.php` | plan limits (doc 05 + 18 Sep pricing decision) |
+| `database/migrations/0001_01_01_*` | doc 04 schema, in migration order |
+| `tests/Feature/{Tenancy,Auth,Workspaces,Spaces,Documents}/` | feature tests |
+
+Tenant models are looked up by id inside controllers, not via route-model binding:
+`SubstituteBindings` runs before `ResolveWorkspace`, when no tenant is set and the scope
+would return nothing.
