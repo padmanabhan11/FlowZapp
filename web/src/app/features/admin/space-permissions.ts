@@ -41,16 +41,32 @@ export class SpacePermissions implements OnInit {
   readonly overrideRole = signal<string>('reader');
 
   readonly roles = ROLES.map((r) => ({ label: r[0].toUpperCase() + r.slice(1), value: r }));
-  readonly overrideRoles = [{ label: 'No access', value: 'none' }, ...this.roles.filter((r) => r.value !== 'admin')];
-  readonly candidates = computed(() => this.allMembers().filter((m) => !this.members().some((s) => s.user_id === m.user_id)).map((m) => ({ label: `${m.name ?? m.email}`, value: m.user_id })));
-  readonly people = computed(() => this.allMembers().map((m) => ({ label: `${m.name ?? m.email}`, value: m.user_id })));
+  readonly overrideRoles = [
+    { label: 'No access', value: 'none' },
+    ...this.roles.filter((r) => r.value !== 'admin'),
+  ];
+  readonly candidates = computed(() =>
+    this.allMembers()
+      .filter((m) => !this.members().some((s) => s.user_id === m.user_id))
+      .map((m) => ({ label: `${m.name ?? m.email}`, value: m.user_id })),
+  );
+  readonly people = computed(() =>
+    this.allMembers().map((m) => ({ label: `${m.name ?? m.email}`, value: m.user_id })),
+  );
   readonly flat = computed(() => this.flatten(this.tree()));
-  readonly selectedAcl = computed(() => (this.selectedFolder() ? this.acl()[this.selectedFolder()!] ?? null : null));
+  readonly selectedAcl = computed(() =>
+    this.selectedFolder() ? (this.acl()[this.selectedFolder()!] ?? null) : null,
+  );
 
   async ngOnInit(): Promise<void> {
     const ws = this.session.current();
     try {
-      const [space, members, all, tree] = await Promise.all([this.spaces.get(this.id()), this.api.spaceMembers(this.id()), ws ? this.api.members(ws.id) : Promise.resolve([]), this.spaces.folders(this.id())]);
+      const [space, members, all, tree] = await Promise.all([
+        this.spaces.get(this.id()),
+        this.api.spaceMembers(this.id()),
+        ws ? this.api.members(ws.id) : Promise.resolve([]),
+        this.spaces.folders(this.id()),
+      ]);
       this.space.set(space);
       this.members.set(members);
       this.allMembers.set(all);
@@ -101,7 +117,12 @@ export class SpacePermissions implements OnInit {
   }
 
   async revoke(m: SpaceMemberRow): Promise<void> {
-    if (!confirm(`${m.name ?? m.email} will immediately lose access to this space's documents and any answers drawn from them.`)) return;
+    if (
+      !confirm(
+        `${m.name ?? m.email} will immediately lose access to this space's documents and any answers drawn from them.`,
+      )
+    )
+      return;
     try {
       await this.api.revokeSpace(this.id(), m.user_id);
       this.members.update((l) => l.filter((x) => x.user_id !== m.user_id));
@@ -140,13 +161,17 @@ export class SpacePermissions implements OnInit {
     if (!u) return;
     try {
       const f = this.selectedFolder();
-      this.resolution.set(f ? await this.api.folderChain(f, u) : await this.api.spaceAccess(this.id(), u));
+      this.resolution.set(
+        f ? await this.api.folderChain(f, u) : await this.api.spaceAccess(this.id(), u),
+      );
     } catch {
       this.error.set('The inspector could not resolve that person.');
     }
   }
 
   levelLabel(level: string): string {
-    return { workspace: 'Workspace', space: 'Space', folder: 'Folder', result: 'Result' }[level] ?? level;
+    return (
+      { workspace: 'Workspace', space: 'Space', folder: 'Folder', result: 'Result' }[level] ?? level
+    );
   }
 }

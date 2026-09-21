@@ -13,6 +13,7 @@ use App\Models\DocumentVersion;
 use App\Models\SpaceMember;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Notifications\AcknowledgementDueNotification;
 use App\Notifications\ChangesRequestedNotification;
 use App\Notifications\DocumentApprovedNotification;
 use App\Jobs\Pipeline\IndexDocument;
@@ -117,6 +118,11 @@ final class Workflow
             Approval::create(['document_id' => $doc->id, 'requested_by' => $doc->submitted_by, 'reviewer_id' => $reviewer->id, 'from_state' => 'in_review', 'to_state' => 'approved', 'comment' => $changeSummary]);
             Audit::record('document.approved', 'document', $doc->id, ['version' => $number]);
             IndexDocument::dispatch($doc->workspace_id, $doc->id, $version->id);   // stage 5, on approval only
+            if ($doc->requires_ack) {   // FR-704: a new version re-obtains acknowledgement from every target
+                foreach ($doc->ackTargets()->with('user')->get() as $t) {
+                    $t->user?->notify(new AcknowledgementDueNotification($doc->title, $number, $doc->id));
+                }
+            }
             if ($doc->submitted_by && $doc->submitted_by !== $reviewer->id) {
                 User::query()->find($doc->submitted_by)?->notify(new DocumentApprovedNotification($doc->title, $number, $doc->id));
             }

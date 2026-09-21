@@ -7,9 +7,22 @@ export const routes: Routes = [
     path: 'onboarding',
     canActivate: [authGuard],
     children: [
-      { path: 'workspace', loadComponent: () => import('./features/onboarding/create-workspace').then((m) => m.CreateWorkspace) },
-      { path: 'invite', canActivate: [workspaceGuard], loadComponent: () => import('./features/onboarding/invite-team').then((m) => m.InviteTeam) },
-      { path: 'first-recording', canActivate: [workspaceGuard], loadComponent: () => import('./features/onboarding/first-recording').then((m) => m.FirstRecording) },
+      {
+        path: 'workspace',
+        loadComponent: () =>
+          import('./features/onboarding/create-workspace').then((m) => m.CreateWorkspace),
+      },
+      {
+        path: 'invite',
+        canActivate: [workspaceGuard],
+        loadComponent: () => import('./features/onboarding/invite-team').then((m) => m.InviteTeam),
+      },
+      {
+        path: 'first-recording',
+        canActivate: [workspaceGuard],
+        loadComponent: () =>
+          import('./features/onboarding/first-recording').then((m) => m.FirstRecording),
+      },
     ],
   },
   {
@@ -18,20 +31,70 @@ export const routes: Routes = [
     loadComponent: () => import('./features/shell/shell').then((m) => m.Shell),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'ask' },
-      { path: 's/:spaceId', loadComponent: () => import('./features/spaces/space-browser').then((m) => m.SpaceBrowser) },
-      { path: 's/:spaceId/f/:folderId', loadComponent: () => import('./features/spaces/space-browser').then((m) => m.SpaceBrowser) },
-      { path: 'r/:id/draft', loadComponent: () => import('./features/review/draft-review').then((m) => m.DraftReview) },
-      { path: 'd/:id/edit', loadComponent: () => import('./features/editor/editor').then((m) => m.Editor) },
-      { path: 'd/:id/review', loadComponent: () => import('./features/governance/approval-review').then((m) => m.ApprovalReview) },
-      { path: 'd/:id/history', loadComponent: () => import('./features/governance/history').then((m) => m.History) },
-      { path: 'd/:id', loadComponent: () => import('./features/reader/reader').then((m) => m.Reader) },
+      {
+        path: 's/:spaceId',
+        loadComponent: () => import('./features/spaces/space-browser').then((m) => m.SpaceBrowser),
+      },
+      {
+        path: 's/:spaceId/f/:folderId',
+        loadComponent: () => import('./features/spaces/space-browser').then((m) => m.SpaceBrowser),
+      },
+      {
+        path: 'r/:id/draft',
+        loadComponent: () => import('./features/review/draft-review').then((m) => m.DraftReview),
+      },
+      {
+        path: 'd/:id/edit',
+        loadComponent: () => import('./features/editor/editor').then((m) => m.Editor),
+      },
+      {
+        path: 'd/:id/review',
+        loadComponent: () =>
+          import('./features/governance/approval-review').then((m) => m.ApprovalReview),
+      },
+      {
+        path: 'd/:id/history',
+        loadComponent: () => import('./features/governance/history').then((m) => m.History),
+      },
+      {
+        path: 'd/:id',
+        loadComponent: () => import('./features/reader/reader').then((m) => m.Reader),
+      },
       { path: 'ask', loadComponent: () => import('./features/chat/ask').then((m) => m.Ask) },
-      { path: 'search', loadComponent: () => import('./features/search/search').then((m) => m.Search) },
-      { path: 'recordings', loadComponent: () => import('./features/recordings/recordings').then((m) => m.Recordings) },
-      { path: 'handbook', loadComponent: () => import('./features/shell/placeholder').then((m) => m.Placeholder), data: { title: 'Handbook', milestone: 'M4' } },
-      { path: 'admin/members', loadComponent: () => import('./features/admin/members').then((m) => m.Members) },
-      { path: 'admin/knowledge-gaps', loadComponent: () => import('./features/admin/knowledge-gaps').then((m) => m.KnowledgeGaps) },
-      { path: 'admin/spaces/:id', loadComponent: () => import('./features/admin/space-permissions').then((m) => m.SpacePermissions) },
+      {
+        path: 'search',
+        loadComponent: () => import('./features/search/search').then((m) => m.Search),
+      },
+      {
+        path: 'recordings',
+        loadComponent: () => import('./features/recordings/recordings').then((m) => m.Recordings),
+      },
+      {
+        path: 'handbook',
+        loadComponent: () => import('./features/handbook/handbook').then((m) => m.Handbook),
+      },
+      {
+        path: 'handbook/:docId',
+        loadComponent: () => import('./features/handbook/handbook').then((m) => m.Handbook),
+      },
+      {
+        path: 'admin/members',
+        loadComponent: () => import('./features/admin/members').then((m) => m.Members),
+      },
+      {
+        path: 'admin/insights',
+        loadComponent: () => import('./features/admin/knowledge-gaps').then((m) => m.KnowledgeGaps),
+      },
+      {
+        path: 'admin/acknowledgements',
+        loadComponent: () =>
+          import('./features/admin/acknowledgements').then((m) => m.Acknowledgements),
+      },
+      {
+        path: 'admin/spaces/:id',
+        loadComponent: () =>
+          import('./features/admin/space-permissions').then((m) => m.SpacePermissions),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

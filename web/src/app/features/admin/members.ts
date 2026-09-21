@@ -71,7 +71,10 @@ export class Members implements OnInit {
       await this.api.setRole(ws.id, m.user_id, role);
       this.members.update((l) => l.map((x) => (x.user_id === m.user_id ? { ...x, role } : x)));
     } catch (e: unknown) {
-      this.error.set((e as { error?: { error?: { message?: string } } }).error?.error?.message ?? 'The role could not be changed.');
+      this.error.set(
+        (e as { error?: { error?: { message?: string } } }).error?.error?.message ??
+          'The role could not be changed.',
+      );
     }
   }
 
@@ -79,12 +82,20 @@ export class Members implements OnInit {
     const ws = this.ws();
     if (!ws) return;
     const name = m.name ?? m.email ?? 'This person';
-    if (!confirm(`${name} will immediately lose access to every document in this workspace and any answers drawn from them.`)) return;
+    if (
+      !confirm(
+        `${name} will immediately lose access to every document in this workspace and any answers drawn from them.`,
+      )
+    )
+      return;
     try {
       await this.api.removeMember(ws.id, m.user_id);
       this.members.update((l) => l.filter((x) => x.user_id !== m.user_id));
     } catch (e: unknown) {
-      this.error.set((e as { error?: { error?: { message?: string } } }).error?.error?.message ?? 'The member could not be removed.');
+      this.error.set(
+        (e as { error?: { error?: { message?: string } } }).error?.error?.message ??
+          'The member could not be removed.',
+      );
     }
   }
 

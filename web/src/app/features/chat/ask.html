@@ -46,7 +46,13 @@
             <p class="refusal__p">{{ m.content }}</p>
             <div class="refusal__actions">
               @if (canRecord()) {
-                <a pButton size="small" routerLink="/recordings">Record it</a>
+                <a
+                  pButton
+                  size="small"
+                  routerLink="/recordings"
+                  [queryParams]="{ record: 1, title: questionBefore(m) }"
+                  >Record it</a
+                >
               }
               @if (requested().has(m.id)) {
                 <span class="refusal__noted">Noted as a knowledge gap for your admins.</span>

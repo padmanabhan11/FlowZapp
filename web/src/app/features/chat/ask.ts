@@ -215,6 +215,14 @@ export class Ask implements OnInit, OnDestroy {
     this.requested.update((set) => new Set(set).add(m.id));
   }
 
+  /** The question a refusal answered — used to pre-fill "Record it" (S20 acceptance). */
+  questionBefore(m: ChatMessage): string {
+    const list = this.messages();
+    const i = list.findIndex((x) => x.id === m.id);
+    for (let j = i - 1; j >= 0; j--) if (list[j].role === 'user') return list[j].content;
+    return '';
+  }
+
   fragment(c: Citation): string | undefined {
     return citationFragment(c);
   }

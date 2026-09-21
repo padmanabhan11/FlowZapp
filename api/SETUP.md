@@ -62,6 +62,7 @@ once per environment (the pre-deploy job does it after `migrate`). Tests use the
 | `app/Documents/` | `Content` (structured JSON model + validation), `Templates` |
 | `app/Retrieval/` | `Chunker` (structured JSON → chunks with `section_ref`), `Embeddings`/`VectorStore` drivers (OpenAI + Qdrant, fakes for tests), `Retriever` (permission scope → vector + keyword → RRF → stale-chunk guard), `Answerer` (citations or refusal), `Deindex` |
 | `Http/Controllers/Retrieval/` | `POST /search` (S14), chat sessions/messages with SSE (S15), `analytics/knowledge-gaps` (S20) |
+| `Http/Controllers/Handbook/` | `GET /handbook` + `PUT /handbook/order` (S16, FR-701), acknowledgement targets / acknowledge / compliance rows / CSV export / remind (S17, FR-702..707). Acknowledgements are per approved version, so a new approval re-triggers them (FR-704) |
 | `app/Media/` | `MediaStorage` interface, `SpacesStorage` (presigned multipart, signed GET ≤ 15 min), `FakeMediaStorage` for tests (`MEDIA_DRIVER=fake`) |
 | `Http/Controllers/Recordings/` | upload-url → parts → register → pipeline; list/show/rename/playback-url/retry/generate/delete; plan minutes checked before bytes move |
 | `app/Jobs/Pipeline/` | `PipelineStage` base (idempotent via `pipeline_jobs.job_key`, retry with backoff, plain-language failure), `TranscribeRecording`, `SegmentRecording` (Epic D fills the rest) |

@@ -1,34 +1,74 @@
 <section class="adm">
   <header class="adm__head">
     <h1>Members &amp; roles</h1>
-    <span class="adm__seats control-value">{{ used() }}@if (seats() !== null) { / {{ seats() }} } seats</span>
+    <span class="adm__seats control-value"
+      >{{ used() }}
+      @if (seats() !== null) {
+        / {{ seats() }}
+      }
+      seats</span
+    >
     <a pButton routerLink="/onboarding/invite" [outlined]="true" size="small">Invite</a>
-    <a routerLink="/admin/knowledge-gaps" class="adm__link">Knowledge gaps</a>
+    <a routerLink="/admin/acknowledgements" class="adm__link">Acknowledgements</a>
+    <a routerLink="/admin/insights" class="adm__link">Knowledge gaps</a>
   </header>
-  @if (error()) { <p class="adm__error" role="alert">{{ error() }}</p> }
+  @if (error()) {
+    <p class="adm__error" role="alert">{{ error() }}</p>
+  }
 
   <div class="document-surface adm__table">
-    <div class="adm__row adm__row--head"><span>Name</span><span>Email</span><span>Workspace role</span><span>Joined</span><span></span></div>
+    <div class="adm__row adm__row--head">
+      <span>Name</span><span>Email</span><span>Workspace role</span><span>Joined</span><span></span>
+    </div>
     @for (m of members(); track m.user_id) {
       <div class="adm__row">
         <span>{{ m.name ?? '—' }}</span>
         <span class="control-value">{{ m.email }}</span>
-        <span><p-select [options]="roles" optionLabel="label" optionValue="value" [ngModel]="m.role" (ngModelChange)="changeRole(m, $event)" size="small" [attr.aria-label]="'Role for ' + (m.name ?? m.email)" /></span>
+        <span
+          ><p-select
+            [options]="roles"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="m.role"
+            (ngModelChange)="changeRole(m, $event)"
+            size="small"
+            [attr.aria-label]="'Role for ' + (m.name ?? m.email)"
+        /></span>
         <span class="control-value">{{ m.joined_at | date: 'd MMM y' }}</span>
-        <span><button pButton type="button" [text]="true" size="small" (click)="remove(m)" [disabled]="m.role === 'admin' && admins() <= 1" [title]="m.role === 'admin' && admins() <= 1 ? 'The last admin cannot be removed' : ''">Remove</button></span>
+        <span
+          ><button
+            pButton
+            type="button"
+            [text]="true"
+            size="small"
+            (click)="remove(m)"
+            [disabled]="m.role === 'admin' && admins() <= 1"
+            [title]="m.role === 'admin' && admins() <= 1 ? 'The last admin cannot be removed' : ''"
+          >
+            Remove
+          </button></span
+        >
       </div>
     }
   </div>
 
   <h2 class="adm__h2">Pending invites</h2>
   <div class="document-surface adm__table">
-    @if (invites().length === 0) { <p class="adm__empty">No pending invites.</p> }
+    @if (invites().length === 0) {
+      <p class="adm__empty">No pending invites.</p>
+    }
     @for (i of invites(); track i.id) {
       <div class="adm__row adm__row--invite">
         <span class="control-value">{{ i.email }}</span>
         <span>{{ i.role }}</span>
         <span class="control-value">expires {{ i.expires_at | date: 'd MMM' }}</span>
-        <span><button pButton type="button" [text]="true" size="small" (click)="resend(i)">Resend</button><button pButton type="button" [text]="true" size="small" (click)="revoke(i)">Revoke</button></span>
+        <span
+          ><button pButton type="button" [text]="true" size="small" (click)="resend(i)">
+            Resend</button
+          ><button pButton type="button" [text]="true" size="small" (click)="revoke(i)">
+            Revoke
+          </button></span
+        >
       </div>
     }
   </div>

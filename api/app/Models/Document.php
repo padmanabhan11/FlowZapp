@@ -24,7 +24,7 @@ class Document extends TenantModel
 
     protected $fillable = [
         'space_id', 'folder_id', 'title', 'doc_type', 'state', 'owner_id', 'submitted_by', 'submitted_at', 'created_by', 'source_recording_id',
-        'content', 'approved_version_id', 'requires_ack', 'review_due_at', 'language', 'translation_of', 'translation_stale',
+        'content', 'approved_version_id', 'requires_ack', 'handbook_position', 'review_due_at', 'language', 'translation_of', 'translation_stale',
     ];
 
     protected function casts(): array
@@ -61,6 +61,11 @@ class Document extends TenantModel
     public function versions(): HasMany
     {
         return $this->hasMany(DocumentVersion::class)->orderByDesc('version_number');
+    }
+
+    public function ackTargets(): HasMany
+    {
+        return $this->hasMany(AcknowledgementTarget::class);
     }
 
     public function approvals(): HasMany

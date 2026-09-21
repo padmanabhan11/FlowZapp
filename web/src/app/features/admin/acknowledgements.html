@@ -1,0 +1,148 @@
+<section class="adm">
+  <header class="adm__head">
+    <h1>Acknowledgements</h1>
+    <button pButton type="button" [outlined]="true" size="small" (click)="exportCsv()">
+      Export CSV
+    </button>
+    <a routerLink="/admin/members" class="adm__link">Members</a>
+  </header>
+  @if (error()) {
+    <p class="adm__error" role="alert">{{ error() }}</p>
+  }
+  @if (notice()) {
+    <p class="adm__notice" role="status">{{ notice() }}</p>
+  }
+
+  <div class="adm__tabs" role="tablist">
+    <button
+      type="button"
+      role="tab"
+      class="adm__tab"
+      [class.is-on]="tab() === 'document'"
+      [attr.aria-selected]="tab() === 'document'"
+      (click)="tab.set('document')"
+    >
+      By document
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="adm__tab"
+      [class.is-on]="tab() === 'person'"
+      [attr.aria-selected]="tab() === 'person'"
+      (click)="tab.set('person')"
+    >
+      By person
+    </button>
+  </div>
+
+  @if (tab() === 'document') {
+    @if (byDocument().length === 0) {
+      <p class="adm__empty">No document requires acknowledgement yet. Assign people below.</p>
+    }
+    @if (byDocument().length) {
+      <div class="adm__table adm__table--ackdoc document-surface">
+        <div class="adm__row adm__row--head">
+          <span>Document</span><span>Version</span><span>Assigned</span><span>Confirmed</span
+          ><span>Outstanding</span><span></span>
+        </div>
+        @for (d of byDocument(); track d.document_id) {
+          <div class="adm__row">
+            <span
+              ><a [routerLink]="['/handbook', d.document_id]">{{ d.title }}</a></span
+            >
+            <span class="control-value">v{{ d.version_number }}</span>
+            <span class="control-value">{{ d.assigned }}</span>
+            <span class="control-value">{{ d.confirmed }}</span>
+            <span class="control-value">{{ d.outstanding }}</span>
+            <span>
+              <button
+                pButton
+                type="button"
+                [text]="true"
+                size="small"
+                (click)="nudge(d)"
+                [disabled]="d.outstanding === 0"
+              >
+                Nudge
+              </button>
+              <button
+                pButton
+                type="button"
+                [text]="true"
+                size="small"
+                (click)="pickDocument(d.document_id)"
+              >
+                Assign
+              </button>
+            </span>
+          </div>
+        }
+      </div>
+    }
+  } @else {
+    @if (byPerson().length === 0) {
+      <p class="adm__empty">Nobody has anything outstanding.</p>
+    }
+    @if (byPerson().length) {
+      <div class="adm__table adm__table--ackperson document-surface">
+        <div class="adm__row adm__row--head">
+          <span>Person</span><span>Outstanding</span><span>Oldest outstanding</span><span></span>
+        </div>
+        @for (p of byPerson(); track p.user.id) {
+          <div class="adm__row">
+            <span
+              >{{ p.user.name }} <span class="adm__sub">{{ p.documents.join(', ') }}</span></span
+            >
+            <span class="control-value">{{ p.outstanding }}</span>
+            <span class="control-value">{{ p.oldest | date: 'mediumDate' }}</span>
+            <span
+              ><button pButton type="button" [text]="true" size="small" (click)="nudgePerson(p)">
+                Nudge
+              </button></span
+            >
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <h2 class="adm__h2">Who must acknowledge</h2>
+  <p class="adm__lead">
+    Pick an approved document and the people who must confirm they have read it. Each new approved
+    version asks them again.
+  </p>
+  <div class="adm__assign">
+    <p-select
+      [options]="approved()"
+      optionLabel="title"
+      optionValue="id"
+      [ngModel]="assignDoc()"
+      (ngModelChange)="pickDocument($event)"
+      placeholder="Approved document"
+      [filter]="true"
+      aria-label="Document"
+    />
+    <p-multiSelect
+      [options]="members()"
+      optionLabel="name"
+      optionValue="user_id"
+      [ngModel]="assignUsers()"
+      (ngModelChange)="assignUsers.set($event)"
+      placeholder="People"
+      [filter]="true"
+      display="chip"
+      aria-label="People"
+    />
+    <button
+      pButton
+      type="button"
+      size="small"
+      [loading]="busy()"
+      [disabled]="!assignDoc()"
+      (click)="saveTargets()"
+    >
+      Save
+    </button>
+  </div>
+</section>

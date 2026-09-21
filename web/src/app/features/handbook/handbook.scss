@@ -1,0 +1,121 @@
+.hb {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 20px;
+  align-items: start;
+  padding-bottom: 72px;
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+  &__error {
+    color: var(--danger);
+  }
+  &__empty {
+    padding: 24px;
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.2rem;
+    }
+    p {
+      margin: 0;
+      color: var(--ink-soft);
+    }
+  }
+  &__rail {
+    position: sticky;
+    top: 12px;
+    display: grid;
+    gap: 6px;
+  }
+  &__space {
+    margin: 0;
+    font-weight: 600;
+  }
+  &__due {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+  }
+  &__toc {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+  &__item {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    &.is-current {
+      background: var(--paper);
+      box-shadow: inset 3px 0 0 var(--ink);
+    }
+  }
+  &__link {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 8px;
+    align-items: baseline;
+    background: none;
+    border: 0;
+    padding: 8px 10px;
+    text-align: left;
+    cursor: pointer;
+    color: var(--ink);
+    font: inherit;
+    &:hover {
+      background: var(--select);
+    }
+  }
+  &__num,
+  &__mark {
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+  &__move {
+    display: grid;
+  }
+  &__mv {
+    background: none;
+    border: 0;
+    cursor: pointer;
+    color: var(--ink);
+    padding: 0 6px;
+    &:disabled {
+      color: var(--line);
+    }
+  }
+  &__none {
+    color: var(--ink-soft);
+  }
+  &__body {
+    min-width: 0;
+  }
+  &__pager {
+    display: flex;
+    justify-content: space-between;
+    max-width: var(--canvas-width);
+    margin: 12px auto 0;
+  }
+  &__ack-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 16px;
+    background: var(--paper);
+    border-top: 1px solid var(--line);
+    z-index: 5;
+  }
+  &__ack-line {
+    max-width: var(--canvas-width);
+    margin: 12px auto 0;
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+}

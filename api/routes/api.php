@@ -9,6 +9,8 @@ use App\Http\Controllers\Documents\StepController;
 use App\Http\Controllers\Governance\ApprovalController;
 use App\Http\Controllers\Media\AssetController;
 use App\Http\Controllers\Recordings\RecordingController;
+use App\Http\Controllers\Handbook\AcknowledgementController;
+use App\Http\Controllers\Handbook\HandbookController;
 use App\Http\Controllers\Retrieval\ChatController;
 use App\Http\Controllers\Retrieval\SearchController;
 use App\Http\Controllers\Spaces\FolderController;
@@ -114,6 +116,14 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/chat/sessions/{id}/messages', [ChatController::class, 'ask']);
             Route::post('/chat/messages/{id}/rating', [ChatController::class, 'rate']);
             Route::get('/analytics/knowledge-gaps', [ChatController::class, 'gaps']);
+
+            Route::get('/handbook', [HandbookController::class, 'index']);
+            Route::put('/handbook/order', [HandbookController::class, 'reorder']);
+            Route::post('/documents/{id}/acknowledgement-targets', [AcknowledgementController::class, 'targets']);
+            Route::post('/documents/{id}/acknowledge', [AcknowledgementController::class, 'acknowledge']);
+            Route::get('/acknowledgements', [AcknowledgementController::class, 'index']);
+            Route::get('/acknowledgements/export', [AcknowledgementController::class, 'export']);
+            Route::post('/acknowledgements/remind', [AcknowledgementController::class, 'remind']);
         });
     });
 });

@@ -26,7 +26,14 @@
           <span class="control-value">{{ g.count }}×</span>
           <span class="control-value">{{ g.last_asked_at | date: 'medium' }}</span>
           <span
-            ><a pButton size="small" [outlined]="true" routerLink="/recordings">Record it</a></span
+            ><a
+              pButton
+              size="small"
+              [outlined]="true"
+              routerLink="/recordings"
+              [queryParams]="{ record: 1, title: g.question }"
+              >Record it</a
+            ></span
           >
         </div>
       }

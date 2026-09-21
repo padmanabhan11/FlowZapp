@@ -1,0 +1,111 @@
+@if (error(); as e) {
+  <p class="hb__error" role="alert">{{ e }}</p>
+}
+@if (view(); as v) {
+  @if (!v.space) {
+    <section class="document-surface hb__empty">
+      <h1>No handbook yet</h1>
+      <p>
+        An admin marks one space as the handbook (Admin → space settings). Its approved documents
+        then read here in order.
+      </p>
+    </section>
+  } @else {
+    <div class="hb">
+      <nav class="hb__rail" aria-label="Handbook contents">
+        <p class="hb__space">{{ v.space.name }}</p>
+        @if (outstanding() > 0) {
+          <p class="hb__due">
+            <span class="control-value">{{ outstanding() }}</span> to acknowledge
+          </p>
+        }
+        <ol class="hb__toc">
+          @for (d of v.documents; track d.id; let i = $index) {
+            <li class="hb__item" [class.is-current]="current()?.id === d.id">
+              <button type="button" class="hb__link" (click)="open(d)">
+                <span class="hb__num control-value">{{ i + 1 }}</span>
+                <span class="hb__title">{{ d.title }}</span>
+                @if (d.ack_required_from_me) {
+                  <span class="hb__mark control-value">{{ d.acknowledged_at ? '✓' : '·' }}</span>
+                }
+              </button>
+              @if (reordering()) {
+                <span class="hb__move">
+                  <button
+                    type="button"
+                    class="hb__mv"
+                    (click)="move(d, -1)"
+                    [disabled]="i === 0"
+                    aria-label="Move up"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    class="hb__mv"
+                    (click)="move(d, 1)"
+                    [disabled]="i === v.documents.length - 1"
+                    aria-label="Move down"
+                  >
+                    ↓
+                  </button>
+                </span>
+              }
+            </li>
+          }
+        </ol>
+        @if (v.documents.length === 0) {
+          <p class="hb__none">Nothing approved in this space yet.</p>
+        }
+        @if (v.can_reorder && v.documents.length > 1) {
+          <button
+            pButton
+            type="button"
+            [text]="true"
+            size="small"
+            (click)="reordering.set(!reordering())"
+          >
+            {{ reordering() ? 'Done ordering' : 'Set order' }}
+          </button>
+        }
+      </nav>
+
+      <section class="hb__body">
+        @if (current(); as c) {
+          @for (id of [c.id]; track id) {
+            <app-reader [id]="id" />
+          }
+          <div class="hb__pager">
+            @if (prev(); as p) {
+              <a [routerLink]="['/handbook', p.id]">← {{ p.title }}</a>
+            } @else {
+              <span></span>
+            }
+            @if (next(); as n) {
+              <a [routerLink]="['/handbook', n.id]">{{ n.title }} →</a>
+            }
+          </div>
+        }
+      </section>
+    </div>
+
+    @if (current(); as c) {
+      @if (c.ack_required_from_me) {
+        @if (c.acknowledged_at || receipt()) {
+          <p class="hb__ack-line control-value" role="status">
+            Acknowledged v{{ receipt()?.version_number ?? c.version_number }} by
+            {{ receipt()?.user?.name ?? user()?.name }} on
+            {{ receipt()?.acknowledged_at ?? c.acknowledged_at | date: 'medium' }}
+          </p>
+        } @else {
+          <div class="hb__ack-bar" role="region" aria-label="Acknowledgement">
+            <span>You haven’t confirmed you’ve read this version (v{{ c.version_number }}).</span>
+            <button pButton type="button" size="small" [loading]="busy()" (click)="acknowledge(c)">
+              I have read and understood this
+            </button>
+          </div>
+        }
+      }
+    }
+  }
+}
