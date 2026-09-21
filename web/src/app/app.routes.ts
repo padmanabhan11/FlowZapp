@@ -20,6 +20,8 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'ask' },
       { path: 's/:spaceId', loadComponent: () => import('./features/spaces/space-browser').then((m) => m.SpaceBrowser) },
       { path: 's/:spaceId/f/:folderId', loadComponent: () => import('./features/spaces/space-browser').then((m) => m.SpaceBrowser) },
+      { path: 'd/:id/edit', loadComponent: () => import('./features/editor/editor').then((m) => m.Editor) },
+      { path: 'd/:id', redirectTo: 'd/:id/edit' },
       { path: 'ask', loadComponent: () => import('./features/shell/placeholder').then((m) => m.Placeholder), data: { title: 'Ask', milestone: 'M3' } },
       { path: 'search', loadComponent: () => import('./features/shell/placeholder').then((m) => m.Placeholder), data: { title: 'Search', milestone: 'M3' } },
       { path: 'recordings', loadComponent: () => import('./features/shell/placeholder').then((m) => m.Placeholder), data: { title: 'Recordings', milestone: 'M1' } },

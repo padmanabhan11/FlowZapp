@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Auth\MagicLinkController;
+use App\Http\Controllers\Documents\DocumentController;
+use App\Http\Controllers\Documents\StepController;
 use App\Http\Controllers\Spaces\FolderController;
 use App\Http\Controllers\Spaces\SpaceController;
 use App\Http\Controllers\Workspaces\InviteController;
@@ -55,6 +57,22 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/folders', [FolderController::class, 'store']);
             Route::patch('/folders/{id}', [FolderController::class, 'update']);
             Route::delete('/folders/{id}', [FolderController::class, 'destroy']);
+
+            Route::get('/templates', [DocumentController::class, 'templates']);
+            Route::get('/documents', [DocumentController::class, 'index']);
+            Route::post('/documents', [DocumentController::class, 'store']);
+            Route::get('/documents/{id}', [DocumentController::class, 'show']);
+            Route::get('/documents/{id}/published', [DocumentController::class, 'published']);
+            Route::patch('/documents/{id}', [DocumentController::class, 'update']);
+            Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);
+            Route::post('/documents/{id}/duplicate', [DocumentController::class, 'duplicate']);
+            Route::post('/documents/{id}/move', [DocumentController::class, 'move']);
+
+            Route::get('/documents/{id}/steps', [StepController::class, 'index']);
+            Route::post('/documents/{id}/steps', [StepController::class, 'store']);
+            Route::post('/documents/{id}/steps/reorder', [StepController::class, 'reorder']);
+            Route::patch('/documents/{id}/steps/{step_id}', [StepController::class, 'update']);
+            Route::delete('/documents/{id}/steps/{step_id}', [StepController::class, 'destroy']);
         });
     });
 });

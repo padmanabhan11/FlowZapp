@@ -112,6 +112,9 @@ final class CrossTenantIsolationTest extends TestCase
             'token_hash' => str_repeat('0', 64), 'expires_at' => now()->addDay(),
         ]);
         \App\Audit\Audit::record('test.seeded', 'space', $space->id);
+        $doc = \App\Models\Document::create(['space_id' => $space->id, 'title' => 'Doc', 'content' => \App\Documents\Content::empty(), 'created_by' => $user->id]);
+        \App\Models\DocumentStep::create(['document_id' => $doc->id, 'position' => 1, 'instruction' => 'Do it']);
+        \App\Models\DocumentVersion::create(['document_id' => $doc->id, 'version_number' => 1, 'title' => 'Doc', 'content' => $doc->content]);
 
         $unseeded = [];
         $this->current()->set($this->b->id);

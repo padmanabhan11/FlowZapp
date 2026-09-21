@@ -1,0 +1,111 @@
+@if (doc(); as d) {
+  <div class="editor">
+    <header class="editor__bar">
+      <a [routerLink]="['/s', d.space_id]" class="editor__back">← {{ d.state === 'approved' ? 'Published' : 'Space' }}</a>
+      <span class="state-pill state-pill--{{ d.state }}">{{ stateLabel(d.state) }}</span>
+      <span class="editor__saved control-value" aria-live="polite">
+        @if (saving()) { Saving… } @else if (dirty()) { Unsaved changes } @else { {{ savedLabel() }} }
+      </span>
+      <span class="editor__spacer"></span>
+      <button pButton type="button" [disabled]="submitBlockers().length > 0" [title]="submitBlockers().length ? 'Add ' + submitBlockers().join(', ') + ' before submitting' : ''">Submit for approval</button>
+    </header>
+
+    @if (submitBlockers().length) {
+      <p class="editor__hint">To submit, this document still needs {{ submitBlockers().join(', ') }}.</p>
+    }
+
+    @if (liveVersionBanner()) {
+      <div class="editor__banner" role="status">You're editing a new draft. The approved version stays live until this is approved.</div>
+    }
+    @if (isApproved()) {
+      <div class="editor__banner" role="status">This document is approved. Your first change starts a new draft; the approved version stays live.</div>
+    }
+
+    @if (conflict(); as c) {
+      <div class="editor__conflict" role="alert">
+        <strong>This document changed while you were editing.</strong>
+        Current title: “{{ c.title }}”. Reload to see the current version before continuing — your unsaved edits here will be discarded.
+        <button pButton type="button" size="small" (click)="reloadAfterConflict()">Reload</button>
+      </div>
+    }
+    @if (error()) {
+      <p class="editor__error" role="alert">{{ error() }}</p>
+    }
+
+    <article class="editor__canvas document-surface">
+      <input class="editor__title" [ngModel]="d.title" (ngModelChange)="setTitle($event)" aria-label="Title" placeholder="Untitled" />
+
+      <section class="slot">
+        <label for="slot-purpose">Purpose</label>
+        <textarea pTextarea id="slot-purpose" rows="2" [ngModel]="d.content.purpose" (ngModelChange)="setSection('purpose', $event)" placeholder="Why this process exists"></textarea>
+      </section>
+      <section class="slot">
+        <label for="slot-scope">Scope</label>
+        <textarea pTextarea id="slot-scope" rows="2" [ngModel]="d.content.scope" (ngModelChange)="setSection('scope', $event)" placeholder="Who it applies to and when"></textarea>
+      </section>
+      <section class="slot">
+        <label for="slot-prereqs">Prerequisites <span class="slot__hint">one per line</span></label>
+        <textarea pTextarea id="slot-prereqs" rows="2" [ngModel]="prereqText()" (ngModelChange)="setPrereqs($event)" placeholder="Access, tools, permissions needed before starting"></textarea>
+      </section>
+
+      @if (d.doc_type === 'sop') {
+        <section class="steps">
+          <h2>Steps</h2>
+          @for (s of steps(); track s.id; let i = $index) {
+            <div class="step" [class.step--critical]="s.is_critical">
+              <span class="step__n control-value">{{ s.position }}</span>
+              <div class="step__body">
+                <textarea pTextarea rows="1" [ngModel]="s.instruction" (ngModelChange)="patchStep(s, { instruction: $event })" aria-label="Step instruction"></textarea>
+                <input pInputText [ngModel]="s.note ?? ''" (ngModelChange)="patchStep(s, { note: $event || null })" placeholder="Note or warning (optional)" aria-label="Step note" />
+                <input pInputText [ngModel]="s.expected_result ?? ''" (ngModelChange)="patchStep(s, { expected_result: $event || null })" placeholder="Expected result (optional)" aria-label="Expected result" />
+                <div class="step__flags">
+                  <label [attr.for]="'crit-' + s.id"><p-checkbox [inputId]="'crit-' + s.id" [binary]="true" [ngModel]="s.is_critical" (ngModelChange)="patchStep(s, { is_critical: $event })" /> Critical</label>
+                  <label [attr.for]="'chk-' + s.id"><p-checkbox [inputId]="'chk-' + s.id" [binary]="true" [ngModel]="s.is_checkpoint" (ngModelChange)="patchStep(s, { is_checkpoint: $event })" /> Checkpoint</label>
+                  @if (s.source_ts_start !== null) {
+                    <span class="control-value">⏱ {{ s.source_ts_start }}s</span>
+                  }
+                </div>
+              </div>
+              <div class="step__actions">
+                <button pButton type="button" [text]="true" size="small" aria-label="Move up" [disabled]="i === 0" (click)="moveStep(s, -1)">↑</button>
+                <button pButton type="button" [text]="true" size="small" aria-label="Move down" [disabled]="i === steps().length - 1" (click)="moveStep(s, 1)">↓</button>
+                <button pButton type="button" [text]="true" size="small" aria-label="Delete step" (click)="deleteStep(s)">✕</button>
+              </div>
+            </div>
+          }
+          <form class="step__new" (ngSubmit)="addStep()">
+            <span class="step__n control-value">{{ steps().length + 1 }}</span>
+            <input pInputText name="newStep" [ngModel]="newStep()" (ngModelChange)="newStep.set($event)" placeholder="Add a step…" aria-label="New step" />
+            <button pButton type="submit" [outlined]="true" size="small" [disabled]="!newStep().trim()">Add</button>
+          </form>
+        </section>
+      }
+
+      @if (d.content.blocks.length || d.doc_type !== 'sop') {
+        <section class="blocks">
+          @for (b of d.content.blocks; track b.id; let i = $index) {
+            @switch (b.type) {
+              @case ('heading') {
+                <input class="block block--heading" [ngModel]="b.text ?? ''" (ngModelChange)="setBlockText(i, $event)" aria-label="Heading" />
+              }
+              @case ('divider') {
+                <hr />
+              }
+              @default {
+                <textarea pTextarea class="block" rows="2" [ngModel]="b.text ?? ''" (ngModelChange)="setBlockText(i, $event)" [attr.aria-label]="b.type"></textarea>
+              }
+            }
+          }
+          <button pButton type="button" [text]="true" size="small" (click)="addParagraph()">+ Paragraph</button>
+        </section>
+      }
+
+      <section class="slot">
+        <label for="slot-outcome">Outcome</label>
+        <textarea pTextarea id="slot-outcome" rows="2" [ngModel]="d.content.outcome" (ngModelChange)="setSection('outcome', $event)" placeholder="What “done” looks like"></textarea>
+      </section>
+    </article>
+  </div>
+} @else if (error()) {
+  <p class="editor__error" role="alert">{{ error() }}</p>
+}

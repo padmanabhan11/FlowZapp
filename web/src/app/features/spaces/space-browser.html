@@ -11,8 +11,12 @@
     <p class="browser__error" role="alert">{{ error() }}</p>
   }
 
+  <div class="browser__filters">
+    <p-select [options]="stateOptions" optionLabel="label" optionValue="value" [ngModel]="stateFilter()" (ngModelChange)="setStateFilter($event)" placeholder="All states" [showClear]="true" aria-label="Filter by state" />
+  </div>
+
   <div class="browser__list document-surface">
-    @if (children().length === 0) {
+    @if (children().length === 0 && documents().length === 0) {
       <p class="browser__empty">Nothing here yet. Record a process, or create a document.</p>
     }
     @for (f of children(); track f.id) {
@@ -35,9 +39,22 @@
         }
       </div>
     }
+    @for (d of documents(); track d.id) {
+      <div class="browser__row browser__row--doc">
+        <a class="browser__doc" [routerLink]="['/d', d.id, 'edit']">{{ d.title }}</a>
+        <span class="state-pill state-pill--{{ d.state }}">{{ stateLabel(d.state) }}</span>
+        <span class="browser__meta">{{ d.owner?.name ?? '—' }}</span>
+        <span class="browser__meta control-value">{{ d.updated_at | date: 'd MMM y' }}</span>
+      </div>
+    }
   </div>
 
   @if (canEdit()) {
+    <form class="browser__new" (ngSubmit)="createDocument()">
+      <input pInputText name="doctitle" [ngModel]="newDocTitle()" (ngModelChange)="newDocTitle.set($event)" placeholder="New document title" aria-label="New document title" />
+      <p-select [options]="templates()" optionLabel="name" optionValue="id" [ngModel]="newDocTemplate()" (ngModelChange)="newDocTemplate.set($event)" aria-label="Template" />
+      <button pButton type="submit" [disabled]="!newDocTitle().trim()">Create document</button>
+    </form>
     <form class="browser__new" (ngSubmit)="createFolder()">
       <input pInputText name="folder" [ngModel]="newName()" (ngModelChange)="newName.set($event)" placeholder="New folder name" aria-label="New folder name" />
       <button pButton type="submit" [outlined]="true" [disabled]="!newName().trim()">Create folder</button>

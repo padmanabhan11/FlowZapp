@@ -70,5 +70,9 @@ they are the tenancy boundary.
 | `app/Providers/AuthServiceProvider.php` | `workspace-admin/approver/editor` gates from the role ResolveWorkspace stores on the request |
 | `app/Policies/SpacePolicy.php` | space-level access: view/edit/approve/manage, default deny, workspace admins see all (A5) |
 | `Http/Controllers/Spaces/{Space,Folder}Controller.php` | A4: spaces CRUD + members (S19 source column), folder tree with depth ≤ 5, move re-parents the subtree, delete requires a contents strategy (FR-204) |
-| `tests/Feature/{Auth,Workspaces,Spaces}/*` | feature tests for all of the above |
+| `app/Documents/{Content,Templates}.php`, `Observers/DocumentObserver.php` | structured-JSON content model + validation rules, built-in templates, body_text flattening (doc 04) |
+| `Models/{Document,DocumentVersion,DocumentStep}.php`, migration `000400` | working copy vs approved version; steps as rows with the `'0'` working sentinel |
+| `Policies/DocumentPolicy.php` | drafts: author/owner/approvers; archived: editors+; else space viewers (14 §4) |
+| `Http/Controllers/Documents/{Document,Step}Controller.php` | B1–B3, B5: CRUD, published view, autosave with `expected_updated_at` → 409 (FR-210), approved edit → draft revision (FR-408), steps add/edit/reorder/delete with contiguous numbering |
+| `tests/Feature/{Auth,Workspaces,Spaces,Documents}/*` | feature tests for all of the above |
 | `pint.json`, `phpstan.neon` | code style and static analysis config |

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Spaces;
 
 use App\Audit\Audit;
 use App\Http\Controllers\Controller;
+use App\Models\Document;
 use App\Models\Folder;
 use App\Models\Space;
 use Illuminate\Http\JsonResponse;
@@ -17,8 +18,8 @@ use Illuminate\Validation\Rule;
 /**
  * Folders (F3): nestable to depth 5 inside a space. Moving a folder moves its
  * subtree and recomputes depth. Deleting requires an explicit contents
- * strategy — never silent data loss (FR-204). Documents arrive in Epic B;
- * until then the strategies apply to child folders.
+ * strategy — never silent data loss (FR-204): move re-parents child folders
+ * and documents to the target; archive archives the documents in the subtree.
  */
 final class FolderController extends Controller
 {
@@ -132,9 +133,11 @@ final class FolderController extends Controller
                     abort_if($targetDepth + $this->subtreeHeight($child) > Folder::MAX_DEPTH, 422, 'Moving the contents would exceed the maximum folder depth.');
                     $this->reparent($child, $targetId, $targetDepth);
                 }
-                // Documents: moved to target in Epic B (documents.folder_id).
+                Document::query()->where('folder_id', $folder->id)->update(['folder_id' => $targetId]);
             } else {
-                // archive: child folders are deleted (cascade); documents will be archived (state) in Epic B.
+                // archive: documents in the subtree are archived (state) and detached; child folders cascade.
+                $ids = $this->descendants($folder)->pluck('id')->push($folder->id);
+                Document::query()->whereIn('folder_id', $ids)->update(['state' => 'archived', 'folder_id' => null]);
             }
             Audit::record('folder.deleted', 'folder', $folder->id, ['strategy' => $data['strategy'], 'name' => $folder->name]);
             $folder->delete();

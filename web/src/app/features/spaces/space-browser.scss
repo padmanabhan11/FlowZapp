@@ -7,5 +7,8 @@
   &__empty { padding: 24px; color: var(--ink-soft); margin: 0; }
   &__row { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--line); &:last-child { border-bottom: 0; } }
   &__folder { flex: 1; text-decoration: none; }
+  &__doc { flex: 1; text-decoration: none; font-weight: 500; }
+  &__meta { color: var(--ink-soft); font-size: 0.9rem; min-width: 90px; }
+  &__filters { display: flex; gap: 8px; margin-bottom: 8px; }
   &__new { display: flex; gap: 8px; margin-top: 12px; input { flex: 1; max-width: 360px; } }
 }

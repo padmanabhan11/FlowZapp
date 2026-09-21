@@ -1,9 +1,12 @@
 import { Component, OnChanges, computed, inject, input, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { SelectModule } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
-import { Folder, Space } from '../../core/api.types';
+import { DocumentSummary, Folder, Space, Template } from '../../core/api.types';
+import { DocumentApi } from '../../core/document.api';
 import { SessionStore } from '../../core/session.store';
 import { SpaceApi } from '../../core/workspace.api';
 
@@ -14,13 +17,15 @@ import { SpaceApi } from '../../core/workspace.api';
  */
 @Component({
   selector: 'app-space-browser',
-  imports: [FormsModule, ButtonModule, InputTextModule, RouterLink],
+  imports: [DatePipe, FormsModule, ButtonModule, InputTextModule, SelectModule, RouterLink],
   templateUrl: './space-browser.html',
   styleUrl: './space-browser.scss',
 })
 export class SpaceBrowser implements OnChanges {
   private readonly api = inject(SpaceApi);
   private readonly session = inject(SessionStore);
+  private readonly docs = inject(DocumentApi);
+  private readonly router = inject(Router);
 
   readonly spaceId = input.required<string>();
   readonly folderId = input<string | null>(null);
@@ -28,6 +33,17 @@ export class SpaceBrowser implements OnChanges {
   readonly space = signal<Space | null>(null);
   readonly tree = signal<Folder[]>([]);
   readonly error = signal<string | null>(null);
+  readonly documents = signal<DocumentSummary[]>([]);
+  readonly templates = signal<Template[]>([]);
+  readonly newDocTitle = signal('');
+  readonly newDocTemplate = signal<string>('blank-sop');
+  readonly stateFilter = signal<string>('');
+  readonly stateOptions = [
+    { label: 'Draft', value: 'draft' },
+    { label: 'In review', value: 'in_review' },
+    { label: 'Approved', value: 'approved' },
+    { label: 'Archived', value: 'archived' },
+  ];
   readonly newName = signal('');
   readonly renaming = signal<{ id: string; name: string } | null>(null);
   readonly canEdit = computed(() => ['admin', 'approver', 'editor'].includes(this.session.current()?.role ?? ''));
@@ -46,19 +62,56 @@ export class SpaceBrowser implements OnChanges {
   });
   readonly children = computed<Folder[]>(() => (this.current() ? (this.current()!.children ?? []) : this.tree()));
 
+  private lastFolder: string | null | undefined = undefined;
+
   ngOnChanges(): void {
     if (this.spaceId() !== this.lastLoaded) {
       this.lastLoaded = this.spaceId();
       void this.load();
     }
+    if (this.folderId() !== this.lastFolder) {
+      this.lastFolder = this.folderId();
+      void this.loadDocuments();
+    }
+  }
+
+  async loadDocuments(): Promise<void> {
+    try {
+      this.documents.set(await this.docs.list({ space_id: this.spaceId(), folder_id: this.folderId() ?? undefined, state: this.stateFilter() || undefined }));
+    } catch {
+      this.documents.set([]);
+    }
+  }
+
+  setStateFilter(v: string): void {
+    this.stateFilter.set(v);
+    void this.loadDocuments();
+  }
+
+  async createDocument(): Promise<void> {
+    const title = this.newDocTitle().trim();
+    if (!title) return;
+    try {
+      const d = await this.docs.create({ space_id: this.spaceId(), folder_id: this.folderId(), title, template_id: this.newDocTemplate() });
+      this.newDocTitle.set('');
+      await this.router.navigate(['/d', d.id, 'edit']);
+    } catch {
+      this.error.set('The document could not be created.');
+    }
+  }
+
+  stateLabel(state: string): string {
+    return { draft: 'Draft', in_review: 'In review', approved: 'Approved', archived: 'Archived' }[state] ?? state;
   }
 
   async load(): Promise<void> {
     this.error.set(null);
     try {
-      const [space, tree] = await Promise.all([this.api.get(this.spaceId()), this.api.folders(this.spaceId())]);
+      const [space, tree, templates] = await Promise.all([this.api.get(this.spaceId()), this.api.folders(this.spaceId()), this.docs.templates()]);
       this.space.set(space);
       this.tree.set(tree);
+      this.templates.set(templates);
+      await this.loadDocuments();
     } catch {
       this.error.set('This space could not be loaded.');
     }
