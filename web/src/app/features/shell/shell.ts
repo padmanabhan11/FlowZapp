@@ -8,6 +8,7 @@ import { Space } from '../../core/api.types';
 import { SessionStore } from '../../core/session.store';
 import { SpaceApi } from '../../core/workspace.api';
 import { WorkspaceStore } from '../../core/workspace.store';
+import { LimitNotice } from './limit-notice';
 import { Notifications } from './notifications';
 
 /**
@@ -26,6 +27,7 @@ import { Notifications } from './notifications';
     InputTextModule,
     SelectModule,
     Notifications,
+    LimitNotice,
   ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',

@@ -1,0 +1,128 @@
+<section class="adm">
+  <header class="adm__head">
+    <h1>Billing &amp; usage</h1>
+    <a routerLink="/admin/members" class="adm__link">Members</a>
+  </header>
+  @if (error()) {
+    <p class="adm__error" role="alert">{{ error() }}</p>
+  }
+
+  @if (usage(); as u) {
+    <div class="bill__plan document-surface">
+      <div>
+        <p class="bill__tier">
+          {{ planNames[u.plan] }} plan
+          <span class="bill__price control-value">{{ prices[u.plan] }}</span>
+        </p>
+        <p class="adm__hint">
+          Usage period resets
+          <span class="control-value">{{ u.renews_at | date: 'mediumDate' }}</span
+          >.
+        </p>
+      </div>
+      <div class="bill__actions">
+        <button
+          pButton
+          type="button"
+          size="small"
+          [outlined]="true"
+          (click)="compare.set(!compare())"
+        >
+          {{ compare() ? 'Hide plans' : 'Compare plans' }}
+        </button>
+        <button pButton type="button" size="small" (click)="changePlan()">Change plan</button>
+      </div>
+    </div>
+    @if (portalMissing()) {
+      <p class="adm__notice" role="status">
+        Billing is not connected yet. Plan changes are handled by FlowZapp support for now.
+      </p>
+    }
+
+    @for (o of over(); track o.key) {
+      <p class="bill__over" role="status">
+        You have used {{ u.counters[o.key].used | number: '1.0-1' }} of {{ u.counters[o.key].max }}
+        {{ o.label.toLowerCase() }}
+        @if (o.period === 'month') {
+          this month
+        }
+        @if (o.period === 'day') {
+          today
+        }
+        .
+        @if (o.key === 'seats') {
+          Remove a member or add seats to invite more.
+        } @else {
+          Upgrade to continue.
+        }
+      </p>
+    }
+
+    <div class="bill__usage document-surface">
+      @for (r of rows; track r.key) {
+        <div class="bill__row">
+          <span class="bill__label"
+            >{{ r.label }}
+            @if (r.period === 'month') {
+              <span class="adm__hint"> this month</span>
+            }
+            @if (r.period === 'day') {
+              <span class="adm__hint"> today</span>
+            }
+          </span>
+          @if (u.counters[r.key].unlimited) {
+            <span class="control-value"
+              >{{ u.counters[r.key].used | number: '1.0-1' }} · unlimited</span
+            >
+            <span></span>
+          } @else if (u.counters[r.key].max === 0) {
+            <span class="control-value">Not included in {{ planNames[u.plan] }}</span>
+            <span></span>
+          } @else {
+            <span class="control-value"
+              >{{ u.counters[r.key].used | number: '1.0-1' }} / {{ u.counters[r.key].max }}</span
+            >
+            <span
+              class="bill__bar"
+              role="progressbar"
+              [attr.aria-valuenow]="pct(r.key)"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              [attr.aria-label]="r.label"
+              ><span class="bill__fill" [style.width.%]="pct(r.key)"></span
+            ></span>
+          }
+        </div>
+      }
+    </div>
+
+    @if (compare()) {
+      <div class="bill__compare document-surface">
+        <div class="bill__crow bill__crow--head">
+          <span>Limit</span>
+          @for (p of plans; track p) {
+            <span
+              >{{ planNames[p] }}
+              @if (p === u.plan) {
+                <span class="adm__hint"> (current)</span>
+              }
+            </span>
+          }
+        </div>
+        @for (r of rows; track r.key) {
+          <div class="bill__crow">
+            <span>{{ r.label }}</span>
+            @for (p of plans; track p) {
+              <span class="control-value">{{ limitText(u.plans[p][r.key], r.key) }}</span>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <p class="adm__lead">
+      Free is capped on documents and monthly generations, not on features: recording, generation,
+      approval and search all work on every plan. The assistant is part of Team.
+    </p>
+  }
+</section>

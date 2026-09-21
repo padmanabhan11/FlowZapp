@@ -35,7 +35,7 @@ final class RetrievalTest extends TestCase
     {
         parent::setUp();
         Notification::fake();
-        [$this->ws, $this->admin] = $this->makeWorkspace('acme');
+        [$this->ws, $this->admin] = $this->makeWorkspace('acme', 'team');   // chat is Team-only (pricing decision)
         $this->sid = app(CurrentWorkspace::class)->runAs($this->ws->id, fn () => Space::query()->firstOrFail()->id);
         $this->approver = $this->addMember($this->ws, 'ap@example.test', 'approver');
         app(CurrentWorkspace::class)->runAs($this->ws->id, fn () => SpaceMember::create(['space_id' => $this->sid, 'user_id' => $this->approver->id, 'role' => 'approver']));

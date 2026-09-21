@@ -12,6 +12,7 @@ use App\Http\Controllers\Documents\StepController;
 use App\Http\Controllers\Governance\ApprovalController;
 use App\Http\Controllers\Media\AssetController;
 use App\Http\Controllers\Recordings\RecordingController;
+use App\Http\Controllers\Billing\BillingController;
 use App\Http\Controllers\Handbook\AcknowledgementController;
 use App\Http\Controllers\Handbook\HandbookController;
 use App\Http\Controllers\Retrieval\ChatController;
@@ -128,6 +129,9 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/chat/sessions/{id}/messages', [ChatController::class, 'ask']);
             Route::post('/chat/messages/{id}/rating', [ChatController::class, 'rate']);
             Route::get('/analytics/knowledge-gaps', [ChatController::class, 'gaps']);
+
+            Route::get('/usage', [BillingController::class, 'usage']);
+            Route::get('/billing/portal', [BillingController::class, 'portal']);
 
             Route::get('/handbook', [HandbookController::class, 'index']);
             Route::put('/handbook/order', [HandbookController::class, 'reorder']);

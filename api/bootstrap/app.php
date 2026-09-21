@@ -41,7 +41,10 @@ return Application::configure(basePath: dirname(__DIR__))
                     // Do not leak existence: a tenant-scoped miss is indistinguishable from a permission miss.
                     return response()->json(['error' => ['code' => 'forbidden', 'message' => 'Not permitted.']], 403);
                 }
-                $codes = [400 => 'bad_request', 403 => 'forbidden', 404 => 'not_found', 409 => 'conflict', 422 => 'unprocessable', 429 => 'too_many_requests'];
+                if ($e instanceof \App\Billing\PlanLimitExceeded) {
+                    return response()->json(['error' => ['code' => 'plan_limit_exceeded', 'message' => $e->getMessage(), 'details' => $e->details()]], 429);
+                }
+                $codes = [400 => 'bad_request', 402 => 'plan_required', 403 => 'forbidden', 404 => 'not_found', 409 => 'conflict', 422 => 'unprocessable', 429 => 'too_many_requests'];
                 return response()->json(['error' => ['code' => $codes[$e->getStatusCode()] ?? 'error', 'message' => $e->getMessage() ?: 'Request failed.']], $e->getStatusCode());
             }
         });

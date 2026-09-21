@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Recordings;
 
 use App\Audit\Audit;
 use App\Billing\PlanLimits;
+use App\Billing\Usage;
 use App\Http\Controllers\Controller;
 use App\Jobs\Pipeline\TranscribeRecording;
 use App\Media\MediaStorage;
@@ -82,6 +83,7 @@ final class RecordingController extends Controller
         $rec = Recording::query()->findOrFail($data['recording_id']);
         $this->authorize('manage', $rec);
         abort_unless($rec->state === 'pending_upload', 409, 'This recording has already been registered.');
+        app(Usage::class)->assert('sop_generations');   // every completed upload starts one generation (FR-901)
 
         $this->storage->completeMultipartUpload($rec->storage_key, (string) $rec->upload_id, $data['parts']);
         $rec->forceFill([
@@ -161,6 +163,7 @@ final class RecordingController extends Controller
         $this->authorize('manage', $rec);
         abort_if($rec->state === 'pending_upload' || $rec->inFlight(), 409, 'The recording is still being processed.');
 
+        app(Usage::class)->assert('sop_generations');
         $rec->forceFill(['state' => 'uploaded', 'failed_stage' => null, 'failure_reason' => null])->save();
         // Regeneration reuses the transcript when one exists (Epic D); a fresh input hash keeps it distinct from the first run.
         TranscribeRecording::dispatch($rec->workspace_id, $rec->id, 'regen-'.now()->timestamp);

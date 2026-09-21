@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Retrieval;
 
 use App\Audit\Audit;
+use App\Billing\Usage;
 use App\Http\Controllers\Controller;
 use App\Models\ChatMessage;
 use App\Models\ChatSession;
@@ -23,7 +24,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 final class ChatController extends Controller
 {
-    public function __construct(private readonly Retriever $retriever, private readonly Answerer $answerer) {}
+    public function __construct(private readonly Retriever $retriever, private readonly Answerer $answerer, private readonly Usage $usage) {}
 
     /** POST /v1/chat/sessions  body { scope_document_id?, title? } */
     public function createSession(Request $request): JsonResponse
@@ -58,6 +59,7 @@ final class ChatController extends Controller
     {
         $s = $this->own($request, $id);
         $data = $request->validate(['content' => ['required', 'string', 'min:1', 'max:2000']]);
+        $this->usage->assert('chat_queries_per_day');   // Team-only (402) and the daily cap (429)
         $question = trim($data['content']);
         $started = microtime(true);
 

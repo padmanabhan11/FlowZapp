@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Documents;
 
 use App\Access\Access;
 use App\Audit\Audit;
+use App\Billing\Usage;
 use App\Documents\Content;
 use App\Documents\Templates;
 use App\Http\Controllers\Controller;
@@ -100,6 +101,7 @@ final class DocumentController extends Controller
         ]);
         $space = Space::query()->findOrFail($data['space_id']);
         $this->authorize('create', [Document::class, $space]);
+        app(Usage::class)->assert('documents');
         if (! empty($data['folder_id'])) {
             Folder::query()->where('space_id', $space->id)->findOrFail($data['folder_id']);
         }
