@@ -1,0 +1,209 @@
+.be {
+  display: grid;
+  gap: 4px;
+  margin: 16px 0;
+  &__block {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 4px;
+    position: relative;
+    &:hover .be__gutter,
+    &:focus-within .be__gutter {
+      opacity: 1;
+    }
+  }
+  &__gutter {
+    display: flex;
+    gap: 0;
+    opacity: 0;
+    transition: opacity 0.1s;
+    align-items: flex-start;
+    padding-top: 4px;
+  }
+  &__g {
+    background: none;
+    border: 0;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 2px 4px;
+    font-size: 0.8rem;
+    &:hover {
+      color: var(--ink);
+    }
+    &:disabled {
+      color: var(--line);
+      cursor: default;
+    }
+  }
+  &__body {
+    position: relative;
+    min-width: 0;
+  }
+  &__row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px;
+    align-items: center;
+    &--top {
+      align-items: start;
+    }
+  }
+  &__mini {
+    font: inherit;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control);
+    background: var(--paper);
+    padding: 2px 4px;
+    &--lang {
+      width: 64px;
+      font-family: var(--font-mono);
+    }
+  }
+  textarea,
+  input {
+    font: inherit;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-control);
+    padding: 4px 6px;
+    width: 100%;
+    resize: none;
+    &:focus {
+      outline: none;
+      border-color: var(--select);
+      background: var(--paper);
+    }
+  }
+  &__heading {
+    font-weight: 600;
+    &--1 {
+      font-size: 1.4rem;
+    }
+    &--2 {
+      font-size: 1.15rem;
+    }
+    &--3 {
+      font-size: 1rem;
+    }
+  }
+  &__list {
+    padding-left: 24px;
+    background-image: radial-gradient(circle, var(--ink) 1.5px, transparent 2px);
+    background-size: 100% 1.5em;
+    background-position: 8px 0.55em;
+    background-repeat: repeat-y;
+    line-height: 1.5em;
+    &--num {
+      background-image: none;
+      padding-left: 24px;
+    }
+  }
+  &__check {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 2px;
+  }
+  &__check-boxes {
+    display: grid;
+    align-content: start;
+    padding-top: 6px;
+    input {
+      width: 14px;
+      height: 1.5em;
+      margin: 0;
+    }
+  }
+  &__callout {
+    border-left: 3px solid var(--line) !important;
+    border-radius: 0;
+    padding-left: 10px;
+    &--warning,
+    &--danger {
+      border-left-color: var(--ink) !important;
+    }
+  }
+  &__code {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    background: var(--rail);
+    white-space: pre;
+    overflow-x: auto;
+  }
+  &__table {
+    display: grid;
+    gap: 2px;
+  }
+  &__tr {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+  }
+  &__td {
+    flex: 1;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    &--head {
+      font-weight: 600;
+      background: var(--rail);
+    }
+  }
+  &__tbtns {
+    display: flex;
+    gap: 4px;
+  }
+  &__asset {
+    margin: 0;
+    color: var(--ink-soft);
+    border: 1px dashed var(--line);
+    padding: 6px 8px;
+  }
+  &__menu {
+    position: absolute;
+    left: 0;
+    top: 100%;
+    z-index: 10;
+    list-style: none;
+    margin: 2px 0 0;
+    padding: 4px 0;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    box-shadow: 0 4px 16px rgba(30, 39, 97, 0.12);
+    min-width: 260px;
+    li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 5px 10px;
+      cursor: pointer;
+      &.is-on,
+      &:hover {
+        background: var(--select);
+      }
+    }
+  }
+  &__menu-hint {
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+  &__add {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 4px;
+  }
+  &__hint {
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+  hr {
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin: 10px 0;
+    &:focus {
+      outline: 2px solid var(--select);
+    }
+  }
+}

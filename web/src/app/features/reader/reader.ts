@@ -33,15 +33,23 @@ export class Reader implements OnInit {
   readonly checked = signal<Set<string>>(new Set());
   readonly notPublished = signal(false);
   readonly error = signal<string | null>(null);
-  readonly canEdit = computed(() => ['admin', 'approver', 'editor'].includes(this.session.current()?.role ?? ''));
-  readonly hasDraft = computed(() => this.doc()?.state === 'draft' || this.doc()?.state === 'in_review');
+  readonly canEdit = computed(() =>
+    ['admin', 'approver', 'editor'].includes(this.session.current()?.role ?? ''),
+  );
+  readonly hasDraft = computed(
+    () => this.doc()?.state === 'draft' || this.doc()?.state === 'in_review',
+  );
 
   async ngOnInit(): Promise<void> {
     try {
       const d = await this.gov.published(this.id());
       this.doc.set(d);
       for (const s of d.steps) {
-        if (s.media_asset_id) this.assets.url(s.media_asset_id).then((u) => this.frames.update((f) => ({ ...f, [s.media_asset_id!]: u }))).catch(() => undefined);
+        if (s.media_asset_id)
+          this.assets
+            .url(s.media_asset_id)
+            .then((u) => this.frames.update((f) => ({ ...f, [s.media_asset_id!]: u })))
+            .catch(() => undefined);
       }
       this.scrollToCitation();
     } catch (e: unknown) {
@@ -79,6 +87,10 @@ export class Reader implements OnInit {
   }
 
   stateLabel(state: string): string {
-    return { draft: 'Draft', in_review: 'In review', approved: 'Approved', archived: 'Archived' }[state] ?? state;
+    return (
+      { draft: 'Draft', in_review: 'In review', approved: 'Approved', archived: 'Archived' }[
+        state
+      ] ?? state
+    );
   }
 }

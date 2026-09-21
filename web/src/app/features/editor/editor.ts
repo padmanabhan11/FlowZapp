@@ -6,7 +6,8 @@ import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
-import { DocumentFull, Step } from '../../core/api.types';
+import { Block, DocumentFull, Step } from '../../core/api.types';
+import { BlockEditor } from './block-editor';
 import { DocumentApi, GovernanceApi } from '../../core/document.api';
 import { Router } from '@angular/router';
 
@@ -18,13 +19,21 @@ import { Router } from '@angular/router';
  * offers reload, it never overwrites. Editing an approved document shows the
  * draft-revision banner (the most misunderstood behaviour in the product).
  *
- * Rich block editing (F2 block types, slash menu, paste fidelity) is B1 and
- * lands on top of this: blocks are stored already, edited here as plain
- * paragraphs.
+ * Free-form content is a structured block list (B1: every F2 block type,
+ * slash menu, paste fidelity) handled by BlockEditor; this component owns
+ * the fixed slots, steps and autosave.
  */
 @Component({
   selector: 'app-editor',
-  imports: [FormsModule, ButtonModule, CheckboxModule, InputTextModule, TextareaModule, RouterLink],
+  imports: [
+    FormsModule,
+    ButtonModule,
+    CheckboxModule,
+    InputTextModule,
+    TextareaModule,
+    RouterLink,
+    BlockEditor,
+  ],
   templateUrl: './editor.html',
   styleUrl: './editor.scss',
 })
@@ -103,29 +112,18 @@ export class Editor implements OnInit, OnDestroy {
 
   setPrereqs(v: string): void {
     this.prereqText.set(v);
-    const list = v.split('\n').map((s) => s.trim()).filter(Boolean);
+    const list = v
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
     this.doc.update((d) => (d ? { ...d, content: { ...d.content, prerequisites: list } } : d));
     this.pending.content = { ...(this.pending.content ?? {}), prerequisites: list };
     this.schedule();
   }
 
-  setBlockText(i: number, v: string): void {
-    this.doc.update((d) => {
-      if (!d) return d;
-      const blocks = d.content.blocks.map((b, k) => (k === i ? { ...b, text: v } : b));
-      this.pending.content = { ...(this.pending.content ?? {}), blocks };
-      return { ...d, content: { ...d.content, blocks } };
-    });
-    this.schedule();
-  }
-
-  addParagraph(): void {
-    this.doc.update((d) => {
-      if (!d) return d;
-      const blocks = [...d.content.blocks, { id: `b${Date.now().toString(36)}`, type: 'paragraph' as const, text: '' }];
-      this.pending.content = { ...(this.pending.content ?? {}), blocks };
-      return { ...d, content: { ...d.content, blocks } };
-    });
+  setBlocks(blocks: Block[]): void {
+    this.doc.update((d) => (d ? { ...d, content: { ...d.content, blocks } } : d));
+    this.pending.content = { ...(this.pending.content ?? {}), blocks };
     this.schedule();
   }
 
@@ -144,7 +142,11 @@ export class Editor implements OnInit, OnDestroy {
     try {
       const saved = await this.api.patch(d.id, body);
       // Keep local edits made while the request was in flight; take server metadata.
-      this.doc.update((cur) => (cur ? { ...cur, updated_at: saved.updated_at, state: saved.state, owner: saved.owner } : saved));
+      this.doc.update((cur) =>
+        cur
+          ? { ...cur, updated_at: saved.updated_at, state: saved.state, owner: saved.owner }
+          : saved,
+      );
       this.savedAt.set(new Date());
       this.dirty.set(Object.keys(this.pending).length > 0);
       if (this.dirty()) this.schedule();
@@ -212,7 +214,9 @@ export class Editor implements OnInit, OnDestroy {
     if (!d) return;
     try {
       await this.api.deleteStep(d.id, step.id);
-      this.steps.update((list) => list.filter((s) => s.id !== step.id).map((s, k) => ({ ...s, position: k + 1 })));
+      this.steps.update((list) =>
+        list.filter((s) => s.id !== step.id).map((s, k) => ({ ...s, position: k + 1 })),
+      );
       this.afterStepWrite();
     } catch {
       this.error.set('The step could not be removed.');
@@ -225,7 +229,9 @@ export class Editor implements OnInit, OnDestroy {
     if (!d) return;
     try {
       const fresh = await this.api.get(d.id);
-      this.doc.update((cur) => (cur ? { ...cur, updated_at: fresh.updated_at, state: fresh.state } : cur));
+      this.doc.update((cur) =>
+        cur ? { ...cur, updated_at: fresh.updated_at, state: fresh.state } : cur,
+      );
       this.savedAt.set(new Date());
     } catch {
       /* next autosave will surface a conflict if needed */
@@ -259,7 +265,11 @@ export class Editor implements OnInit, OnDestroy {
   }
 
   stateLabel(state: string): string {
-    return { draft: 'Draft', in_review: 'In review', approved: 'Approved', archived: 'Archived' }[state] ?? state;
+    return (
+      { draft: 'Draft', in_review: 'In review', approved: 'Approved', archived: 'Archived' }[
+        state
+      ] ?? state
+    );
   }
 
   savedLabel(): string {

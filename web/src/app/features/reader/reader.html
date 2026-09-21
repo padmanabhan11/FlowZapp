@@ -105,7 +105,13 @@
       <div class="reader__block" [id]="'block-' + b.id">
         @switch (b.type) {
           @case ('heading') {
-            <h2 class="reader__h">{{ b.text }}</h2>
+            @if (b.level === 1) {
+              <h2 class="reader__h reader__h--1">{{ b.text }}</h2>
+            } @else if (b.level === 3) {
+              <h4 class="reader__h reader__h--3">{{ b.text }}</h4>
+            } @else {
+              <h3 class="reader__h">{{ b.text }}</h3>
+            }
           }
           @case ('divider') {
             <hr />
@@ -124,10 +130,51 @@
               }
             </ol>
           }
+          @case ('checklist') {
+            <ul class="reader__checklist">
+              @for (i of b.items ?? []; track $index) {
+                <li>
+                  <span class="reader__box control-value">{{ $any(i).checked ? '☑' : '☐' }}</span>
+                  {{ $any(i).text ?? i }}
+                </li>
+              }
+            </ul>
+          }
           @case ('callout') {
             <aside class="reader__callout reader__callout--{{ b.variant ?? 'info' }}">
-              {{ b.text }}
+              <span class="reader__callout-k">{{
+                b.variant === 'danger' ? 'Danger' : b.variant === 'warning' ? 'Warning' : 'Note'
+              }}</span
+              >{{ b.text }}
             </aside>
+          }
+          @case ('code') {
+            <pre class="reader__code"><code>{{ b.text }}</code></pre>
+          }
+          @case ('table') {
+            <table class="reader__table">
+              @for (row of b.rows ?? []; track $index; let r = $index) {
+                <tr>
+                  @for (cell of row; track $index) {
+                    @if (r === 0) {
+                      <th>{{ cell }}</th>
+                    } @else {
+                      <td>{{ cell }}</td>
+                    }
+                  }
+                </tr>
+              }
+            </table>
+          }
+          @case ('image') {
+            @if (b.asset_id && frames()[b.asset_id]) {
+              <img class="rs__frame" [src]="frames()[b.asset_id]" alt="" loading="lazy" />
+            }
+          }
+          @case ('link') {
+            <p>
+              <a [href]="b.text" rel="noopener" target="_blank">{{ b.text }}</a>
+            </p>
           }
           @default {
             <p>{{ b.text }}</p>
