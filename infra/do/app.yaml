@@ -98,7 +98,7 @@ jobs:
       repo: OWNER/FlowZapp
       branch: main
     build_command: composer install --no-dev --optimize-autoloader --no-interaction
-    run_command: php artisan migrate --force
+    run_command: php artisan migrate --force && php artisan vector:ensure-collection
 
 static_sites:
   - name: app

@@ -24,3 +24,4 @@
   &__note { margin: 4px 0 0; color: var(--ink-soft); font-size: 0.95rem; }
   &__frame { display: block; max-width: 100%; margin-top: 10px; border: 1px solid var(--line); }
 }
+.is-cited { box-shadow: inset 3px 0 0 var(--ink); background: var(--select); }

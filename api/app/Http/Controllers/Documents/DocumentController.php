@@ -209,6 +209,7 @@ final class DocumentController extends Controller
     {
         $doc = Document::query()->findOrFail($id);
         $this->authorize('delete', $doc);
+        \App\Retrieval\Deindex::document($doc->workspace_id, $doc->id);
         $doc->delete();
         Audit::record('document.deleted', 'document', $doc->id, ['title' => $doc->title]);
 
@@ -260,7 +261,7 @@ final class DocumentController extends Controller
         }
         $doc->fill(['space_id' => $targetSpaceId, 'folder_id' => $folderId])->save();
         Audit::record('document.moved', 'document', $doc->id, ['space_id' => $targetSpaceId, 'folder_id' => $folderId]);
-        // Retrieval chunks re-scoped on move once M3 lands (FR-615).
+        \App\Retrieval\Deindex::rescope($doc->workspace_id, $doc->id, $targetSpaceId, $folderId);
 
         return response()->json(['data' => $this->summary($doc)]);
     }

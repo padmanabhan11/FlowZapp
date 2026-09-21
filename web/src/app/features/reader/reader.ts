@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { PublishedDocument, Step } from '../../core/api.types';
 import { DocumentApi, GovernanceApi } from '../../core/document.api';
@@ -25,6 +25,7 @@ export class Reader implements OnInit {
   private readonly assets = inject(AssetApi);
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly id = input.required<string>();
   readonly doc = signal<PublishedDocument | null>(null);
@@ -42,6 +43,7 @@ export class Reader implements OnInit {
       for (const s of d.steps) {
         if (s.media_asset_id) this.assets.url(s.media_asset_id).then((u) => this.frames.update((f) => ({ ...f, [s.media_asset_id!]: u }))).catch(() => undefined);
       }
+      this.scrollToCitation();
     } catch (e: unknown) {
       const err = e as { status?: number };
       if (err.status === 409) {
@@ -52,6 +54,19 @@ export class Reader implements OnInit {
         this.error.set('This document could not be loaded.');
       }
     }
+  }
+
+  /** Citation deep links (S14/S15) arrive as #step-N / #section-x; the content renders after load, so scroll once it exists. */
+  private scrollToCitation(): void {
+    const fragment = this.route.snapshot.fragment;
+    if (!fragment) return;
+    setTimeout(() => {
+      const el = document.getElementById(fragment);
+      if (el) {
+        el.scrollIntoView({ block: 'start' });
+        el.classList.add('is-cited');
+      }
+    });
   }
 
   toggle(s: Step): void {

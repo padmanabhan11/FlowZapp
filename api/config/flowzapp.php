@@ -17,6 +17,15 @@ return [
     // 'claude' (default) or 'fake' for tests.
     'llm_driver' => env('LLM_DRIVER', 'claude'),
 
+    // Retrieval (decisions 21 Sep 2026): OpenAI text-embedding-3-small + Qdrant. 'fake' for tests.
+    'embeddings_driver' => env('EMBEDDINGS_DRIVER', 'openai'),
+    'vector_driver' => env('VECTOR_DRIVER', 'qdrant'),
+    'retrieval' => [
+        'top_k' => 20,
+        'keep' => 8,
+        'min_score' => (float) env('RETRIEVAL_MIN_SCORE', 0.25),   // below this the assistant refuses (FR-608)
+    ],
+
     'workspace_defaults' => [
         'self_approval' => false,
         'review_cadence_months' => null,

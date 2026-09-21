@@ -26,3 +26,6 @@
   &__chain { margin: 0; padding-left: 18px; li { padding: 4px 0; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; &.is-result { font-weight: 600; } } }
   &__level { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-soft); min-width: 72px; }
 }
+.adm__lead { color: var(--ink-soft); margin: 0 0 12px; }
+.adm__link { margin-left: auto; font-size: 0.9rem; }
+.adm__table--gaps .adm__row { grid-template-columns: 1fr 70px 180px auto; }

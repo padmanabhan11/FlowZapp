@@ -35,7 +35,10 @@ cd ../web && npm ci --legacy-peer-deps && npm start   # :4200, proxies /api and 
 
 `.env` keys that matter beyond the Laravel defaults: `FRONTEND_URL`, `SANCTUM_STATEFUL_DOMAINS`,
 `SESSION_DOMAIN`, `ANTHROPIC_API_KEY`, and for DigitalOcean `MYSQL_ATTR_SSL_CA`,
-`DO_SPACES_*`. `config/database.php` mysql: `utf8mb4` / `utf8mb4_0900_ai_ci`.
+`DO_SPACES_*`. Retrieval (M3): `OPENAI_API_KEY` + `EMBEDDINGS_DRIVER=openai`
+(text-embedding-3-small, 1536 dims), `VECTOR_DRIVER=qdrant` + `QDRANT_URL`/`QDRANT_API_KEY`/
+`QDRANT_COLLECTION` (self-hosted Qdrant on a droplet). Run `php artisan vector:ensure-collection`
+once per environment (the pre-deploy job does it after `migrate`). Tests use the fake drivers. `config/database.php` mysql: `utf8mb4` / `utf8mb4_0900_ai_ci`.
 
 ## Guards that never get skipped
 
@@ -57,6 +60,8 @@ cd ../web && npm ci --legacy-peer-deps && npm start   # :4200, proxies /api and 
 | `Http/Controllers/Spaces/` | spaces (visible-only list, members with role source), folders (depth ≤ 5, delete strategy) |
 | `Http/Controllers/Documents/` | documents (autosave with `expected_updated_at` → 409, approved edit → draft revision), steps |
 | `app/Documents/` | `Content` (structured JSON model + validation), `Templates` |
+| `app/Retrieval/` | `Chunker` (structured JSON → chunks with `section_ref`), `Embeddings`/`VectorStore` drivers (OpenAI + Qdrant, fakes for tests), `Retriever` (permission scope → vector + keyword → RRF → stale-chunk guard), `Answerer` (citations or refusal), `Deindex` |
+| `Http/Controllers/Retrieval/` | `POST /search` (S14), chat sessions/messages with SSE (S15), `analytics/knowledge-gaps` (S20) |
 | `app/Media/` | `MediaStorage` interface, `SpacesStorage` (presigned multipart, signed GET ≤ 15 min), `FakeMediaStorage` for tests (`MEDIA_DRIVER=fake`) |
 | `Http/Controllers/Recordings/` | upload-url → parts → register → pipeline; list/show/rename/playback-url/retry/generate/delete; plan minutes checked before bytes move |
 | `app/Jobs/Pipeline/` | `PipelineStage` base (idempotent via `pipeline_jobs.job_key`, retry with backoff, plain-language failure), `TranscribeRecording`, `SegmentRecording` (Epic D fills the rest) |

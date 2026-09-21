@@ -11,6 +11,14 @@ return [
 
     'openai' => [
         'key' => env('OPENAI_API_KEY'),
+        'embedding_model' => env('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
+        'embedding_dims' => (int) env('OPENAI_EMBEDDING_DIMS', 1536),
+    ],
+
+    'qdrant' => [
+        'url' => env('QDRANT_URL', 'http://localhost:6333'),
+        'key' => env('QDRANT_API_KEY'),
+        'collection' => env('QDRANT_COLLECTION', 'flowzapp'),
     ],
 
     'deepgram' => [

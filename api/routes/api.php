@@ -9,6 +9,8 @@ use App\Http\Controllers\Documents\StepController;
 use App\Http\Controllers\Governance\ApprovalController;
 use App\Http\Controllers\Media\AssetController;
 use App\Http\Controllers\Recordings\RecordingController;
+use App\Http\Controllers\Retrieval\ChatController;
+use App\Http\Controllers\Retrieval\SearchController;
 use App\Http\Controllers\Spaces\FolderController;
 use App\Http\Controllers\Spaces\SpaceController;
 use App\Http\Controllers\Workspaces\InviteController;
@@ -104,6 +106,14 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/recordings/{id}/generate', [RecordingController::class, 'generate']);
             Route::delete('/recordings/{id}', [RecordingController::class, 'destroy']);
             Route::get('/assets/{id}/url', [AssetController::class, 'url']);
+
+            Route::post('/search', [SearchController::class, 'search']);
+            Route::post('/chat/sessions', [ChatController::class, 'createSession']);
+            Route::get('/chat/sessions', [ChatController::class, 'sessions']);
+            Route::get('/chat/sessions/{id}/messages', [ChatController::class, 'messages']);
+            Route::post('/chat/sessions/{id}/messages', [ChatController::class, 'ask']);
+            Route::post('/chat/messages/{id}/rating', [ChatController::class, 'rate']);
+            Route::get('/analytics/knowledge-gaps', [ChatController::class, 'gaps']);
         });
     });
 });

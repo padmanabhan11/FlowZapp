@@ -1,0 +1,155 @@
+<div class="ask" [class.ask--scoped]="scopeDoc()">
+  <aside class="ask__rail" aria-label="Conversations">
+    <button pButton type="button" size="small" class="ask__new" (click)="newSession(null)">
+      New conversation
+    </button>
+    <ul class="ask__sessions">
+      @for (s of sessions(); track s.id) {
+        <li>
+          <button
+            type="button"
+            class="ask__session"
+            [class.is-active]="active()?.id === s.id"
+            (click)="open(s)"
+          >
+            <span class="ask__session-title">{{ s.title ?? 'New conversation' }}</span>
+            <span class="ask__session-when control-value">{{ s.updated_at | date: 'MMM d' }}</span>
+          </button>
+        </li>
+      }
+      @if (sessions().length === 0) {
+        <li class="ask__empty">No conversations yet.</li>
+      }
+    </ul>
+  </aside>
+
+  <section class="ask__main">
+    <div class="ask__thread" aria-live="polite">
+      @if (messages().length === 0 && !pending()) {
+        <div class="ask__intro document-surface">
+          <h1 class="ask__h">Ask about approved procedures</h1>
+          <p>
+            Answers come only from approved documents you can access, and every answer cites its
+            source. When nothing approved covers a question, the assistant says so instead of
+            guessing.
+          </p>
+        </div>
+      }
+      @for (m of messages(); track m.id) {
+        @if (m.role === 'user') {
+          <div class="msg msg--user">
+            <p class="msg__text">{{ m.content }}</p>
+          </div>
+        } @else if (m.refused) {
+          <div class="refusal document-surface" role="note">
+            <p class="refusal__h">No approved document covers this.</p>
+            <p class="refusal__p">{{ m.content }}</p>
+            <div class="refusal__actions">
+              @if (canRecord()) {
+                <a pButton size="small" routerLink="/recordings">Record it</a>
+              }
+              @if (requested().has(m.id)) {
+                <span class="refusal__noted">Noted as a knowledge gap for your admins.</span>
+              } @else {
+                <button pButton type="button" size="small" [outlined]="true" (click)="request(m)">
+                  Request this document
+                </button>
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="msg msg--assistant document-surface">
+            <p class="msg__text">{{ m.content }}</p>
+            @if (m.citations?.length) {
+              <div class="msg__cites">
+                @for (c of m.citations; track c.n) {
+                  <a
+                    class="cite"
+                    [routerLink]="['/d', c.document_id]"
+                    [fragment]="fragment(c)"
+                    [title]="c.heading_path ?? c.title"
+                    >[{{ c.n }}] {{ c.title }}
+                    @if (c.heading_path) {
+                      · {{ c.heading_path }}
+                    }
+                  </a>
+                }
+              </div>
+            }
+            <div class="msg__foot">
+              @if (m.latency_ms !== null) {
+                <span class="control-value">{{ m.latency_ms }} ms</span>
+              }
+              <span class="msg__rate">
+                <button
+                  type="button"
+                  class="rate"
+                  [class.is-on]="m.rated_helpful === true"
+                  (click)="rate(m, true)"
+                  aria-label="Helpful"
+                >
+                  Helpful
+                </button>
+                <button
+                  type="button"
+                  class="rate"
+                  [class.is-on]="m.rated_helpful === false"
+                  (click)="rate(m, false)"
+                  aria-label="Not helpful"
+                >
+                  Not helpful
+                </button>
+              </span>
+            </div>
+          </div>
+        }
+      }
+      @if (pending(); as p) {
+        <div class="msg msg--assistant msg--pending document-surface">
+          @if (p.content) {
+            <p class="msg__text">{{ p.content }}</p>
+          } @else {
+            <p class="msg__text msg__text--wait">
+              {{ p.citations.length ? 'Writing…' : 'Finding approved sources…' }}
+            </p>
+          }
+        </div>
+      }
+    </div>
+
+    @if (error(); as e) {
+      <p class="ask__error" role="alert">{{ e }}</p>
+    }
+
+    <form class="ask__composer" (ngSubmit)="send()">
+      <textarea
+        id="ask-input"
+        name="q"
+        rows="2"
+        [ngModel]="draft()"
+        (ngModelChange)="draft.set($event)"
+        (keydown)="onKey($event)"
+        [placeholder]="
+          scopeDoc()
+            ? 'Ask about “' + scopeDoc()!.title + '”'
+            : 'Ask a question about an approved procedure'
+        "
+        aria-label="Your question"
+      ></textarea>
+      <button pButton type="submit" [loading]="busy()" [disabled]="!draft().trim()">Ask</button>
+    </form>
+  </section>
+
+  @if (scopeDoc(); as d) {
+    <aside class="ask__scope" aria-label="Scoped to document">
+      <p class="ask__scope-h">Scoped to</p>
+      <a class="ask__scope-title" [routerLink]="['/d', d.id]">{{ d.title }}</a>
+      <p class="ask__scope-p">
+        Answers in this conversation use only this document’s approved version.
+      </p>
+      <button pButton type="button" size="small" [text]="true" (click)="clearScope()">
+        Ask across everything
+      </button>
+    </aside>
+  }
+</div>

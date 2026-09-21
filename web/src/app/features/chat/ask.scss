@@ -1,0 +1,212 @@
+.ask {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 16px;
+  height: calc(100vh - 96px);
+  min-height: 480px;
+  &--scoped {
+    grid-template-columns: 240px 1fr 240px;
+  }
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr !important;
+    height: auto;
+  }
+
+  &__rail {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 8px;
+    align-content: start;
+  }
+  &__sessions {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+  }
+  &__session {
+    display: grid;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 8px 10px;
+    cursor: pointer;
+    color: var(--ink);
+    &:hover {
+      background: var(--select);
+    }
+    &.is-active {
+      background: var(--paper);
+      box-shadow: inset 3px 0 0 var(--ink);
+    }
+  }
+  &__session-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  &__session-when {
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+  }
+  &__empty {
+    color: var(--ink-soft);
+    padding: 8px 10px;
+  }
+
+  &__main {
+    display: grid;
+    grid-template-rows: 1fr auto auto;
+    min-height: 0;
+  }
+  &__thread {
+    overflow: auto;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+    padding-bottom: 12px;
+  }
+  &__intro {
+    max-width: none;
+    padding: 20px 24px;
+    color: var(--ink-soft);
+  }
+  &__h {
+    margin: 0 0 6px;
+    font-size: 1.2rem;
+    color: var(--ink);
+  }
+  &__error {
+    color: var(--danger);
+    margin: 0 0 8px;
+  }
+  &__composer {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: end;
+    textarea {
+      font: inherit;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-control);
+      resize: vertical;
+    }
+  }
+
+  &__scope {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 14px;
+    align-self: start;
+    display: grid;
+    gap: 6px;
+  }
+  &__scope-h {
+    margin: 0;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+  }
+  &__scope-title {
+    font-weight: 600;
+  }
+  &__scope-p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+  }
+}
+.msg {
+  &--user {
+    justify-self: end;
+    max-width: 75%;
+    background: var(--select);
+    padding: 8px 12px;
+    border-radius: var(--radius-control);
+  }
+  &--assistant {
+    max-width: none;
+    padding: 14px 18px;
+    border-left: 3px solid var(--ink);
+  }
+  &--pending {
+    border-left-color: var(--line);
+  }
+  &__text {
+    margin: 0;
+    white-space: pre-wrap;
+    &--wait {
+      color: var(--ink-soft);
+    }
+  }
+  &__cites {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  &__foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+  &__rate {
+    display: flex;
+    gap: 6px;
+  }
+}
+.cite {
+  text-decoration: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 1px 8px;
+  font-size: 0.85rem;
+  background: var(--paper);
+  &:hover {
+    background: var(--select);
+  }
+}
+.rate {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 1px 8px;
+  cursor: pointer;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  &.is-on {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+}
+.refusal {
+  max-width: none;
+  padding: 14px 18px;
+  border-left: 3px solid var(--line);
+  &__h {
+    margin: 0 0 4px;
+    font-weight: 600;
+  }
+  &__p {
+    margin: 0 0 10px;
+    color: var(--ink-soft);
+  }
+  &__actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  &__noted {
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+  }
+}

@@ -6,7 +6,13 @@ export interface ApiError {
 }
 
 export interface Me {
-  user: { id: string; name: string; email: string; locale: string; avatar_path: string | null } | null;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    locale: string;
+    avatar_path: string | null;
+  } | null;
   workspaces: WorkspaceSummary[];
 }
 
@@ -52,8 +58,19 @@ export type DocType = 'sop' | 'policy' | 'handbook_page' | 'note';
 export type DocState = 'draft' | 'in_review' | 'approved' | 'archived';
 
 export type BlockType =
-  | 'paragraph' | 'heading' | 'bullet_list' | 'numbered_list' | 'checklist' | 'table'
-  | 'code' | 'callout' | 'image' | 'video' | 'file' | 'divider' | 'link';
+  | 'paragraph'
+  | 'heading'
+  | 'bullet_list'
+  | 'numbered_list'
+  | 'checklist'
+  | 'table'
+  | 'code'
+  | 'callout'
+  | 'image'
+  | 'video'
+  | 'file'
+  | 'divider'
+  | 'link';
 
 export interface Block {
   id: string;
@@ -121,7 +138,14 @@ export interface Template {
   description: string;
 }
 
-export type RecordingState = 'pending_upload' | 'uploaded' | 'transcribing' | 'segmenting' | 'generating' | 'draft_ready' | 'failed';
+export type RecordingState =
+  | 'pending_upload'
+  | 'uploaded'
+  | 'transcribing'
+  | 'segmenting'
+  | 'generating'
+  | 'draft_ready'
+  | 'failed';
 
 export interface Recording {
   id: string;
@@ -199,4 +223,58 @@ export interface ReviewPayload {
   content: Content;
   steps: Step[];
   blockers: string[];
+}
+
+// ---- Retrieval (M3: search, chat, knowledge gaps) ----
+
+export interface Citation {
+  n: number;
+  document_id: string;
+  version_id: string;
+  section_ref: string; // "step:3" | "section:purpose" | "block:<id>"
+  title: string;
+  heading_path: string | null;
+  score: number;
+}
+
+export interface SearchResult {
+  document_id: string;
+  title: string;
+  doc_type: DocType;
+  state: DocState;
+  snippet: string;
+  section_ref: string;
+  owner: { id: string; name: string } | null;
+  approved_at: string | null;
+  score: number;
+}
+
+export interface SearchResponse {
+  instant_answer: { text: string; citations: Citation[] } | null;
+  results: SearchResult[];
+}
+
+export interface ChatSessionMeta {
+  id: string;
+  title: string | null;
+  scope_document_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  citations: Citation[] | null;
+  refused: boolean;
+  latency_ms: number | null;
+  rated_helpful: boolean | null;
+  created_at: string;
+}
+
+export interface KnowledgeGap {
+  question: string;
+  count: number;
+  last_asked_at: string;
 }

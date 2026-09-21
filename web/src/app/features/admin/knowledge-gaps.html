@@ -1,0 +1,35 @@
+<section class="adm">
+  <header class="adm__head">
+    <h1>Knowledge gaps</h1>
+    <a routerLink="/admin/members" class="adm__link">Members</a>
+  </header>
+  <p class="adm__lead">
+    Questions the assistant could not answer from approved content, most frequent first. Each one is
+    a procedure worth recording.
+  </p>
+  @if (error()) {
+    <p class="adm__error" role="alert">{{ error() }}</p>
+  }
+  @if (!loading() && gaps().length === 0) {
+    <p class="adm__empty">
+      No gaps yet. When someone asks a question no approved document covers, it appears here.
+    </p>
+  }
+  @if (gaps().length) {
+    <div class="adm__table adm__table--gaps">
+      <div class="adm__row adm__row--head">
+        <span>Question</span><span>Asked</span><span>Last asked</span><span></span>
+      </div>
+      @for (g of gaps(); track g.question) {
+        <div class="adm__row">
+          <span>{{ g.question }}</span>
+          <span class="control-value">{{ g.count }}×</span>
+          <span class="control-value">{{ g.last_asked_at | date: 'medium' }}</span>
+          <span
+            ><a pButton size="small" [outlined]="true" routerLink="/recordings">Record it</a></span
+          >
+        </div>
+      }
+    </div>
+  }
+</section>

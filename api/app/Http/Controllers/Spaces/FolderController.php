@@ -137,6 +137,9 @@ final class FolderController extends Controller
             } else {
                 // archive: documents in the subtree are archived (state) and detached; child folders cascade.
                 $ids = $this->descendants($folder)->pluck('id')->push($folder->id);
+                foreach (Document::query()->whereIn('folder_id', $ids)->pluck('id') as $docId) {
+                    \App\Retrieval\Deindex::document($space->workspace_id, (string) $docId);
+                }
                 Document::query()->whereIn('folder_id', $ids)->update(['state' => 'archived', 'folder_id' => null]);
             }
             Audit::record('folder.deleted', 'folder', $folder->id, ['strategy' => $data['strategy'], 'name' => $folder->name]);

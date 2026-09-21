@@ -1,0 +1,103 @@
+<div class="search">
+  <form class="search__bar" (ngSubmit)="submit()" role="search">
+    <input
+      pInputText
+      id="search-q"
+      name="q"
+      [ngModel]="query()"
+      (ngModelChange)="query.set($event)"
+      placeholder="Search approved documents"
+      aria-label="Search"
+    />
+    <p-select
+      name="space"
+      [options]="spaces()"
+      optionLabel="name"
+      optionValue="id"
+      [ngModel]="spaceId()"
+      (ngModelChange)="spaceId.set($event); run()"
+      placeholder="All spaces"
+      [showClear]="true"
+      aria-label="Space"
+    />
+    <p-select
+      name="type"
+      [options]="docTypes"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="docType()"
+      (ngModelChange)="docType.set($event); run()"
+      aria-label="Document type"
+    />
+    <button pButton type="submit" [loading]="loading()">Search</button>
+  </form>
+
+  @if (error(); as e) {
+    <p class="search__error" role="alert">{{ e }}</p>
+  }
+
+  @if (result(); as r) {
+    @if (r.instant_answer; as ia) {
+      <section class="answer document-surface" aria-labelledby="instant-h">
+        <h2 id="instant-h" class="answer__h">Answer</h2>
+        <p class="answer__text">{{ ia.text }}</p>
+        <p class="answer__cites">
+          Sources:
+          @for (c of ia.citations; track c.n) {
+            <a class="cite" [routerLink]="['/d', c.document_id]" [fragment]="fragment(c)"
+              >[{{ c.n }}] {{ c.title }}
+              @if (c.heading_path) {
+                · {{ c.heading_path }}
+              }
+            </a>
+          }
+        </p>
+      </section>
+    }
+
+    @if (r.results.length === 0) {
+      <section class="zero document-surface">
+        <h2 class="zero__h">No approved document matches “{{ query() }}”.</h2>
+        <p class="zero__p">
+          Only approved content is searchable. Drafts and archived documents are never shown here.
+        </p>
+        <div class="zero__actions">
+          <a pButton [routerLink]="['/ask']" [queryParams]="{ q: query() }">Ask the assistant</a>
+          @if (canRecord()) {
+            <a pButton [outlined]="true" routerLink="/recordings">Record it</a>
+          }
+        </div>
+      </section>
+    } @else {
+      <p class="search__count">
+        {{ r.results.length }} document{{ r.results.length === 1 ? '' : 's' }}
+      </p>
+      <ol class="results">
+        @for (h of r.results; track h.document_id) {
+          <li class="hit document-surface">
+            <div class="hit__head">
+              <a class="hit__title" [routerLink]="['/d', h.document_id]" [fragment]="fragment(h)">{{
+                h.title
+              }}</a>
+              <span class="state-pill" [class]="'state-pill state-pill--' + h.state">Approved</span>
+            </div>
+            <p class="hit__snippet">{{ h.snippet }}</p>
+            <p class="hit__meta">
+              {{ typeLabel(h.doc_type) }}
+              @if (h.owner) {
+                · {{ h.owner.name }}
+              }
+              @if (h.approved_at) {
+                · approved
+                <span class="control-value">{{ h.approved_at | date: 'mediumDate' }}</span>
+              }
+              · <span class="control-value">{{ h.section_ref }}</span>
+            </p>
+          </li>
+        }
+      </ol>
+    }
+  } @else if (!loading()) {
+    <p class="search__hint">Type a few words to search approved documents. Questions go to Ask.</p>
+  }
+</div>

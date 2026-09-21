@@ -3,6 +3,7 @@
     <h1>Members &amp; roles</h1>
     <span class="adm__seats control-value">{{ used() }}@if (seats() !== null) { / {{ seats() }} } seats</span>
     <a pButton routerLink="/onboarding/invite" [outlined]="true" size="small">Invite</a>
+    <a routerLink="/admin/knowledge-gaps" class="adm__link">Knowledge gaps</a>
   </header>
   @if (error()) { <p class="adm__error" role="alert">{{ error() }}</p> }
 

@@ -116,6 +116,10 @@ final class CrossTenantIsolationTest extends TestCase
         $doc = \App\Models\Document::create(['space_id' => $space->id, 'title' => 'Doc', 'content' => \App\Documents\Content::empty(), 'created_by' => $user->id]);
         \App\Models\DocumentStep::create(['document_id' => $doc->id, 'position' => 1, 'instruction' => 'Do it']);
         \App\Models\DocumentVersion::create(['document_id' => $doc->id, 'version_number' => 1, 'title' => 'Doc', 'content' => $doc->content]);
+        $ver = \App\Models\DocumentVersion::query()->where('document_id', $doc->id)->firstOrFail();
+        \App\Models\DocumentChunk::create(['space_id' => $space->id, 'document_id' => $doc->id, 'version_id' => $ver->id, 'section_ref' => 'step:1', 'content' => 'Do it']);
+        $cs = \App\Models\ChatSession::create(['user_id' => $user->id]);
+        \App\Models\ChatMessage::create(['session_id' => $cs->id, 'role' => 'user', 'content' => 'hi']);
         \App\Models\Approval::create(['document_id' => $doc->id, 'requested_by' => $user->id, 'from_state' => 'draft', 'to_state' => 'in_review']);
         $rec = \App\Models\Recording::create(['space_id' => $space->id, 'uploaded_by' => $user->id, 'storage_key' => 'k/source.webm', 'state' => 'uploaded']);
         \App\Models\Transcript::create(['recording_id' => $rec->id, 'full_text' => 'hi', 'words' => []]);

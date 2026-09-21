@@ -15,7 +15,9 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Notifications\ChangesRequestedNotification;
 use App\Notifications\DocumentApprovedNotification;
+use App\Jobs\Pipeline\IndexDocument;
 use App\Notifications\ReviewRequestedNotification;
+use App\Retrieval\Deindex;
 use App\Tenancy\CurrentWorkspace;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -114,7 +116,7 @@ final class Workflow
             Document::query()->where('translation_of', $doc->id)->update(['translation_stale' => true]);   // I3
             Approval::create(['document_id' => $doc->id, 'requested_by' => $doc->submitted_by, 'reviewer_id' => $reviewer->id, 'from_state' => 'in_review', 'to_state' => 'approved', 'comment' => $changeSummary]);
             Audit::record('document.approved', 'document', $doc->id, ['version' => $number]);
-            // Stage 5 (chunk & embed) is dispatched here from M3: IndexDocument::dispatch($doc->workspace_id, $doc->id, $version->id).
+            IndexDocument::dispatch($doc->workspace_id, $doc->id, $version->id);   // stage 5, on approval only
             if ($doc->submitted_by && $doc->submitted_by !== $reviewer->id) {
                 User::query()->find($doc->submitted_by)?->notify(new DocumentApprovedNotification($doc->title, $number, $doc->id));
             }
@@ -148,6 +150,7 @@ final class Workflow
         return DB::transaction(function () use ($doc, $actor): Document {
             $from = $doc->state;
             $doc->forceFill(['state' => 'archived'])->save();
+            Deindex::document($doc->workspace_id, $doc->id);   // same transaction as the state change (FR-615)
             Approval::create(['document_id' => $doc->id, 'requested_by' => $actor->id, 'reviewer_id' => $actor->id, 'from_state' => $from, 'to_state' => 'archived']);
             Audit::record('document.archived', 'document', $doc->id);
 

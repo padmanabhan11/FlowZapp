@@ -14,6 +14,12 @@ use App\Pipeline\DeepgramTranscriber;
 use App\Pipeline\FakeTranscriber;
 use App\Pipeline\NullTranscriber;
 use App\Pipeline\WhisperTranscriber;
+use App\Retrieval\Embeddings;
+use App\Retrieval\FakeEmbeddings;
+use App\Retrieval\FakeVectorStore;
+use App\Retrieval\OpenAiEmbeddings;
+use App\Retrieval\QdrantStore;
+use App\Retrieval\VectorStore;
 use App\Pipeline\Transcriber;
 use Illuminate\Support\ServiceProvider;
 
@@ -33,6 +39,20 @@ final class MediaServiceProvider extends ServiceProvider
                 'deepgram' => new DeepgramTranscriber((string) config('services.deepgram.key')),
                 'fake' => new FakeTranscriber,
                 default => new NullTranscriber,
+            };
+        });
+
+        $this->app->singleton(Embeddings::class, function (): Embeddings {
+            return match ((string) config('flowzapp.embeddings_driver', 'openai')) {
+                'fake' => new FakeEmbeddings,
+                default => new OpenAiEmbeddings((string) config('services.openai.key'), (string) config('services.openai.embedding_model', 'text-embedding-3-small'), (int) config('services.openai.embedding_dims', 1536)),
+            };
+        });
+
+        $this->app->singleton(VectorStore::class, function (): VectorStore {
+            return match ((string) config('flowzapp.vector_driver', 'qdrant')) {
+                'fake' => new FakeVectorStore,
+                default => new QdrantStore((string) config('services.qdrant.url'), config('services.qdrant.key'), (string) config('services.qdrant.collection', 'flowzapp'), (int) config('services.openai.embedding_dims', 1536)),
             };
         });
 

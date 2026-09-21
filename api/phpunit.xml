@@ -30,6 +30,8 @@
         <env name="MEDIA_DRIVER" value="fake"/>
         <env name="TRANSCRIPTION_DRIVER" value="fake"/>
         <env name="LLM_DRIVER" value="fake"/>
+        <env name="EMBEDDINGS_DRIVER" value="fake"/>
+        <env name="VECTOR_DRIVER" value="fake"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
