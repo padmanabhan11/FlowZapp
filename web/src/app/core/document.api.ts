@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { Content, DocumentFull, DocumentSummary, Step, Template } from './api.types';
+import { Change, Content, DocumentFull, DocumentSummary, PublishedDocument, ReviewPayload, Step, Template, VersionMeta } from './api.types';
 import { SessionStore } from './session.store';
 
 export interface DocumentPatch {
@@ -67,5 +67,64 @@ export class DocumentApi {
   async deleteStep(id: string, stepId: string): Promise<void> {
     await this.session.ensureCsrf();
     await firstValueFrom(this.http.delete(`/api/v1/documents/${id}/steps/${stepId}`));
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class GovernanceApi {
+  private readonly http = inject(HttpClient);
+  private readonly session = inject(SessionStore);
+
+  async published(id: string): Promise<PublishedDocument> {
+    const res = await firstValueFrom(this.http.get<{ data: PublishedDocument }>(`/api/v1/documents/${id}/published`));
+    return res.data;
+  }
+
+  async submitCheck(id: string): Promise<string[]> {
+    const res = await firstValueFrom(this.http.get<{ data: { blockers: string[] } }>(`/api/v1/documents/${id}/submit-check`));
+    return res.data.blockers;
+  }
+
+  async submit(id: string): Promise<void> {
+    await this.session.ensureCsrf();
+    await firstValueFrom(this.http.post(`/api/v1/documents/${id}/submit`, {}));
+  }
+
+  async review(id: string): Promise<ReviewPayload> {
+    const res = await firstValueFrom(this.http.get<{ data: ReviewPayload }>(`/api/v1/documents/${id}/review`));
+    return res.data;
+  }
+
+  async approve(id: string, changeSummary: string | null, expectedUpdatedAt: string): Promise<{ version_number: number }> {
+    await this.session.ensureCsrf();
+    const res = await firstValueFrom(
+      this.http.post<{ data: { version_number: number } }>(`/api/v1/documents/${id}/approve`, { change_summary: changeSummary, expected_updated_at: expectedUpdatedAt }),
+    );
+    return res.data;
+  }
+
+  async requestChanges(id: string, comment: string): Promise<void> {
+    await this.session.ensureCsrf();
+    await firstValueFrom(this.http.post(`/api/v1/documents/${id}/request-changes`, { comment }));
+  }
+
+  async archive(id: string): Promise<void> {
+    await this.session.ensureCsrf();
+    await firstValueFrom(this.http.post(`/api/v1/documents/${id}/archive`, {}));
+  }
+
+  async versions(id: string): Promise<VersionMeta[]> {
+    const res = await firstValueFrom(this.http.get<{ data: VersionMeta[] }>(`/api/v1/documents/${id}/versions`));
+    return res.data;
+  }
+
+  async diff(id: string, from: string, to: string): Promise<Change[]> {
+    const res = await firstValueFrom(this.http.get<{ data: { changes: Change[] } }>(`/api/v1/documents/${id}/diff`, { params: { from, to } }));
+    return res.data.changes;
+  }
+
+  async restore(id: string, versionId: string): Promise<void> {
+    await this.session.ensureCsrf();
+    await firstValueFrom(this.http.post(`/api/v1/documents/${id}/versions/${versionId}/restore`, {}));
   }
 }

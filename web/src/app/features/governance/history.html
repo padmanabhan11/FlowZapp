@@ -1,0 +1,27 @@
+<section class="hist">
+  <header class="hist__head">
+    <a [routerLink]="['/d', id()]" class="hist__back">← Document</a>
+    <h1>Version history</h1>
+  </header>
+  @if (error()) { <p class="hist__error" role="alert">{{ error() }}</p> }
+  <div class="hist__grid">
+    <aside class="hist__list document-surface">
+      <button type="button" class="hist__v" [class.is-picked]="from() === 'working' || to() === 'working'" (click)="pick('working')">
+        <span class="control-value">working</span><span class="hist__meta">Current draft</span>
+      </button>
+      @for (v of versions(); track v.id) {
+        <button type="button" class="hist__v" [class.is-picked]="from() === v.id || to() === v.id" (click)="pick(v)">
+          <span class="control-value">v{{ v.version_number }}</span>
+          <span class="hist__meta">{{ v.approved_at | date: 'd MMM y HH:mm' }}@if (v.is_live) { · <strong>live</strong> }</span>
+          @if (v.change_summary) { <span class="hist__summary">{{ v.change_summary }}</span> }
+          @if (canEdit()) { <span class="hist__restore" (click)="restore(v); $event.stopPropagation()" role="button" tabindex="0" (keydown.enter)="restore(v)">Restore</span> }
+        </button>
+      }
+      @if (versions().length === 0) { <p class="hist__meta" style="padding: 12px">No approved versions yet.</p> }
+    </aside>
+    <div class="hist__diff document-surface">
+      <p class="hist__compare">Comparing <span class="control-value">{{ label(from()) }}</span> → <span class="control-value">{{ to() === 'pending' ? 'pick a second version' : label(to()) }}</span></p>
+      @if (changes(); as c) { <app-change-list [changes]="c" /> }
+    </div>
+  </div>
+</section>

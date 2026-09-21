@@ -23,7 +23,7 @@ class Document extends TenantModel
     public const WORKING = '0';
 
     protected $fillable = [
-        'space_id', 'folder_id', 'title', 'doc_type', 'state', 'owner_id', 'created_by', 'source_recording_id',
+        'space_id', 'folder_id', 'title', 'doc_type', 'state', 'owner_id', 'submitted_by', 'submitted_at', 'created_by', 'source_recording_id',
         'content', 'approved_version_id', 'requires_ack', 'review_due_at', 'language', 'translation_of', 'translation_stale',
     ];
 
@@ -34,6 +34,7 @@ class Document extends TenantModel
             'requires_ack' => 'boolean',
             'translation_stale' => 'boolean',
             'review_due_at' => 'datetime',
+            'submitted_at' => 'datetime',
         ];
     }
 
@@ -60,6 +61,11 @@ class Document extends TenantModel
     public function versions(): HasMany
     {
         return $this->hasMany(DocumentVersion::class)->orderByDesc('version_number');
+    }
+
+    public function approvals(): HasMany
+    {
+        return $this->hasMany(Approval::class)->orderBy('created_at');
     }
 
     /** Steps of the working copy, in order. */

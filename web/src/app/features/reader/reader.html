@@ -1,0 +1,72 @@
+@if (notPublished()) {
+  <section class="document-surface reader__empty"><p>Nothing has been published here yet.</p></section>
+} @else if (error()) {
+  <p class="reader__error" role="alert">{{ error() }}</p>
+} @else if (doc(); as d) {
+  <article class="reader document-surface">
+    <header class="control">
+      <div class="control__row">
+        <span class="state-pill state-pill--approved">Approved</span>
+        <span class="control-value">v{{ d.version_number }}</span>
+        @if (d.approved_at) { <span>Approved {{ d.approved_at | date: 'd MMM y' }}</span> }
+        @if (d.owner) { <span>Owner {{ d.owner.name }}</span> }
+        @if (d.review_due_at) { <span>Review due {{ d.review_due_at | date: 'MMM y' }}</span> }
+      </div>
+      <div class="control__actions">
+        @if (canEdit()) { <a pButton [routerLink]="['/d', d.id, 'edit']" [outlined]="true" size="small">Edit</a> }
+        <a pButton [routerLink]="['/d', d.id, 'history']" [text]="true" size="small">History</a>
+        <a pButton routerLink="/ask" [queryParams]="{ q: d.title }" [text]="true" size="small">Ask about this</a>
+      </div>
+    </header>
+    @if (d.state === 'archived') {
+      <div class="reader__banner">This document is archived and doesn't appear in answers.</div>
+    } @else if (hasDraft()) {
+      <div class="reader__banner">A newer draft is being edited. This is the approved version.</div>
+    }
+    <h1 class="reader__title">{{ d.title }}</h1>
+
+    @if (d.content.purpose) { <section class="reader__slot"><h2>Purpose</h2><p>{{ d.content.purpose }}</p></section> }
+    @if (d.content.scope) { <section class="reader__slot"><h2>Scope</h2><p>{{ d.content.scope }}</p></section> }
+    @if (d.content.prerequisites.length) {
+      <section class="reader__slot"><h2>Prerequisites</h2><ul>@for (p of d.content.prerequisites; track p) { <li>{{ p }}</li> }</ul></section>
+    }
+
+    @if (d.steps.length) {
+      <section class="reader__steps">
+        <h2>Steps</h2>
+        @for (s of d.steps; track s.id) {
+          <div class="rs" [id]="'step-' + s.position" [class.rs--critical]="s.is_critical">
+            <div class="rs__n">
+              @if (s.is_checkpoint) {
+                <input type="checkbox" [checked]="checked().has(s.id)" (change)="toggle(s)" [attr.aria-label]="'Checkpoint for step ' + s.position" />
+              }
+              <span class="control-value">{{ s.position }}</span>
+            </div>
+            <div class="rs__body">
+              <p class="rs__text">{{ s.instruction }}</p>
+              @if (s.is_critical) { <p class="rs__critical">Critical</p> }
+              @if (s.note) { <p class="rs__note">{{ s.note }}</p> }
+              @if (s.expected_result) { <p class="rs__note">Expected: {{ s.expected_result }}</p> }
+              @if (s.media_asset_id && frames()[s.media_asset_id]) {
+                <img class="rs__frame" [src]="frames()[s.media_asset_id]" [alt]="'Screenshot for step ' + s.position" loading="lazy" />
+              }
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+    @for (b of d.content.blocks; track b.id) {
+      @switch (b.type) {
+        @case ('heading') { <h2 class="reader__h">{{ b.text }}</h2> }
+        @case ('divider') { <hr /> }
+        @case ('bullet_list') { <ul>@for (i of b.items ?? []; track $index) { <li>{{ $any(i).text ?? i }}</li> }</ul> }
+        @case ('numbered_list') { <ol>@for (i of b.items ?? []; track $index) { <li>{{ $any(i).text ?? i }}</li> }</ol> }
+        @case ('callout') { <aside class="reader__callout reader__callout--{{ b.variant ?? 'info' }}">{{ b.text }}</aside> }
+        @default { <p>{{ b.text }}</p> }
+      }
+    }
+
+    @if (d.content.outcome) { <section class="reader__slot"><h2>Outcome</h2><p>{{ d.content.outcome }}</p></section> }
+  </article>
+}

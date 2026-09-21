@@ -1,0 +1,13 @@
+.hist {
+  &__head { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; h1 { margin: 0; font-size: 1.3rem; } }
+  &__back { color: var(--ink-soft); text-decoration: none; }
+  &__error { color: var(--danger); }
+  &__grid { display: grid; grid-template-columns: 280px 1fr; gap: 16px; align-items: start; @media (max-width: 900px) { grid-template-columns: 1fr; } }
+  &__list { max-width: none; display: grid; }
+  &__v { display: grid; gap: 2px; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 10px 14px; cursor: pointer; color: var(--ink); &:hover { background: var(--select); } &.is-picked { background: var(--select); box-shadow: inset 3px 0 0 var(--ink); } }
+  &__meta { color: var(--ink-soft); font-size: 0.85rem; }
+  &__summary { font-size: 0.9rem; }
+  &__restore { font-size: 0.85rem; text-decoration: underline; color: var(--ink); justify-self: start; }
+  &__diff { max-width: none; padding: 16px 20px; }
+  &__compare { margin: 0 0 8px; color: var(--ink-soft); }
+}

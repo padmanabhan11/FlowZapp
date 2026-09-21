@@ -7,7 +7,8 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { DocumentFull, Step } from '../../core/api.types';
-import { DocumentApi } from '../../core/document.api';
+import { DocumentApi, GovernanceApi } from '../../core/document.api';
+import { Router } from '@angular/router';
 
 /**
  * S8 — SOP editor (M0 core). 720px canvas; structural sections are fixed
@@ -29,6 +30,9 @@ import { DocumentApi } from '../../core/document.api';
 })
 export class Editor implements OnInit, OnDestroy {
   private readonly api = inject(DocumentApi);
+  private readonly gov = inject(GovernanceApi);
+  private readonly router = inject(Router);
+  readonly submitting = signal(false);
 
   readonly id = input.required<string>();
 
@@ -230,6 +234,28 @@ export class Editor implements OnInit, OnDestroy {
 
   reloadAfterConflict(): void {
     void this.load();
+  }
+
+  async submit(): Promise<void> {
+    const d = this.doc();
+    if (!d || this.submitting()) return;
+    if (this.dirty()) await this.flush();
+    this.submitting.set(true);
+    this.error.set(null);
+    try {
+      const blockers = await this.gov.submitCheck(d.id);
+      if (blockers.length) {
+        this.error.set('Cannot submit yet: ' + blockers.join('; ') + '.');
+        return;
+      }
+      await this.gov.submit(d.id);
+      await this.router.navigate(['/d', d.id, 'review']);
+    } catch (e: unknown) {
+      const err = e as { error?: { error?: { message?: string } } };
+      this.error.set(err.error?.error?.message ?? 'The document could not be submitted.');
+    } finally {
+      this.submitting.set(false);
+    }
   }
 
   stateLabel(state: string): string {

@@ -41,7 +41,7 @@
     }
     @for (d of documents(); track d.id) {
       <div class="browser__row browser__row--doc">
-        <a class="browser__doc" [routerLink]="['/d', d.id, 'edit']">{{ d.title }}</a>
+        <a class="browser__doc" [routerLink]="d.approved_version_id ? ['/d', d.id] : ['/d', d.id, 'edit']">{{ d.title }}</a>
         <span class="state-pill state-pill--{{ d.state }}">{{ stateLabel(d.state) }}</span>
         <span class="browser__meta">{{ d.owner?.name ?? '—' }}</span>
         <span class="browser__meta control-value">{{ d.updated_at | date: 'd MMM y' }}</span>

@@ -145,3 +145,58 @@ export interface UploadTargets {
   part_size: number;
   parts: { part_number: number; url: string }[];
 }
+
+export interface VersionMeta {
+  id: string;
+  version_number: number;
+  title: string;
+  change_summary: string | null;
+  authored_by: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+  is_live: boolean;
+}
+
+export interface PublishedDocument {
+  id: string;
+  title: string;
+  doc_type: DocType;
+  state: DocState;
+  version_number: number;
+  approved_at: string | null;
+  approved_by: string | null;
+  owner: { id: string; name: string } | null;
+  review_due_at: string | null;
+  content: Content;
+  steps: Step[];
+}
+
+export interface Change {
+  kind: 'added' | 'removed' | 'modified' | 'moved';
+  type: 'title' | 'section' | 'step' | 'block';
+  ref: string;
+  id?: string;
+  from: unknown;
+  to: unknown;
+  from_position?: number;
+  to_position?: number;
+  also_modified?: boolean;
+}
+
+export interface ReviewPayload {
+  id: string;
+  title: string;
+  state: DocState;
+  doc_type: DocType;
+  updated_at: string;
+  submitted_by: string | null;
+  submitted_at: string | null;
+  owner: { id: string; name: string } | null;
+  base_version: VersionMeta | null;
+  next_version_number: number;
+  changes: Change[] | null;
+  content: Content;
+  steps: Step[];
+  blockers: string[];
+}

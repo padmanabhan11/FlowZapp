@@ -43,6 +43,7 @@ final class SchemaConformanceTest extends TestCase
         'password_reset_tokens',
         'personal_access_tokens',  // Sanctum
         'sessions',
+        'notifications',           // Laravel database notifications; notifiable is a user (spans workspaces)
         'fulltext_stopwords',      // custom InnoDB stopword table (doc 04)
         'sqlite_sequence',         // test database only
     ];

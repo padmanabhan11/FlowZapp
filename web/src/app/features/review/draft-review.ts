@@ -4,7 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { DocumentFull, Recording, Step } from '../../core/api.types';
-import { DocumentApi } from '../../core/document.api';
+import { DocumentApi, GovernanceApi } from '../../core/document.api';
 import { AssetApi, RecordingApi } from '../../core/recording.api';
 
 /**
@@ -24,6 +24,7 @@ import { AssetApi, RecordingApi } from '../../core/recording.api';
 export class DraftReview implements OnInit, OnDestroy {
   private readonly recApi = inject(RecordingApi);
   private readonly docApi = inject(DocumentApi);
+  private readonly gov = inject(GovernanceApi);
   private readonly assets = inject(AssetApi);
   private readonly router = inject(Router);
 
@@ -153,8 +154,11 @@ export class DraftReview implements OnInit, OnDestroy {
     if (!d || !this.allVerified()) return;
     this.submitting.set(true);
     try {
-      // Submit for approval lands with Epic E (POST /documents/{id}/submit); until then, open the editor.
-      await this.router.navigate(['/d', d.id, 'edit']);
+      await this.gov.submit(d.id);
+      await this.router.navigate(['/d', d.id, 'review']);
+    } catch (e: unknown) {
+      const err = e as { error?: { error?: { message?: string } } };
+      this.error.set(err.error?.error?.message ?? 'The draft could not be submitted.');
     } finally {
       this.submitting.set(false);
     }

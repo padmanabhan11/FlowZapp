@@ -142,7 +142,7 @@ final class DocumentController extends Controller
             'id' => $doc->id, 'title' => $v->title, 'doc_type' => $doc->doc_type, 'state' => $doc->state,
             'version_number' => $v->version_number, 'approved_at' => $v->approved_at, 'approved_by' => $v->approved_by,
             'owner' => $doc->owner?->only(['id', 'name']), 'review_due_at' => $doc->review_due_at,
-            'content' => $v->content,
+            'content' => array_diff_key($v->content ?? [], ['_steps' => 1]),
             'steps' => $v->steps()->get()->map(fn (DocumentStep $s) => $this->step($s)),
         ]]);
     }

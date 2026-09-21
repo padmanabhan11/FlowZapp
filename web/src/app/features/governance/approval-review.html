@@ -1,0 +1,59 @@
+@if (r(); as r) {
+  <section class="ar document-surface">
+    <header class="ar__head">
+      <div>
+        <h1 class="ar__title">{{ r.title }}</h1>
+        <p class="ar__meta">
+          <span class="state-pill state-pill--in_review">In review</span>
+          @if (r.submitted_at) { <span>Submitted {{ r.submitted_at | date: 'd MMM y HH:mm' }}</span> }
+          @if (r.owner) { <span>Owner {{ r.owner.name }}</span> }
+          @if (r.base_version) { <span>Comparing with <span class="control-value">v{{ r.base_version.version_number }}</span></span> } @else { <span>First version</span> }
+        </p>
+      </div>
+      @if (r.base_version) {
+        <div class="ar__toggle">
+          <button pButton type="button" size="small" [outlined]="view() !== 'diff'" (click)="view.set('diff')">Changes</button>
+          <button pButton type="button" size="small" [outlined]="view() !== 'full'" (click)="view.set('full')">Full document</button>
+        </div>
+      }
+    </header>
+
+    @if (error()) { <p class="ar__error" role="alert">{{ error() }} <button pButton type="button" [text]="true" size="small" (click)="load()">Reload</button></p> }
+    @if (done(); as msg) {
+      <div class="ar__done" role="status">{{ msg }} <a [routerLink]="['/d', r.id]">Open the published version</a></div>
+    } @else {
+      @if (r.state !== 'in_review') {
+        <p class="ar__meta">This document is not awaiting review (state: {{ r.state }}).</p>
+      }
+
+      @if (view() === 'diff' && r.changes) {
+        <app-change-list [changes]="r.changes" />
+      } @else {
+        <div class="ar__full">
+          @if (r.content.purpose) { <p><strong>Purpose.</strong> {{ r.content.purpose }}</p> }
+          @if (r.content.scope) { <p><strong>Scope.</strong> {{ r.content.scope }}</p> }
+          @if (r.content.prerequisites.length) { <p><strong>Prerequisites.</strong> {{ r.content.prerequisites.join(' · ') }}</p> }
+          <ol class="ar__steps">
+            @for (s of r.steps; track s.id) { <li [class.ar__critical]="s.is_critical">{{ s.instruction }}@if (s.note) { <small> — {{ s.note }}</small> }</li> }
+          </ol>
+          @if (r.content.outcome) { <p><strong>Outcome.</strong> {{ r.content.outcome }}</p> }
+        </div>
+      }
+
+      @if (r.blockers.length) {
+        <p class="ar__blockers">Cannot be approved yet: {{ r.blockers.join('; ') }}.</p>
+      }
+
+      <div class="ar__decide">
+        <label for="ar-comment">Comment <span class="ar__hint">(required to request changes)</span></label>
+        <textarea pTextarea id="ar-comment" rows="3" [ngModel]="comment()" (ngModelChange)="comment.set($event)"></textarea>
+        <p class="ar__consequence">Publishing as <span class="control-value">v{{ r.next_version_number }}</span> makes this the answer the assistant gives.</p>
+        <div class="ar__actions">
+          <button pButton type="button" [disabled]="busy() || r.state !== 'in_review' || r.blockers.length > 0" (click)="approve()">Approve and publish</button>
+          <button pButton type="button" [outlined]="true" [disabled]="busy() || comment().trim().length < 3 || r.state !== 'in_review'" (click)="requestChanges()">Request changes</button>
+          <a pButton [routerLink]="['/d', r.id, 'edit']" [text]="true">Cancel</a>
+        </div>
+      </div>
+    }
+  </section>
+}

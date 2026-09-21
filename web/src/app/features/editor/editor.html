@@ -7,7 +7,11 @@
         @if (saving()) { Saving… } @else if (dirty()) { Unsaved changes } @else { {{ savedLabel() }} }
       </span>
       <span class="editor__spacer"></span>
-      <button pButton type="button" [disabled]="submitBlockers().length > 0" [title]="submitBlockers().length ? 'Add ' + submitBlockers().join(', ') + ' before submitting' : ''">Submit for approval</button>
+      @if (d.state === 'in_review') {
+        <a pButton [routerLink]="['/d', d.id, 'review']" [outlined]="true">Awaiting approval</a>
+      } @else {
+        <button pButton type="button" [disabled]="submitBlockers().length > 0 || submitting()" [loading]="submitting()" (click)="submit()" [title]="submitBlockers().length ? 'Add ' + submitBlockers().join(', ') + ' before submitting' : ''">Submit for approval</button>
+      }
     </header>
 
     @if (submitBlockers().length) {

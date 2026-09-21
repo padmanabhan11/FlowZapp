@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Documents\DocumentController;
 use App\Http\Controllers\Documents\StepController;
+use App\Http\Controllers\Governance\ApprovalController;
 use App\Http\Controllers\Media\AssetController;
 use App\Http\Controllers\Recordings\RecordingController;
 use App\Http\Controllers\Spaces\FolderController;
@@ -69,6 +70,18 @@ Route::prefix('v1')->group(function (): void {
             Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);
             Route::post('/documents/{id}/duplicate', [DocumentController::class, 'duplicate']);
             Route::post('/documents/{id}/move', [DocumentController::class, 'move']);
+
+            Route::get('/documents/{id}/submit-check', [ApprovalController::class, 'submitCheck']);
+            Route::post('/documents/{id}/submit', [ApprovalController::class, 'submit']);
+            Route::post('/documents/{id}/approve', [ApprovalController::class, 'approve']);
+            Route::post('/documents/{id}/request-changes', [ApprovalController::class, 'requestChanges']);
+            Route::post('/documents/{id}/archive', [ApprovalController::class, 'archive']);
+            Route::get('/documents/{id}/approvals', [ApprovalController::class, 'history']);
+            Route::get('/documents/{id}/review', [ApprovalController::class, 'review']);
+            Route::get('/documents/{id}/versions', [ApprovalController::class, 'versions']);
+            Route::get('/documents/{id}/versions/{version_id}', [ApprovalController::class, 'version']);
+            Route::get('/documents/{id}/diff', [ApprovalController::class, 'diff']);
+            Route::post('/documents/{id}/versions/{version_id}/restore', [ApprovalController::class, 'restore']);
 
             Route::get('/documents/{id}/steps', [StepController::class, 'index']);
             Route::post('/documents/{id}/steps', [StepController::class, 'store']);
