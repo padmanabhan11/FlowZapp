@@ -60,7 +60,10 @@ cd ../web && npm ci --legacy-peer-deps && npm start   # :4200, proxies /api and 
 | `app/Media/` | `MediaStorage` interface, `SpacesStorage` (presigned multipart, signed GET ≤ 15 min), `FakeMediaStorage` for tests (`MEDIA_DRIVER=fake`) |
 | `Http/Controllers/Recordings/` | upload-url → parts → register → pipeline; list/show/rename/playback-url/retry/generate/delete; plan minutes checked before bytes move |
 | `app/Jobs/Pipeline/` | `PipelineStage` base (idempotent via `pipeline_jobs.job_key`, retry with backoff, plain-language failure), `TranscribeRecording`, `SegmentRecording` (Epic D fills the rest) |
-| `app/Pipeline/` | `Transcriber` driver interface; `NullTranscriber` until D0 picks a provider (`TRANSCRIPTION_DRIVER`) |
+| `app/Pipeline/` | `Transcriber` interface with `WhisperTranscriber`, `DeepgramTranscriber`, `FakeTranscriber`, `NullTranscriber` (`TRANSCRIPTION_DRIVER`); `Audio` FFmpeg helpers |
+| `app/Ai/` | `LlmDriver` interface, `ClaudeDriver` (Messages API), `FakeLlm` (`LLM_DRIVER=fake`), `Prompts` (segment + generate — re-run the spike before changing) |
+| `app/Jobs/Pipeline/` | stages 1–4: `TranscribeRecording` → `SegmentRecording` → `ExtractFrames` (continues without screenshots on failure) → `GenerateDraft` (new draft, steps bound to time ranges + frames, `verified_at` null); stage 5 embeds on approval (M3) |
+| `Dockerfile.worker` | worker-pipeline image with FFmpeg for App Platform |
 | `app/Policies/` | `SpacePolicy`, `DocumentPolicy` — default deny |
 | `app/Audit/`, `Models/AuditEntry.php` | append-only audit log |
 | `app/Billing/PlanLimits.php` | plan limits (doc 05 + 18 Sep pricing decision) |

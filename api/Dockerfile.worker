@@ -1,0 +1,17 @@
+# Pipeline worker (03 §5, §9): the PHP buildpack has no FFmpeg, so the
+# worker-pipeline component builds from this image.
+FROM php:8.3-cli-bookworm
+
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg git unzip libzip-dev libicu-dev \
+    && docker-php-ext-install pdo_mysql intl zip pcntl \
+    && pecl install redis && docker-php-ext-enable redis \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+WORKDIR /app
+COPY composer.json composer.lock* ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction
+COPY . .
+RUN composer dump-autoload --optimize --no-dev
+
+CMD ["php", "artisan", "queue:work", "redis", "--queue=pipeline", "--tries=3", "--timeout=3600", "--max-jobs=50"]

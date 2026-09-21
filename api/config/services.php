@@ -4,6 +4,20 @@ declare(strict_types=1);
 
 return [
 
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('CLAUDE_MODEL', 'claude-sonnet-4-5'),
+    ],
+
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+    ],
+
+    'deepgram' => [
+        'key' => env('DEEPGRAM_API_KEY'),
+    ],
+
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

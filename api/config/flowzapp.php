@@ -14,6 +14,9 @@ return [
     // Speech-to-text driver: 'null' until the D0 evaluation picks one ('whisper' | 'deepgram').
     'transcription_driver' => env('TRANSCRIPTION_DRIVER', 'null'),
 
+    // 'claude' (default) or 'fake' for tests.
+    'llm_driver' => env('LLM_DRIVER', 'claude'),
+
     'workspace_defaults' => [
         'self_approval' => false,
         'review_cadence_months' => null,

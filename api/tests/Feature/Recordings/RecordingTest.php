@@ -107,6 +107,7 @@ final class RecordingTest extends TestCase
             'space_id' => $this->spaceId($ws), 'uploaded_by' => $admin->id, 'storage_key' => "{$ws->id}/x/source.webm", 'state' => 'uploaded', 'duration_sec' => 60,
         ]));
 
+        $this->app->instance(\App\Pipeline\Transcriber::class, new \App\Pipeline\NullTranscriber);
         (new TranscribeRecording($ws->id, $rec->id, 'h1'))->handle(app(CurrentWorkspace::class));
 
         $r = $this->actingAs($admin)->getJson("/api/v1/recordings/{$rec->id}", $h)->assertOk();

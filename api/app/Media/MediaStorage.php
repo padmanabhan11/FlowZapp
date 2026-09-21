@@ -25,6 +25,9 @@ interface MediaStorage
 
     public function size(string $key): ?int;
 
+    /** Write an object (frames, generated assets). */
+    public function put(string $key, string $contents, string $mimeType): void;
+
     /** Signed GET URL; TTL ≤ 15 minutes (03 §4.3). */
     public function signedUrl(string $key, int $ttlSeconds = 900): string;
 

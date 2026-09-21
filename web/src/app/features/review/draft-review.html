@@ -1,0 +1,80 @@
+<section class="review">
+  @if (error()) {
+    <p class="review__error" role="alert">{{ error() }}</p>
+  }
+
+  @if (rec(); as r) {
+    @if (r.state === 'failed') {
+      <div class="review__state document-surface">
+        <h2>Generation failed</h2>
+        <p>{{ r.failure_reason }}</p>
+        <a routerLink="/recordings">Back to recordings</a>
+      </div>
+    } @else if (inFlight() || !doc()) {
+      <div class="review__state document-surface" role="status" aria-live="polite">
+        <h2>Generating your draft…</h2>
+        <p class="control-value">{{ r.state }}</p>
+        <p>Steps appear here as soon as the draft is ready. You can leave this page; processing continues.</p>
+      </div>
+    } @else {
+      <div class="review__grid">
+        <div class="review__video">
+          @if (playbackUrl(); as url) {
+            <video #video [src]="url" controls playsinline (timeupdate)="onTimeUpdate()" [attr.aria-label]="r.title"></video>
+          } @else {
+            <div class="review__novideo">The source recording is no longer available. The draft is still editable.</div>
+          }
+          <div class="scrubber" role="group" aria-label="Steps on the timeline">
+            @for (s of steps(); track s.id) {
+              <button type="button" class="scrubber__seg" [class.is-active]="activeStep() === s.id" [style]="segmentStyle(s)" [attr.aria-label]="'Step ' + s.position" [title]="'Step ' + s.position + ' · ' + fmt(s.source_ts_start)" (click)="jumpTo(s)"></button>
+            }
+            <span class="scrubber__head" [style.left.%]="(100 * current()) / duration()"></span>
+          </div>
+        </div>
+
+        <div class="review__draft document-surface">
+          <header class="review__head">
+            <div>
+              <span class="state-pill state-pill--draft">Draft</span>
+              <span class="control-value review__count">{{ verified() }} of {{ steps().length }} verified</span>
+            </div>
+            <div class="review__actions">
+              <button pButton type="button" [text]="true" size="small" (click)="regenerate()">Regenerate</button>
+              <a pButton [routerLink]="['/d', doc()!.id, 'edit']" [outlined]="true" size="small">Open in editor</a>
+              <button pButton type="button" [disabled]="!allVerified() || submitting()" (click)="submit()" [title]="allVerified() ? '' : (steps().length - verified()) + ' step(s) still to verify'">Submit for approval</button>
+            </div>
+          </header>
+          @if (!allVerified()) {
+            <p class="review__hint">Check each step against the recording. Verify it, or edit it — either counts. Submit unlocks when every step is checked.</p>
+          }
+          <h1 class="review__title">{{ doc()!.title }}</h1>
+
+          @for (s of steps(); track s.id) {
+            <article class="rstep" [id]="'step-' + s.id" [class.is-active]="activeStep() === s.id" [class.is-verified]="s.verified_at !== null" [class.is-low]="lowConfidence().includes(s.id)">
+              <div class="rstep__n">
+                <span class="control-value">{{ s.position }}</span>
+                <button type="button" class="rstep__ts control-value" (click)="jumpTo(s)">⏱ {{ fmt(s.source_ts_start) }}</button>
+              </div>
+              <div class="rstep__body">
+                <textarea pTextarea rows="2" [ngModel]="s.instruction" (blur)="edit(s, $any($event.target).value)" [attr.aria-label]="'Step ' + s.position + ' instruction'"></textarea>
+                @if (s.note) { <p class="rstep__note">{{ s.note }}</p> }
+                @if (s.expected_result) { <p class="rstep__note">Expected: {{ s.expected_result }}</p> }
+                @if (s.media_asset_id && frames()[s.media_asset_id]) {
+                  <img class="rstep__frame" [src]="frames()[s.media_asset_id]" [alt]="'Screenshot for step ' + s.position" loading="lazy" />
+                }
+                @if (lowConfidence().includes(s.id)) { <span class="rstep__flag">Low confidence — check this one first</span> }
+              </div>
+              <div class="rstep__verify">
+                @if (s.verified_at !== null) {
+                  <span class="rstep__done">Verified</span>
+                } @else {
+                  <button pButton type="button" [outlined]="true" size="small" (click)="verify(s)">Mark verified</button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      </div>
+    }
+  }
+</section>

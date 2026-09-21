@@ -35,7 +35,7 @@
           </span>
           <span>{{ r.uploaded_by?.name ?? '—' }}</span>
           <span>
-            @if (r.document_id) { <a [routerLink]="['/d', r.document_id, 'edit']">Open draft</a> } @else { — }
+            @if (r.document_id) { <a [routerLink]="['/r', r.id, 'draft']">Review draft</a> } @else if (r.state !== 'failed' && r.state !== 'pending_upload') { <a [routerLink]="['/r', r.id, 'draft']">Watch progress</a> } @else { — }
           </span>
           <span class="recs__menu">
             @if (r.state === 'failed') { <button pButton type="button" size="small" (click)="retry(r)">Retry</button> }

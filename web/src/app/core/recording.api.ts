@@ -60,3 +60,18 @@ export class RecordingApi {
     await firstValueFrom(this.http.delete(`/api/v1/recordings/${id}`));
   }
 }
+
+@Injectable({ providedIn: 'root' })
+export class AssetApi {
+  private readonly http = inject(HttpClient);
+  private readonly cache = new Map<string, { url: string; at: number }>();
+
+  /** Signed frame URL, cached for 10 minutes (server TTL is 15). */
+  async url(assetId: string): Promise<string> {
+    const hit = this.cache.get(assetId);
+    if (hit && Date.now() - hit.at < 10 * 60 * 1000) return hit.url;
+    const res = await firstValueFrom(this.http.get<{ data: { url: string } }>(`/api/v1/assets/${assetId}/url`));
+    this.cache.set(assetId, { url: res.data.url, at: Date.now() });
+    return res.data.url;
+  }
+}

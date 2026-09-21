@@ -67,6 +67,11 @@ final class SpacesStorage implements MediaStorage
         return isset($r['ContentLength']) ? (int) $r['ContentLength'] : null;
     }
 
+    public function put(string $key, string $contents, string $mimeType): void
+    {
+        $this->client->putObject(['Bucket' => $this->bucket, 'Key' => $key, 'Body' => $contents, 'ContentType' => $mimeType, 'ACL' => 'private']);
+    }
+
     public function signedUrl(string $key, int $ttlSeconds = 900): string
     {
         $ttl = min($ttlSeconds, 900);

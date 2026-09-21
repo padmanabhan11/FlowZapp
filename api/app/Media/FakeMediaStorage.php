@@ -50,6 +50,11 @@ final class FakeMediaStorage implements MediaStorage
         return $this->objects[$key] ?? null;
     }
 
+    public function put(string $key, string $contents, string $mimeType): void
+    {
+        $this->objects[$key] = strlen($contents);
+    }
+
     public function signedUrl(string $key, int $ttlSeconds = 900): string
     {
         return "https://fake.spaces.test/$key?X-Amz-Expires=".min($ttlSeconds, 900).'&X-Amz-Signature=fake';

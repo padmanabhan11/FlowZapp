@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Documents\DocumentController;
 use App\Http\Controllers\Documents\StepController;
+use App\Http\Controllers\Media\AssetController;
 use App\Http\Controllers\Recordings\RecordingController;
 use App\Http\Controllers\Spaces\FolderController;
 use App\Http\Controllers\Spaces\SpaceController;
@@ -84,6 +85,7 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/recordings/{id}/retry', [RecordingController::class, 'retry']);
             Route::post('/recordings/{id}/generate', [RecordingController::class, 'generate']);
             Route::delete('/recordings/{id}', [RecordingController::class, 'destroy']);
+            Route::get('/assets/{id}/url', [AssetController::class, 'url']);
         });
     });
 });
