@@ -181,3 +181,15 @@
     background: var(--rail);
   }
 }
+
+.reader__stale {
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  border-left: 3px solid var(--state-draft);
+  font-size: 0.9rem;
+  a {
+    margin-left: 6px;
+  }
+}

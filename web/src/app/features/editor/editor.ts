@@ -7,6 +7,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { Block, DocumentFull, Step } from '../../core/api.types';
+import { Accepted, AssistPanel } from './assist-panel';
 import { BlockEditor } from './block-editor';
 import { DocumentApi, GovernanceApi } from '../../core/document.api';
 import { Router } from '@angular/router';
@@ -33,6 +34,7 @@ import { Router } from '@angular/router';
     TextareaModule,
     RouterLink,
     BlockEditor,
+    AssistPanel,
   ],
   templateUrl: './editor.html',
   styleUrl: './editor.scss',
@@ -58,6 +60,7 @@ export class Editor implements OnInit, OnDestroy {
   });
   readonly isApproved = computed(() => this.doc()?.state === 'approved');
   readonly prereqText = signal('');
+  readonly assist = signal(false);
   readonly newStep = signal('');
 
   /** Submit is blocked when: zero steps, missing Purpose, or missing Owner (S8 rules). */
@@ -125,6 +128,33 @@ export class Editor implements OnInit, OnDestroy {
     this.doc.update((d) => (d ? { ...d, content: { ...d.content, blocks } } : d));
     this.pending.content = { ...(this.pending.content ?? {}), blocks };
     this.schedule();
+  }
+
+  /** Apply accepted AI proposals through the normal save path (FR-802/805). Keys mirror AiController::collect(). */
+  applyAccepted(items: Accepted[]): void {
+    for (const { key, text } of items) {
+      const [kind, a, b] = key.split(':');
+      if (kind === 'section' && (a === 'purpose' || a === 'scope' || a === 'outcome'))
+        this.setSection(a, text);
+      else if (kind === 'prereq') {
+        const list = [...(this.doc()?.content.prerequisites ?? [])];
+        list[Number(a)] = text;
+        this.setPrereqs(list.join('\n'));
+      } else if (kind === 'step') {
+        const step = this.steps().find((s) => s.id === a);
+        if (step) void this.patchStep(step, { [b]: text } as Partial<Step>);
+      } else if (kind === 'block') {
+        const blocks = (this.doc()?.content.blocks ?? []).map((blk) => {
+          if (blk.id !== a) return blk;
+          if (b === undefined) return { ...blk, text };
+          const items = [...(blk.items ?? [])];
+          const cur = items[Number(b)];
+          items[Number(b)] = typeof cur === 'object' && cur !== null ? { ...cur, text } : text;
+          return { ...blk, items };
+        });
+        this.setBlocks(blocks);
+      }
+    }
   }
 
   private schedule(): void {

@@ -1,0 +1,97 @@
+.ap {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 12px 14px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  font-size: 0.9rem;
+  &__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+  }
+  &__close {
+    background: none;
+    border: 0;
+    cursor: pointer;
+    color: var(--ink-soft);
+    font: inherit;
+  }
+  &__hint {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+  &__error {
+    margin: 0;
+    color: var(--danger);
+  }
+  &__actions,
+  &__btns,
+  &__row,
+  &__bar {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  &__bar {
+    justify-content: space-between;
+  }
+  &__item {
+    border-top: 1px solid var(--line);
+    padding-top: 8px;
+    display: grid;
+    gap: 6px;
+  }
+  &__label {
+    margin: 0;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+  }
+  &__pair {
+    display: grid;
+    gap: 6px;
+  }
+  &__orig,
+  &__prop {
+    margin: 0;
+    padding: 6px 8px;
+    border-left: 3px solid var(--line);
+    white-space: pre-wrap;
+  }
+  &__prop {
+    border-left-color: var(--ink);
+  }
+  &__k {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+  }
+  &__h {
+    margin: 8px 0 0;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+  }
+  &__title {
+    text-align: left;
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control);
+    padding: 4px 8px;
+    cursor: pointer;
+    color: var(--ink);
+    font: inherit;
+    &:hover {
+      background: var(--select);
+    }
+  }
+}

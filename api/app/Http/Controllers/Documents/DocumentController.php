@@ -161,6 +161,8 @@ final class DocumentController extends Controller
             'id' => $doc->id, 'title' => $v->title, 'doc_type' => $doc->doc_type, 'state' => $doc->state,
             'version_number' => $v->version_number, 'approved_at' => $v->approved_at, 'approved_by' => $v->approved_by,
             'owner' => $doc->owner?->only(['id', 'name']), 'review_due_at' => $doc->review_due_at,
+            'language' => $doc->language, 'translation_of' => $doc->translation_of, 'translation_stale' => $doc->translation_stale,   // FR-804
+            'translation_stale_since' => $doc->translation_stale ? Document::query()->whereKey($doc->translation_of)->first()?->approvedVersion?->approved_at : null,
             'content' => array_diff_key($v->content ?? [], ['_steps' => 1]),
             'steps' => $v->steps()->get()->map(fn (DocumentStep $s) => $this->step($s)),
         ]]);
@@ -279,7 +281,7 @@ final class DocumentController extends Controller
             'id' => $d->id, 'space_id' => $d->space_id, 'folder_id' => $d->folder_id, 'title' => $d->title,
             'doc_type' => $d->doc_type, 'state' => $d->state, 'owner' => $d->owner?->only(['id', 'name']),
             'approved_version_id' => $d->approved_version_id, 'review_due_at' => $d->review_due_at,
-            'requires_ack' => $d->requires_ack, 'language' => $d->language, 'updated_at' => $d->updated_at,
+            'requires_ack' => $d->requires_ack, 'language' => $d->language, 'translation_of' => $d->translation_of, 'translation_stale' => $d->translation_stale, 'updated_at' => $d->updated_at,
         ];
     }
 

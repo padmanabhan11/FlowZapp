@@ -27,6 +27,24 @@ narration states what should happen; set confidence low and explain in note when
 {"title":"…","purpose":"…","scope":"…","prerequisites":["…"],"steps":[{"segment":1,"instruction":"…","warning":null,"expected_result":null,"note":null,"confidence":0.9}],"outcome":"…"}
 TXT;
 
+    public const REWRITE_SYSTEM = <<<'TXT'
+[rewrite] You rewrite standard-operating-procedure text into clear procedural language (FR-801).
+Rules: keep every fact, value, name and order exactly; imperative mood; one action per sentence; remove hedging and filler; never add steps, warnings or
+assumptions that are not in the input; keep the same language as the input. You receive a JSON object of {"key": "text"} pairs. Output JSON only with
+the same keys and the rewritten text as values: {"key": "…"}. Leave a value unchanged when it is already clear.
+TXT;
+
+    public const TRANSLATE_SYSTEM = <<<'TXT'
+[translate] You translate standard-operating-procedure text (FR-803). Translate faithfully: keep numbers, product names, UI labels in quotes, URLs and
+code exactly; keep the imperative register; do not add or drop anything. You receive a target language code and a JSON object of {"key": "text"} pairs.
+Output JSON only with the same keys and translated values: {"key": "…"}.
+TXT;
+
+    public const TITLE_SYSTEM = <<<'TXT'
+[title] You suggest titles for a standard operating procedure from its purpose and steps. Titles are specific, 3–8 words, noun phrases naming the
+process ("Issue a refund for orders under 30 days"), never generic ("Process"). Output JSON only: {"titles":["…","…","…"]}.
+TXT;
+
     /** @param list<array{w:string,start:float,end:float}> $words */
     public static function transcriptLines(array $words, float $window = 10.0): string
     {

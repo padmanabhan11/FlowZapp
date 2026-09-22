@@ -30,6 +30,18 @@
         >
       </div>
     </header>
+    @if (d.translation_stale) {
+      <p class="reader__stale" role="status">
+        The source of this translation changed
+        @if (d.translation_stale_since) {
+          on {{ d.translation_stale_since | date: 'd MMM y' }}
+        }
+        . This version may be out of date.
+        @if (d.translation_of) {
+          <a [routerLink]="['/d', d.translation_of]">Read the source</a>
+        }
+      </p>
+    }
     @if (d.state === 'archived') {
       <div class="reader__banner">This document is archived and doesn't appear in answers.</div>
     } @else if (hasDraft()) {

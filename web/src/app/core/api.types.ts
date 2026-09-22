@@ -126,6 +126,8 @@ export interface DocumentSummary {
 export interface DocumentFull extends DocumentSummary {
   content: Content;
   steps: Step[];
+  translation_of?: string | null;
+  translation_stale?: boolean;
   created_by: string | null;
   source_recording_id: string | null;
   created_at: string;
@@ -192,6 +194,10 @@ export interface PublishedDocument {
   approved_by: string | null;
   owner: { id: string; name: string } | null;
   review_due_at: string | null;
+  language?: string;
+  translation_of?: string | null;
+  translation_stale?: boolean;
+  translation_stale_since?: string | null;
   content: Content;
   steps: Step[];
 }

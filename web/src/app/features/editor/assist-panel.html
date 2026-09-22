@@ -1,0 +1,117 @@
+<aside class="ap" aria-label="Writing assistance">
+  <header class="ap__head">
+    <span>Assist</span>
+    <button type="button" class="ap__close" (click)="closed.emit()" aria-label="Close panel">
+      ✕
+    </button>
+  </header>
+  <p class="ap__hint">Proposals only. Nothing changes until you accept it.</p>
+  @if (error()) {
+    <p class="ap__error" role="alert">{{ error() }}</p>
+  }
+
+  <div class="ap__actions">
+    <button
+      pButton
+      type="button"
+      size="small"
+      [outlined]="true"
+      [loading]="busy() === 'rewrite'"
+      (click)="rewrite('document')"
+    >
+      Rewrite for clarity
+    </button>
+    @if (doc().doc_type === 'sop') {
+      <button
+        pButton
+        type="button"
+        size="small"
+        [text]="true"
+        [loading]="busy() === 'rewrite'"
+        (click)="rewrite('steps')"
+      >
+        Steps only
+      </button>
+    }
+  </div>
+
+  @if (proposal(); as p) {
+    @if (pending().length === 0) {
+      <p class="ap__hint">
+        @if (p.changed.length === 0) {
+          Already clear — nothing to change.
+        } @else {
+          All proposals handled.
+        }
+      </p>
+    } @else {
+      <div class="ap__bar">
+        <span class="ap__hint"
+          >{{ pending().length }} proposed
+          @if (unchanged() > 0) {
+            , {{ unchanged() }} unchanged
+          }
+        </span>
+        <button pButton type="button" size="small" [text]="true" (click)="acceptAll()">
+          Accept all
+        </button>
+      </div>
+      @for (x of pending(); track x.key) {
+        <section class="ap__item">
+          <p class="ap__label">{{ x.label }}</p>
+          <div class="ap__pair">
+            <p class="ap__orig"><span class="ap__k">Now</span>{{ x.original }}</p>
+            <p class="ap__prop"><span class="ap__k">Proposed</span>{{ x.proposed }}</p>
+          </div>
+          <div class="ap__btns">
+            <button pButton type="button" size="small" (click)="accept(x.key)">Accept</button>
+            <button pButton type="button" size="small" [text]="true" (click)="reject(x.key)">
+              Keep mine
+            </button>
+          </div>
+        </section>
+      }
+    }
+  }
+
+  <h3 class="ap__h">Title</h3>
+  <button
+    pButton
+    type="button"
+    size="small"
+    [outlined]="true"
+    [loading]="busy() === 'title'"
+    (click)="suggestTitles()"
+  >
+    Suggest titles
+  </button>
+  @for (t of titles(); track t) {
+    <button type="button" class="ap__title" (click)="titlePicked.emit(t)">{{ t }}</button>
+  }
+
+  <h3 class="ap__h">Translate</h3>
+  <p class="ap__hint">
+    Creates a linked draft in the chosen language. The source stays as it is; when the source is
+    re-approved, the translation is marked out of date.
+  </p>
+  <div class="ap__row">
+    <p-select
+      [options]="languages"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="language()"
+      (ngModelChange)="language.set($event)"
+      aria-label="Target language"
+    />
+    <button
+      pButton
+      type="button"
+      size="small"
+      [loading]="busy() === 'translate'"
+      [disabled]="language() === doc().language"
+      (click)="translate()"
+    >
+      Translate
+    </button>
+  </div>
+</aside>

@@ -15,6 +15,18 @@
         }
       </span>
       <span class="editor__spacer"></span>
+      @if (d.state !== 'archived') {
+        <button
+          pButton
+          type="button"
+          [text]="true"
+          size="small"
+          (click)="assist.set(!assist())"
+          [attr.aria-pressed]="assist()"
+        >
+          Assist
+        </button>
+      }
       @if (d.state === 'in_review') {
         <a pButton [routerLink]="['/d', d.id, 'review']" [outlined]="true">Awaiting approval</a>
       } @else {
@@ -65,179 +77,199 @@
       <p class="editor__error" role="alert">{{ error() }}</p>
     }
 
-    <article class="editor__canvas document-surface">
-      <input
-        class="editor__title"
-        [ngModel]="d.title"
-        (ngModelChange)="setTitle($event)"
-        aria-label="Title"
-        placeholder="Untitled"
-      />
+    @if (d.translation_stale) {
+      <div class="editor__banner" role="status">
+        The source of this translation changed since it was translated. Review it against the source
+        before submitting.
+      </div>
+    }
 
-      <section class="slot">
-        <label for="slot-purpose">Purpose</label>
-        <textarea
-          pTextarea
-          id="slot-purpose"
-          rows="2"
-          [ngModel]="d.content.purpose"
-          (ngModelChange)="setSection('purpose', $event)"
-          placeholder="Why this process exists"
-        ></textarea>
-      </section>
-      <section class="slot">
-        <label for="slot-scope">Scope</label>
-        <textarea
-          pTextarea
-          id="slot-scope"
-          rows="2"
-          [ngModel]="d.content.scope"
-          (ngModelChange)="setSection('scope', $event)"
-          placeholder="Who it applies to and when"
-        ></textarea>
-      </section>
-      <section class="slot">
-        <label for="slot-prereqs">Prerequisites <span class="slot__hint">one per line</span></label>
-        <textarea
-          pTextarea
-          id="slot-prereqs"
-          rows="2"
-          [ngModel]="prereqText()"
-          (ngModelChange)="setPrereqs($event)"
-          placeholder="Access, tools, permissions needed before starting"
-        ></textarea>
-      </section>
+    <div class="editor__layout" [class.editor__layout--assist]="assist()">
+      <article class="editor__canvas document-surface">
+        <input
+          class="editor__title"
+          [ngModel]="d.title"
+          (ngModelChange)="setTitle($event)"
+          aria-label="Title"
+          placeholder="Untitled"
+        />
 
-      @if (d.doc_type === 'sop') {
-        <section class="steps">
-          <h2>Steps</h2>
-          @for (s of steps(); track s.id; let i = $index) {
-            <div class="step" [class.step--critical]="s.is_critical">
-              <span class="step__n control-value">{{ s.position }}</span>
-              <div class="step__body">
-                <textarea
-                  pTextarea
-                  rows="1"
-                  [ngModel]="s.instruction"
-                  (ngModelChange)="patchStep(s, { instruction: $event })"
-                  aria-label="Step instruction"
-                ></textarea>
-                <input
-                  pInputText
-                  [ngModel]="s.note ?? ''"
-                  (ngModelChange)="patchStep(s, { note: $event || null })"
-                  placeholder="Note or warning (optional)"
-                  aria-label="Step note"
-                />
-                <input
-                  pInputText
-                  [ngModel]="s.expected_result ?? ''"
-                  (ngModelChange)="patchStep(s, { expected_result: $event || null })"
-                  placeholder="Expected result (optional)"
-                  aria-label="Expected result"
-                />
-                <div class="step__flags">
-                  <label [attr.for]="'crit-' + s.id"
-                    ><p-checkbox
-                      [inputId]="'crit-' + s.id"
-                      [binary]="true"
-                      [ngModel]="s.is_critical"
-                      (ngModelChange)="patchStep(s, { is_critical: $event })"
-                    />
-                    Critical</label
+        <section class="slot">
+          <label for="slot-purpose">Purpose</label>
+          <textarea
+            pTextarea
+            id="slot-purpose"
+            rows="2"
+            [ngModel]="d.content.purpose"
+            (ngModelChange)="setSection('purpose', $event)"
+            placeholder="Why this process exists"
+          ></textarea>
+        </section>
+        <section class="slot">
+          <label for="slot-scope">Scope</label>
+          <textarea
+            pTextarea
+            id="slot-scope"
+            rows="2"
+            [ngModel]="d.content.scope"
+            (ngModelChange)="setSection('scope', $event)"
+            placeholder="Who it applies to and when"
+          ></textarea>
+        </section>
+        <section class="slot">
+          <label for="slot-prereqs"
+            >Prerequisites <span class="slot__hint">one per line</span></label
+          >
+          <textarea
+            pTextarea
+            id="slot-prereqs"
+            rows="2"
+            [ngModel]="prereqText()"
+            (ngModelChange)="setPrereqs($event)"
+            placeholder="Access, tools, permissions needed before starting"
+          ></textarea>
+        </section>
+
+        @if (d.doc_type === 'sop') {
+          <section class="steps">
+            <h2>Steps</h2>
+            @for (s of steps(); track s.id; let i = $index) {
+              <div class="step" [class.step--critical]="s.is_critical">
+                <span class="step__n control-value">{{ s.position }}</span>
+                <div class="step__body">
+                  <textarea
+                    pTextarea
+                    rows="1"
+                    [ngModel]="s.instruction"
+                    (ngModelChange)="patchStep(s, { instruction: $event })"
+                    aria-label="Step instruction"
+                  ></textarea>
+                  <input
+                    pInputText
+                    [ngModel]="s.note ?? ''"
+                    (ngModelChange)="patchStep(s, { note: $event || null })"
+                    placeholder="Note or warning (optional)"
+                    aria-label="Step note"
+                  />
+                  <input
+                    pInputText
+                    [ngModel]="s.expected_result ?? ''"
+                    (ngModelChange)="patchStep(s, { expected_result: $event || null })"
+                    placeholder="Expected result (optional)"
+                    aria-label="Expected result"
+                  />
+                  <div class="step__flags">
+                    <label [attr.for]="'crit-' + s.id"
+                      ><p-checkbox
+                        [inputId]="'crit-' + s.id"
+                        [binary]="true"
+                        [ngModel]="s.is_critical"
+                        (ngModelChange)="patchStep(s, { is_critical: $event })"
+                      />
+                      Critical</label
+                    >
+                    <label [attr.for]="'chk-' + s.id"
+                      ><p-checkbox
+                        [inputId]="'chk-' + s.id"
+                        [binary]="true"
+                        [ngModel]="s.is_checkpoint"
+                        (ngModelChange)="patchStep(s, { is_checkpoint: $event })"
+                      />
+                      Checkpoint</label
+                    >
+                    @if (s.source_ts_start !== null) {
+                      <span class="control-value">⏱ {{ s.source_ts_start }}s</span>
+                    }
+                  </div>
+                </div>
+                <div class="step__actions">
+                  <button
+                    pButton
+                    type="button"
+                    [text]="true"
+                    size="small"
+                    aria-label="Move up"
+                    [disabled]="i === 0"
+                    (click)="moveStep(s, -1)"
                   >
-                  <label [attr.for]="'chk-' + s.id"
-                    ><p-checkbox
-                      [inputId]="'chk-' + s.id"
-                      [binary]="true"
-                      [ngModel]="s.is_checkpoint"
-                      (ngModelChange)="patchStep(s, { is_checkpoint: $event })"
-                    />
-                    Checkpoint</label
+                    ↑
+                  </button>
+                  <button
+                    pButton
+                    type="button"
+                    [text]="true"
+                    size="small"
+                    aria-label="Move down"
+                    [disabled]="i === steps().length - 1"
+                    (click)="moveStep(s, 1)"
                   >
-                  @if (s.source_ts_start !== null) {
-                    <span class="control-value">⏱ {{ s.source_ts_start }}s</span>
-                  }
+                    ↓
+                  </button>
+                  <button
+                    pButton
+                    type="button"
+                    [text]="true"
+                    size="small"
+                    aria-label="Delete step"
+                    (click)="deleteStep(s)"
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
-              <div class="step__actions">
-                <button
-                  pButton
-                  type="button"
-                  [text]="true"
-                  size="small"
-                  aria-label="Move up"
-                  [disabled]="i === 0"
-                  (click)="moveStep(s, -1)"
-                >
-                  ↑
-                </button>
-                <button
-                  pButton
-                  type="button"
-                  [text]="true"
-                  size="small"
-                  aria-label="Move down"
-                  [disabled]="i === steps().length - 1"
-                  (click)="moveStep(s, 1)"
-                >
-                  ↓
-                </button>
-                <button
-                  pButton
-                  type="button"
-                  [text]="true"
-                  size="small"
-                  aria-label="Delete step"
-                  (click)="deleteStep(s)"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-          }
-          <form class="step__new" (ngSubmit)="addStep()">
-            <span class="step__n control-value">{{ steps().length + 1 }}</span>
-            <input
-              pInputText
-              name="newStep"
-              [ngModel]="newStep()"
-              (ngModelChange)="newStep.set($event)"
-              placeholder="Add a step…"
-              aria-label="New step"
-            />
-            <button
-              pButton
-              type="submit"
-              [outlined]="true"
-              size="small"
-              [disabled]="!newStep().trim()"
-            >
-              Add
-            </button>
-          </form>
-        </section>
-      }
-
-      <section class="blocks">
-        @if (d.doc_type === 'sop') {
-          <h2 class="blocks__h">Additional content</h2>
+            }
+            <form class="step__new" (ngSubmit)="addStep()">
+              <span class="step__n control-value">{{ steps().length + 1 }}</span>
+              <input
+                pInputText
+                name="newStep"
+                [ngModel]="newStep()"
+                (ngModelChange)="newStep.set($event)"
+                placeholder="Add a step…"
+                aria-label="New step"
+              />
+              <button
+                pButton
+                type="submit"
+                [outlined]="true"
+                size="small"
+                [disabled]="!newStep().trim()"
+              >
+                Add
+              </button>
+            </form>
+          </section>
         }
-        <app-block-editor [blocks]="d.content.blocks" (changed)="setBlocks($event)" />
-      </section>
 
-      <section class="slot">
-        <label for="slot-outcome">Outcome</label>
-        <textarea
-          pTextarea
-          id="slot-outcome"
-          rows="2"
-          [ngModel]="d.content.outcome"
-          (ngModelChange)="setSection('outcome', $event)"
-          placeholder="What “done” looks like"
-        ></textarea>
-      </section>
-    </article>
+        <section class="blocks">
+          @if (d.doc_type === 'sop') {
+            <h2 class="blocks__h">Additional content</h2>
+          }
+          <app-block-editor [blocks]="d.content.blocks" (changed)="setBlocks($event)" />
+        </section>
+
+        <section class="slot">
+          <label for="slot-outcome">Outcome</label>
+          <textarea
+            pTextarea
+            id="slot-outcome"
+            rows="2"
+            [ngModel]="d.content.outcome"
+            (ngModelChange)="setSection('outcome', $event)"
+            placeholder="What “done” looks like"
+          ></textarea>
+        </section>
+      </article>
+      @if (assist()) {
+        <app-assist-panel
+          [doc]="d"
+          [steps]="steps()"
+          (accepted)="applyAccepted($event)"
+          (titlePicked)="setTitle($event)"
+          (closed)="assist.set(false)"
+        />
+      }
+    </div>
   </div>
 } @else if (error()) {
   <p class="editor__error" role="alert">{{ error() }}</p>

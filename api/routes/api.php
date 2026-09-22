@@ -8,6 +8,7 @@ use App\Http\Controllers\Account\NotificationController;
 use App\Http\Controllers\Account\SessionController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Ai\AiController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Billing\BillingController;
 use App\Http\Controllers\Documents\DocumentController;
@@ -134,6 +135,10 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/analytics/overview', [AnalyticsController::class, 'overview']);
             Route::get('/audit-log', [AuditLogController::class, 'index']);
             Route::get('/audit-log/export', [AuditLogController::class, 'export']);
+
+            Route::post('/ai/rewrite', [AiController::class, 'rewrite']);
+            Route::post('/ai/translate', [AiController::class, 'translate']);
+            Route::post('/ai/suggest-title', [AiController::class, 'suggestTitle']);
 
             Route::get('/usage', [BillingController::class, 'usage']);
             Route::get('/billing/portal', [BillingController::class, 'portal']);
