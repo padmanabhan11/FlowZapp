@@ -62,6 +62,7 @@ final class SchemaConformanceTest extends TestCase
             $columns = collect(Schema::getColumns($table))->keyBy('name');
             if (! $columns->has('workspace_id')) {
                 $problems[] = "$table: no workspace_id column";
+
                 continue;
             }
             if ($columns['workspace_id']['nullable']) {
@@ -76,6 +77,7 @@ final class SchemaConformanceTest extends TestCase
 
             if (! isset($models[$table])) {
                 $problems[] = "$table: no model extending TenantModel";
+
                 continue;
             }
 

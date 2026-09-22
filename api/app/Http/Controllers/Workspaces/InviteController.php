@@ -75,16 +75,19 @@ final class InviteController extends Controller
 
             if ($user !== null && in_array($user->id, $memberUserIds, true)) {
                 $results[] = ['email' => $email, 'status' => 'already_member', 'message' => "$email is already a member."];
+
                 continue;
             }
             if (in_array($email, $pendingEmails, true)) {
                 $results[] = ['email' => $email, 'status' => 'already_invited', 'message' => "$email already has a pending invite."];
+
                 continue;
             }
             if ($seatLimit !== null && $seatsUsed >= $seatLimit) {
                 $results[] = ['email' => $email, 'status' => 'plan_limit_exceeded',
                     'message' => ucfirst($workspace->plan)." includes $seatLimit people. Upgrade to invite more.",
                     'details' => ['limit' => 'seats', 'max' => $seatLimit, 'used' => $seatsUsed]];
+
                 continue;
             }
 

@@ -6,6 +6,7 @@ namespace Tests\Feature\Governance;
 
 use App\Models\Document;
 use App\Models\DocumentStep;
+use App\Models\Recording;
 use App\Models\Space;
 use App\Models\SpaceMember;
 use App\Models\User;
@@ -68,7 +69,7 @@ final class ApprovalWorkflowTest extends TestCase
         // Generated draft with unverified steps (FR-315)
         $gen = $this->draft('Generated');
         app(CurrentWorkspace::class)->runAs($this->ws->id, function () use ($gen): void {
-            $rec = \App\Models\Recording::create(['space_id' => $this->sid, 'uploaded_by' => $this->editor->id, 'storage_key' => 'k', 'state' => 'draft_ready']);
+            $rec = Recording::create(['space_id' => $this->sid, 'uploaded_by' => $this->editor->id, 'storage_key' => 'k', 'state' => 'draft_ready']);
             Document::query()->whereKey($gen)->update(['source_recording_id' => $rec->id]);
             DocumentStep::query()->where('document_id', $gen)->update(['verified_at' => null]);
         });

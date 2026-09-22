@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Workspaces;
 
 use App\Models\AuditEntry;
+use App\Models\Space;
+use App\Models\SpaceMember;
 use App\Models\User;
 use App\Models\WorkspaceInvite;
 use App\Notifications\WorkspaceInviteNotification;
@@ -44,7 +46,7 @@ final class InviteAndMemberTest extends TestCase
     {
         Notification::fake();
         [$ws, $admin] = $this->makeWorkspace('acme');
-        $spaceId = app(CurrentWorkspace::class)->runAs($ws->id, fn () => \App\Models\Space::query()->firstOrFail()->id);
+        $spaceId = app(CurrentWorkspace::class)->runAs($ws->id, fn () => Space::query()->firstOrFail()->id);
 
         $this->actingAs($admin)->postJson("/api/v1/workspaces/{$ws->id}/invites", ['invites' => [
             ['email' => 'bo@example.test', 'role' => 'approver', 'space_ids' => [$spaceId]],
@@ -66,7 +68,7 @@ final class InviteAndMemberTest extends TestCase
         $this->actingAs($bo)->postJson('/api/v1/invites/accept', ['token' => $token])->assertOk()->assertJsonPath('data.role', 'approver');
         $this->assertSame('approver', $bo->roleIn($ws->id));
         app(CurrentWorkspace::class)->runAs($ws->id, function () use ($bo, $spaceId): void {
-            $this->assertTrue(\App\Models\SpaceMember::query()->where('user_id', $bo->id)->where('space_id', $spaceId)->exists());
+            $this->assertTrue(SpaceMember::query()->where('user_id', $bo->id)->where('space_id', $spaceId)->exists());
             $this->assertTrue(AuditEntry::query()->where('action', 'member.joined')->exists());
         });
 

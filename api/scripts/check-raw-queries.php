@@ -49,12 +49,12 @@ foreach ($dirs as $dir) {
 }
 
 if ($violations) {
-    fwrite(STDERR, "Raw / unscoped query check FAILED (".count($violations)." finding(s)):".PHP_EOL.PHP_EOL);
+    fwrite(STDERR, 'Raw / unscoped query check FAILED ('.count($violations).' finding(s)):'.PHP_EOL.PHP_EOL);
     foreach ($violations as $v) {
         fwrite(STDERR, "  $v".PHP_EOL.PHP_EOL);
     }
-    fwrite(STDERR, "Mark a deliberate exception on the same line with  // allowlisted: <reason>  and have it reviewed.".PHP_EOL);
+    fwrite(STDERR, 'Mark a deliberate exception on the same line with  // allowlisted: <reason>  and have it reviewed.'.PHP_EOL);
     exit(1);
 }
 
-echo "Raw / unscoped query check passed.".PHP_EOL;
+echo 'Raw / unscoped query check passed.'.PHP_EOL;

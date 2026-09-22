@@ -6,6 +6,8 @@ namespace App\Retrieval;
 
 use App\Ai\Json;
 use App\Ai\LlmDriver;
+use App\Models\Document;
+use App\Models\DocumentChunk;
 
 /**
  * Grounded answering (F-AI "Chatbot on company documents"; FR-606..608):
@@ -25,8 +27,8 @@ TXT;
     public function __construct(private readonly LlmDriver $llm) {}
 
     /**
-     * @param list<array{chunk: \App\Models\DocumentChunk, document: \App\Models\Document, score: float}> $hits
-     * @param list<array{role: string, content: string}> $history
+     * @param  list<array{chunk: DocumentChunk, document: Document, score: float}>  $hits
+     * @param  list<array{role: string, content: string}>  $history
      * @return array{text: string, refused: bool, citations: list<array<string, mixed>>, cost_usd: float, input_tokens: int, output_tokens: int}
      */
     public function answer(string $question, array $hits, array $history = []): array

@@ -14,8 +14,8 @@ use App\Models\DocumentStep;
 use App\Models\PipelineJob;
 use App\Models\Recording;
 use App\Models\User;
-use App\Observers\DocumentObserver;
 use App\Notifications\RecordingDraftReadyNotification;
+use App\Observers\DocumentObserver;
 use App\Pipeline\PipelineFailed;
 use Illuminate\Support\Facades\DB;
 

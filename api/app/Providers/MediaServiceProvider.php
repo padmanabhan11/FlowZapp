@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Media\FakeMediaStorage;
-use App\Media\MediaStorage;
-use App\Media\SpacesStorage;
 use App\Ai\ClaudeDriver;
 use App\Ai\FakeLlm;
 use App\Ai\LlmDriver;
+use App\Media\FakeMediaStorage;
+use App\Media\MediaStorage;
+use App\Media\SpacesStorage;
 use App\Pipeline\DeepgramTranscriber;
 use App\Pipeline\FakeTranscriber;
 use App\Pipeline\NullTranscriber;
+use App\Pipeline\Transcriber;
 use App\Pipeline\WhisperTranscriber;
 use App\Retrieval\Embeddings;
 use App\Retrieval\FakeEmbeddings;
@@ -20,7 +21,6 @@ use App\Retrieval\FakeVectorStore;
 use App\Retrieval\OpenAiEmbeddings;
 use App\Retrieval\QdrantStore;
 use App\Retrieval\VectorStore;
-use App\Pipeline\Transcriber;
 use Illuminate\Support\ServiceProvider;
 
 final class MediaServiceProvider extends ServiceProvider

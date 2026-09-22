@@ -10,6 +10,8 @@ use App\Media\MediaStorage;
 use App\Models\Recording;
 use App\Models\Space;
 use App\Models\SpaceMember;
+use App\Pipeline\NullTranscriber;
+use App\Pipeline\Transcriber;
 use App\Tenancy\CurrentWorkspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -107,7 +109,7 @@ final class RecordingTest extends TestCase
             'space_id' => $this->spaceId($ws), 'uploaded_by' => $admin->id, 'storage_key' => "{$ws->id}/x/source.webm", 'state' => 'uploaded', 'duration_sec' => 60,
         ]));
 
-        $this->app->instance(\App\Pipeline\Transcriber::class, new \App\Pipeline\NullTranscriber);
+        $this->app->instance(Transcriber::class, new NullTranscriber);
         (new TranscribeRecording($ws->id, $rec->id, 'h1'))->handle(app(CurrentWorkspace::class));
 
         $r = $this->actingAs($admin)->getJson("/api/v1/recordings/{$rec->id}", $h)->assertOk();

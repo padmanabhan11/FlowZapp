@@ -57,6 +57,7 @@ final class CurrentWorkspace
      * Jobs and console commands use this; controllers never need to.
      *
      * @template T
+     *
      * @param  callable(): T  $callback
      * @return T
      */

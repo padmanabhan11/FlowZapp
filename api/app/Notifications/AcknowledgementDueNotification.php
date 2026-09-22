@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
+use App\Notifications\Support\NotificationPrefs;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Notifications\Support\NotificationPrefs;
 use Illuminate\Notifications\Notification;
 
 /**

@@ -14,7 +14,7 @@ final class PlanLimits
     /** @var array<string, array<string, int|null>> */
     private const LIMITS = [
         'free' => ['seats' => 3,    'documents' => 50,   'sop_generations' => 5,   'recording_minutes' => 30,   'chat_queries_per_day' => 0,   'api_per_min' => 60],
-        'pro'  => ['seats' => null, 'documents' => null, 'sop_generations' => 100, 'recording_minutes' => 600,  'chat_queries_per_day' => 0,   'api_per_min' => 120],
+        'pro' => ['seats' => null, 'documents' => null, 'sop_generations' => 100, 'recording_minutes' => 600,  'chat_queries_per_day' => 0,   'api_per_min' => 120],
         'team' => ['seats' => 10,   'documents' => null, 'sop_generations' => 500, 'recording_minutes' => 3000, 'chat_queries_per_day' => 500, 'api_per_min' => 300],
     ];
 

@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Approval;
 use App\Models\ChatMessage;
+use App\Models\ChatSession;
 use App\Models\Document;
 use App\Models\DocumentRead;
 use App\Models\Space;
@@ -41,7 +42,7 @@ final class AnalyticsController extends Controller
         $approvals = Approval::query()->where('to_state', 'approved')->where('created_at', '>=', $since)->count();
 
         $questions = ChatMessage::query()->where('role', 'user')->where('created_at', '>=', $since)->get(['session_id', 'created_at']);
-        $askers = \App\Models\ChatSession::query()->whereIn('id', $questions->pluck('session_id')->unique())->get(['user_id'])->pluck('user_id')->unique()->count();
+        $askers = ChatSession::query()->whereIn('id', $questions->pluck('session_id')->unique())->get(['user_id'])->pluck('user_id')->unique()->count();
         $answers = ChatMessage::query()->where('role', 'assistant')->where('created_at', '>=', $since)->get(['refused', 'rated_helpful']);
         $rated = $answers->whereNotNull('rated_helpful');
         $helpfulRate = $rated->count() ? round($rated->where('rated_helpful', true)->count() / $rated->count() * 100) : null;

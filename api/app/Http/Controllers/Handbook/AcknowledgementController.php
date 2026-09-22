@@ -14,6 +14,7 @@ use App\Models\Space;
 use App\Models\User;
 use App\Notifications\AcknowledgementDueNotification;
 use App\Policies\DocumentPolicy;
+use App\Tenancy\CurrentWorkspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -103,7 +104,7 @@ final class AcknowledgementController extends Controller
     {
         $data = $request->validate(['space_id' => ['nullable', 'string', 'size:26']]);
         $rows = $this->rows($request->user(), $data);
-        Audit::record('acknowledgement.exported', 'workspace', app(\App\Tenancy\CurrentWorkspace::class)->require(), ['rows' => $rows->count()]);
+        Audit::record('acknowledgement.exported', 'workspace', app(CurrentWorkspace::class)->require(), ['rows' => $rows->count()]);
 
         return response()->streamDownload(function () use ($rows): void {
             $out = fopen('php://output', 'w');

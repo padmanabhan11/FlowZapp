@@ -7,6 +7,7 @@ namespace App\Retrieval;
 use App\Access\Access;
 use App\Models\Document;
 use App\Models\DocumentChunk;
+use App\Models\Folder;
 use App\Models\FolderPermission;
 use App\Models\Space;
 use App\Models\SpaceMember;
@@ -31,7 +32,7 @@ final class Retriever
             return ['space_ids' => Space::query()->pluck('id')->all(), 'deny_folder_ids' => [], 'grant_folder_ids' => []];
         }
         $member = SpaceMember::query()->where('user_id', $user->id)->pluck('space_id')->all();
-        $overrideSpaces = Space::query()->whereIn('id', \App\Models\Folder::query()->whereIn('id', FolderPermission::query()->where('user_id', $user->id)->pluck('folder_id'))->pluck('space_id'))->pluck('id')->all();
+        $overrideSpaces = Space::query()->whereIn('id', Folder::query()->whereIn('id', FolderPermission::query()->where('user_id', $user->id)->pluck('folder_id'))->pluck('space_id'))->pluck('id')->all();
         $deny = [];
         $grant = [];
         foreach (array_unique(array_merge($member, $overrideSpaces)) as $sid) {
@@ -44,8 +45,8 @@ final class Retriever
     }
 
     /**
-     * @param array{space_ids: list<string>, deny_folder_ids: list<string>, grant_folder_ids: list<string>} $scope
-     * @param array{space_ids?: list<string>, document_id?: string, doc_type?: string, owner_id?: string} $filters
+     * @param  array{space_ids: list<string>, deny_folder_ids: list<string>, grant_folder_ids: list<string>}  $scope
+     * @param  array{space_ids?: list<string>, document_id?: string, doc_type?: string, owner_id?: string}  $filters
      * @return list<array{chunk: DocumentChunk, document: Document, score: float, vector_rank: ?int, keyword_rank: ?int}>
      */
     public function retrieve(string $query, array $scope, array $filters = [], ?int $keep = null): array

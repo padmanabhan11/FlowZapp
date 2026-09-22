@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Access;
 
+use App\Models\Document;
 use App\Models\Space;
 use App\Models\SpaceMember;
 use App\Tenancy\CurrentWorkspace;
@@ -28,7 +29,7 @@ final class FolderPermissionTest extends TestCase
         $sub = $this->actingAs($admin)->postJson('/api/v1/folders', ['space_id' => $sid, 'name' => 'Comp', 'parent_id' => $priv], $h)->json('data.id');
         $d1 = $this->actingAs($admin)->postJson('/api/v1/documents', ['space_id' => $sid, 'folder_id' => $pub, 'title' => 'Refunds'], $h)->json('data.id');
         $d2 = $this->actingAs($admin)->postJson('/api/v1/documents', ['space_id' => $sid, 'folder_id' => $sub, 'title' => 'Board compensation'], $h)->json('data.id');
-        app(CurrentWorkspace::class)->runAs($ws->id, fn () => \App\Models\Document::query()->whereIn('id', [$d1, $d2])->update(['state' => 'approved']));
+        app(CurrentWorkspace::class)->runAs($ws->id, fn () => Document::query()->whereIn('id', [$d1, $d2])->update(['state' => 'approved']));
 
         $this->assertCount(2, $this->actingAs($reader)->getJson('/api/v1/documents', $h)->json('data'));
         $this->actingAs($admin)->putJson("/api/v1/folders/{$priv}/permissions/{$reader->id}", ['role' => 'none'], $h)->assertOk();
@@ -62,7 +63,7 @@ final class FolderPermissionTest extends TestCase
         $shared = $this->actingAs($admin)->postJson('/api/v1/folders', ['space_id' => $sid, 'name' => 'Shared with client'], $h)->json('data.id');
         $d = $this->actingAs($admin)->postJson('/api/v1/documents', ['space_id' => $sid, 'folder_id' => $shared, 'title' => 'Handoff'], $h)->json('data.id');
         $other = $this->actingAs($admin)->postJson('/api/v1/documents', ['space_id' => $sid, 'title' => 'Internal'], $h)->json('data.id');
-        app(CurrentWorkspace::class)->runAs($ws->id, fn () => \App\Models\Document::query()->whereIn('id', [$d, $other])->update(['state' => 'approved']));
+        app(CurrentWorkspace::class)->runAs($ws->id, fn () => Document::query()->whereIn('id', [$d, $other])->update(['state' => 'approved']));
 
         $this->assertCount(0, $this->actingAs($guest)->getJson('/api/v1/documents', $h)->json('data'));
         $this->actingAs($admin)->putJson("/api/v1/folders/{$shared}/permissions/{$guest->id}", ['role' => 'guest'], $h)->assertOk();

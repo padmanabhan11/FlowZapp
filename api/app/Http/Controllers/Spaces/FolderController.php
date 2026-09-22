@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\Folder;
 use App\Models\Space;
+use App\Retrieval\Deindex;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -138,7 +139,7 @@ final class FolderController extends Controller
                 // archive: documents in the subtree are archived (state) and detached; child folders cascade.
                 $ids = $this->descendants($folder)->pluck('id')->push($folder->id);
                 foreach (Document::query()->whereIn('folder_id', $ids)->pluck('id') as $docId) {
-                    \App\Retrieval\Deindex::document($space->workspace_id, (string) $docId);
+                    Deindex::document($space->workspace_id, (string) $docId);
                 }
                 Document::query()->whereIn('folder_id', $ids)->update(['state' => 'archived', 'folder_id' => null]);
             }

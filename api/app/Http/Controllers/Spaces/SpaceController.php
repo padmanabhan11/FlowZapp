@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Space;
 use App\Models\SpaceMember;
 use App\Models\WorkspaceMember;
+use App\Tenancy\CurrentWorkspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -34,7 +35,7 @@ final class SpaceController extends Controller
     {
         $this->authorize('create', Space::class);
         $data = $request->validate([
-            'name' => ['required', 'string', 'min:2', 'max:120', Rule::unique('spaces', 'name')->where('workspace_id', app(\App\Tenancy\CurrentWorkspace::class)->id())],
+            'name' => ['required', 'string', 'min:2', 'max:120', Rule::unique('spaces', 'name')->where('workspace_id', app(CurrentWorkspace::class)->id())],
             'description' => ['nullable', 'string', 'max:500'],
             'is_handbook' => ['sometimes', 'boolean'],
         ]);

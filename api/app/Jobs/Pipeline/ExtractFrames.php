@@ -47,11 +47,13 @@ final class ExtractFrames extends PipelineStage
                 $bytes = Audio::frameAt($url, $mid);
             } catch (\Throwable $e) {
                 Log::warning('frame extraction skipped', ['recording' => $rec->id, 'segment' => $seg->position, 'error' => $e->getMessage()]);
+
                 continue;
             }
             $hash = hash('sha256', $bytes);
             if (isset($seen[$hash])) {
                 $seg->forceFill(['frame_asset_id' => $seen[$hash]])->save(); // near-identical frame: reuse
+
                 continue;
             }
             $key = sprintf('%s/%s/frames/%03d.jpg', $rec->workspace_id, $rec->id, $seg->position);

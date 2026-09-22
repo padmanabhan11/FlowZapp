@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Pipeline;
 
-
-
 final class NullTranscriber implements Transcriber
 {
     public function transcribe(string $signedMediaUrl, float $durationSec): array

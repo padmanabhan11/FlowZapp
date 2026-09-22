@@ -4,10 +4,31 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Tenancy;
 
+use App\Audit\Audit;
+use App\Documents\Content;
+use App\Models\Acknowledgement;
+use App\Models\AcknowledgementTarget;
+use App\Models\Approval;
+use App\Models\ChatMessage;
+use App\Models\ChatSession;
+use App\Models\Document;
+use App\Models\DocumentChunk;
+use App\Models\DocumentRead;
+use App\Models\DocumentStep;
+use App\Models\DocumentVersion;
+use App\Models\Folder;
+use App\Models\FolderPermission;
+use App\Models\MediaAsset;
+use App\Models\PipelineJob;
+use App\Models\Recording;
+use App\Models\RecordingSegment;
 use App\Models\Space;
+use App\Models\SpaceMember;
 use App\Models\TenantModel;
+use App\Models\Transcript;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceInvite;
 use App\Models\WorkspaceMember;
 use App\Tenancy\CurrentWorkspace;
 use Illuminate\Database\Eloquent\Model;
@@ -105,30 +126,30 @@ final class CrossTenantIsolationTest extends TestCase
         $user = User::create(['name' => 'Ana', 'email' => 'ana@example.test']);
         WorkspaceMember::create(['user_id' => $user->id, 'role' => 'admin']);
         $space = Space::create(['name' => 'Ops']);
-        \App\Models\SpaceMember::create(['space_id' => $space->id, 'user_id' => $user->id, 'role' => 'editor']);
-        $folder = \App\Models\Folder::create(['space_id' => $space->id, 'name' => 'Clients']);
-        \App\Models\FolderPermission::create(['folder_id' => $folder->id, 'user_id' => $user->id, 'role' => 'none']);
-        \App\Models\WorkspaceInvite::create([
+        SpaceMember::create(['space_id' => $space->id, 'user_id' => $user->id, 'role' => 'editor']);
+        $folder = Folder::create(['space_id' => $space->id, 'name' => 'Clients']);
+        FolderPermission::create(['folder_id' => $folder->id, 'user_id' => $user->id, 'role' => 'none']);
+        WorkspaceInvite::create([
             'email' => 'bo@example.test', 'role' => 'reader',
             'token_hash' => str_repeat('0', 64), 'expires_at' => now()->addDay(),
         ]);
-        \App\Audit\Audit::record('test.seeded', 'space', $space->id);
-        $doc = \App\Models\Document::create(['space_id' => $space->id, 'title' => 'Doc', 'content' => \App\Documents\Content::empty(), 'created_by' => $user->id]);
-        \App\Models\DocumentStep::create(['document_id' => $doc->id, 'position' => 1, 'instruction' => 'Do it']);
-        \App\Models\DocumentVersion::create(['document_id' => $doc->id, 'version_number' => 1, 'title' => 'Doc', 'content' => $doc->content]);
-        $ver = \App\Models\DocumentVersion::query()->where('document_id', $doc->id)->firstOrFail();
-        \App\Models\DocumentChunk::create(['space_id' => $space->id, 'document_id' => $doc->id, 'version_id' => $ver->id, 'section_ref' => 'step:1', 'content' => 'Do it']);
-        $cs = \App\Models\ChatSession::create(['user_id' => $user->id]);
-        \App\Models\ChatMessage::create(['session_id' => $cs->id, 'role' => 'user', 'content' => 'hi']);
-        \App\Models\DocumentRead::create(['document_id' => $doc->id, 'user_id' => $user->id, 'read_on' => now()->toDateString()]);
-        \App\Models\AcknowledgementTarget::create(['document_id' => $doc->id, 'user_id' => $user->id, 'assigned_by' => $user->id]);
-        \App\Models\Acknowledgement::create(['document_id' => $doc->id, 'version_id' => $ver->id, 'user_id' => $user->id, 'acknowledged_at' => now()]);
-        \App\Models\Approval::create(['document_id' => $doc->id, 'requested_by' => $user->id, 'from_state' => 'draft', 'to_state' => 'in_review']);
-        $rec = \App\Models\Recording::create(['space_id' => $space->id, 'uploaded_by' => $user->id, 'storage_key' => 'k/source.webm', 'state' => 'uploaded']);
-        \App\Models\Transcript::create(['recording_id' => $rec->id, 'full_text' => 'hi', 'words' => []]);
-        \App\Models\RecordingSegment::create(['recording_id' => $rec->id, 'position' => 1, 'ts_start' => 0, 'ts_end' => 1]);
-        \App\Models\MediaAsset::create(['recording_id' => $rec->id, 'kind' => 'frame', 'storage_key' => 'k/f.jpg']);
-        \App\Models\PipelineJob::create(['recording_id' => $rec->id, 'stage' => 'transcribe', 'job_key' => 'seed:transcribe:0']);
+        Audit::record('test.seeded', 'space', $space->id);
+        $doc = Document::create(['space_id' => $space->id, 'title' => 'Doc', 'content' => Content::empty(), 'created_by' => $user->id]);
+        DocumentStep::create(['document_id' => $doc->id, 'position' => 1, 'instruction' => 'Do it']);
+        DocumentVersion::create(['document_id' => $doc->id, 'version_number' => 1, 'title' => 'Doc', 'content' => $doc->content]);
+        $ver = DocumentVersion::query()->where('document_id', $doc->id)->firstOrFail();
+        DocumentChunk::create(['space_id' => $space->id, 'document_id' => $doc->id, 'version_id' => $ver->id, 'section_ref' => 'step:1', 'content' => 'Do it']);
+        $cs = ChatSession::create(['user_id' => $user->id]);
+        ChatMessage::create(['session_id' => $cs->id, 'role' => 'user', 'content' => 'hi']);
+        DocumentRead::create(['document_id' => $doc->id, 'user_id' => $user->id, 'read_on' => now()->toDateString()]);
+        AcknowledgementTarget::create(['document_id' => $doc->id, 'user_id' => $user->id, 'assigned_by' => $user->id]);
+        Acknowledgement::create(['document_id' => $doc->id, 'version_id' => $ver->id, 'user_id' => $user->id, 'acknowledged_at' => now()]);
+        Approval::create(['document_id' => $doc->id, 'requested_by' => $user->id, 'from_state' => 'draft', 'to_state' => 'in_review']);
+        $rec = Recording::create(['space_id' => $space->id, 'uploaded_by' => $user->id, 'storage_key' => 'k/source.webm', 'state' => 'uploaded']);
+        Transcript::create(['recording_id' => $rec->id, 'full_text' => 'hi', 'words' => []]);
+        RecordingSegment::create(['recording_id' => $rec->id, 'position' => 1, 'ts_start' => 0, 'ts_end' => 1]);
+        MediaAsset::create(['recording_id' => $rec->id, 'kind' => 'frame', 'storage_key' => 'k/f.jpg']);
+        PipelineJob::create(['recording_id' => $rec->id, 'stage' => 'transcribe', 'job_key' => 'seed:transcribe:0']);
 
         $unseeded = [];
         $this->current()->set($this->b->id);

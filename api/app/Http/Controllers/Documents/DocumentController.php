@@ -14,10 +14,12 @@ use App\Models\Document;
 use App\Models\DocumentRead;
 use App\Models\DocumentStep;
 use App\Models\Folder;
+use App\Models\FolderPermission;
 use App\Models\Space;
 use App\Models\SpaceMember;
 use App\Observers\DocumentObserver;
 use App\Policies\SpacePolicy;
+use App\Retrieval\Deindex;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -48,7 +50,7 @@ final class DocumentController extends Controller
             $memberSpaces = SpaceMember::query()->where('user_id', $user->id)->pluck('space_id')->all();
             $deny = [];
             $grant = [];
-            $overrideSpaces = Space::query()->whereIn('id', \App\Models\Folder::query()->whereIn('id', \App\Models\FolderPermission::query()->where('user_id', $user->id)->pluck('folder_id'))->pluck('space_id'))->pluck('id')->all();
+            $overrideSpaces = Space::query()->whereIn('id', Folder::query()->whereIn('id', FolderPermission::query()->where('user_id', $user->id)->pluck('folder_id'))->pluck('space_id'))->pluck('id')->all();
             foreach (array_unique(array_merge($memberSpaces, $overrideSpaces)) as $sid) {
                 $o = Access::folderOverridesFor($user, $sid);
                 $deny = array_merge($deny, $o['deny']);
@@ -213,7 +215,7 @@ final class DocumentController extends Controller
     {
         $doc = Document::query()->findOrFail($id);
         $this->authorize('delete', $doc);
-        \App\Retrieval\Deindex::document($doc->workspace_id, $doc->id);
+        Deindex::document($doc->workspace_id, $doc->id);
         $doc->delete();
         Audit::record('document.deleted', 'document', $doc->id, ['title' => $doc->title]);
 
@@ -265,7 +267,7 @@ final class DocumentController extends Controller
         }
         $doc->fill(['space_id' => $targetSpaceId, 'folder_id' => $folderId])->save();
         Audit::record('document.moved', 'document', $doc->id, ['space_id' => $targetSpaceId, 'folder_id' => $folderId]);
-        \App\Retrieval\Deindex::rescope($doc->workspace_id, $doc->id, $targetSpaceId, $folderId);
+        Deindex::rescope($doc->workspace_id, $doc->id, $targetSpaceId, $folderId);
 
         return response()->json(['data' => $this->summary($doc)]);
     }

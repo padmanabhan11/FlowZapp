@@ -11,6 +11,7 @@ use App\Models\DocumentVersion;
  * Semantic chunking (03 §6): one chunk per SOP step, one per section for
  * prose, one per block for free-form content. Each carries section_ref so a
  * citation can deep-link to the exact step.
+ *
  * @return list<array{section_ref: string, heading_path: ?string, content: string}>
  */
 final class Chunker
@@ -22,7 +23,7 @@ final class Chunker
         $c = $v->content ?? [];
         foreach (['purpose', 'scope', 'outcome'] as $k) {
             if (trim((string) ($c[$k] ?? '')) !== '') {
-                $out[] = ['section_ref' => "section:$k", 'heading_path' => "$title › ".ucfirst($k), 'content' => "$title — ".ucfirst($k).": ".trim((string) $c[$k])];
+                $out[] = ['section_ref' => "section:$k", 'heading_path' => "$title › ".ucfirst($k), 'content' => "$title — ".ucfirst($k).': '.trim((string) $c[$k])];
             }
         }
         if (! empty($c['prerequisites'])) {
@@ -45,6 +46,7 @@ final class Chunker
             }
             if (($b['type'] ?? '') === 'heading') {
                 $heading = (string) ($b['text'] ?? '');
+
                 continue;
             }
             $text = trim(Content::toText(['blocks' => [$b]]));

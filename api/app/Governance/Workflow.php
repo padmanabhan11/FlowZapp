@@ -6,6 +6,7 @@ namespace App\Governance;
 
 use App\Audit\Audit;
 use App\Documents\Content;
+use App\Jobs\Pipeline\IndexDocument;
 use App\Models\Approval;
 use App\Models\Document;
 use App\Models\DocumentStep;
@@ -16,7 +17,6 @@ use App\Models\Workspace;
 use App\Notifications\AcknowledgementDueNotification;
 use App\Notifications\ChangesRequestedNotification;
 use App\Notifications\DocumentApprovedNotification;
-use App\Jobs\Pipeline\IndexDocument;
 use App\Notifications\ReviewRequestedNotification;
 use App\Retrieval\Deindex;
 use App\Tenancy\CurrentWorkspace;

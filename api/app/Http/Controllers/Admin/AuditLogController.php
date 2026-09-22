@@ -8,9 +8,11 @@ use App\Audit\Audit;
 use App\Http\Controllers\Controller;
 use App\Models\AuditEntry;
 use App\Models\User;
+use App\Tenancy\CurrentWorkspace;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -47,7 +49,7 @@ final class AuditLogController extends Controller
     {
         $this->authorize('workspace-admin');
         $f = $this->filters($request);
-        Audit::record('audit_log.exported', 'workspace', app(\App\Tenancy\CurrentWorkspace::class)->require(), array_filter($f));
+        Audit::record('audit_log.exported', 'workspace', app(CurrentWorkspace::class)->require(), array_filter($f));
         $q = $this->query($f);
 
         return response()->streamDownload(function () use ($q): void {
@@ -84,7 +86,7 @@ final class AuditLogController extends Controller
             ->when(! empty($f['actor_id']), fn ($q) => $q->where('actor_id', $f['actor_id']))
             ->when(! empty($f['action']), fn ($q) => $q->where('action', 'like', $f['action'].'%'))
             ->when(! empty($f['from']), fn ($q) => $q->where('created_at', '>=', $f['from']))
-            ->when(! empty($f['to']), fn ($q) => $q->where('created_at', '<', \Illuminate\Support\Carbon::parse($f['to'])->addDay()));
+            ->when(! empty($f['to']), fn ($q) => $q->where('created_at', '<', Carbon::parse($f['to'])->addDay()));
     }
 
     /** @return array<string, mixed> */

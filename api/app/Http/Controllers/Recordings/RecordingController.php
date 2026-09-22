@@ -49,7 +49,9 @@ final class RecordingController extends Controller
         }
 
         $id = (string) Str::ulid();
-        $ext = match ($data['mime_type']) { 'video/mp4' => 'mp4', 'video/quicktime' => 'mov', default => 'webm' };
+        $ext = match ($data['mime_type']) {
+            'video/mp4' => 'mp4', 'video/quicktime' => 'mov', default => 'webm'
+        };
         $key = "{$this->current->require()}/{$id}/source.{$ext}";
         $targets = $this->storage->createMultipartUpload($key, $data['mime_type'], (int) $data['size_bytes']);
 

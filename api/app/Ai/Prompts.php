@@ -37,7 +37,7 @@ TXT;
         $buf = [];
         $start = $words[0]['start'];
         foreach ($words as $w) {
-            if ($buf && $w['start'] - $start >= $window) {
+            if ($buf && $window <= $w['start'] - $start) {
                 $lines[] = sprintf('[%.1f–%.1f] %s', $start, end($buf)['end'], implode(' ', array_column($buf, 'w')));
                 $buf = [];
                 $start = $w['start'];

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Retrieval;
 
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -77,7 +78,7 @@ final class QdrantStore implements VectorStore
         return array_map(fn ($r) => ['id' => (string) ($r['payload']['chunk_id'] ?? $r['id']), 'score' => (float) $r['score'], 'payload' => $r['payload'] ?? []], $res['result'] ?? []);
     }
 
-    private function http(): \Illuminate\Http\Client\PendingRequest
+    private function http(): PendingRequest
     {
         $req = Http::baseUrl(rtrim($this->baseUrl, '/'))->timeout(30);
 

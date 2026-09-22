@@ -78,6 +78,7 @@ final class Diff
             $ref = "$type:".($row['i'] + 1);
             if (! isset($aById[$k])) {
                 $out[] = ['kind' => 'added', 'type' => $type, 'ref' => $ref, 'id' => $k, 'from' => null, 'to' => $row['v']];
+
                 continue;
             }
             $changed = $fingerprint($aById[$k]['v']) != $fingerprint($row['v']);
