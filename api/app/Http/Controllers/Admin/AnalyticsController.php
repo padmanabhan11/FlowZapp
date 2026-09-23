@@ -69,4 +69,19 @@ final class AnalyticsController extends Controller
             'unindexed' => IndexHealth::unindexed()->map(fn (Document $d) => ['document_id' => $d->id, 'title' => $d->title, 'approved_at' => $d->approvedVersion?->approved_at])->all(),
         ]]);
     }
+
+    /** GET /v1/analytics/past-review — admin: every document past its review date, most overdue first (L2-T2). */
+    public function pastReview(): JsonResponse
+    {
+        $this->authorize('workspace-admin');
+        $docs = Document::query()->live()->whereNotNull('review_due_at')->where('review_due_at', '<=', now())
+            ->with(['owner:id,name', 'approvedVersion:id,title,approved_at'])->orderBy('review_due_at')->limit(500)->get();
+        $spaces = Space::query()->whereIn('id', $docs->pluck('space_id')->unique())->get(['id', 'name'])->keyBy('id');
+
+        return response()->json(['data' => $docs->map(fn (Document $d) => [
+            'id' => $d->id, 'title' => $d->approvedVersion->title ?? $d->title, 'state' => $d->state,
+            'space' => $spaces->get($d->space_id)?->only(['id', 'name']), 'owner' => $d->owner?->only(['id', 'name']),
+            'review_due_at' => $d->review_due_at, 'days_overdue' => (int) $d->review_due_at?->diffInDays(now()), 'approved_at' => $d->approvedVersion?->approved_at,
+        ])->values()]);
+    }
 }

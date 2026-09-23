@@ -54,6 +54,23 @@ return [
 
     'channels' => [
 
+        // L3-T2: where operator alerts go (index drift, failed payments). stderr always — App
+        // Platform ships it to the log forwarder — plus Slack when LOG_SLACK_WEBHOOK_URL is set.
+        'alerts' => [
+            'driver' => 'stack',
+            'channels' => array_values(array_filter(['stderr', env('LOG_SLACK_WEBHOOK_URL') ? 'slack-alerts' : null])),
+            'ignore_exceptions' => false,
+        ],
+
+        'slack-alerts' => [
+            'driver' => 'slack',
+            'url' => env('LOG_SLACK_WEBHOOK_URL'),
+            'username' => env('LOG_SLACK_USERNAME', 'FlowZapp alerts'),
+            'emoji' => ':rotating_light:',
+            'level' => 'warning',
+            'replace_placeholders' => true,
+        ],
+
         'stack' => [
             'driver' => 'stack',
             'channels' => explode(',', (string) env('LOG_STACK', 'single')),

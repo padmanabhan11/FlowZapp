@@ -120,6 +120,25 @@
             <span class="control-value">{{ s.count }}</span>
           </div>
         }
+        @if (o.past_review_by_space.length) {
+          <button pButton type="button" size="small" [text]="true" (click)="togglePastReview()">
+            {{ showPastReview() ? 'Hide the list' : 'Show the documents' }}
+          </button>
+          @if (showPastReview()) {
+            <ul class="ins__list">
+              @for (d of pastReview(); track d.id) {
+                <li>
+                  <a [routerLink]="['/d', d.id]">{{ d.title }}</a>
+                  <span class="adm__hint">
+                    {{ d.space?.name }} · {{ d.owner?.name ?? 'no owner' }} ·
+                    <span class="control-value">{{ d.days_overdue }}</span>
+                    {{ d.days_overdue === 1 ? 'day' : 'days' }} overdue
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+        }
       </div>
 
       <div class="ins__card document-surface ins__metrics">

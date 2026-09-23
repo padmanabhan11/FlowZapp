@@ -12,6 +12,7 @@ FlowZapp turns screen recordings into approved, searchable standard operating pr
 | `spike/retrieval-eval/` | Retrieval eval set format (`php artisan retrieval:eval`). |
 | `infra/do/app.yaml` | DigitalOcean App Platform spec — web, worker-pipeline, worker-default, scheduler. |
 | `infra/qdrant/` | Self-hosted Qdrant droplet: compose file, TLS, backups, runbook. |
+| `infra/runbooks/` | Operator runbooks for each alert on the `alerts` log channel. |
 | `Documentation/` | Specs 00–14, concept deck, Jira backlog. Read 12 → 03 → 04 → 05 → 02 when joining. |
 
 ## Non-negotiables

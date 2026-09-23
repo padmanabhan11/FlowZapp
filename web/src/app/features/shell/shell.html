@@ -36,6 +36,7 @@
     <a routerLink="/ask" routerLinkActive="is-active" class="shell__nav">Ask</a>
     @if (canRecord()) {
       <a routerLink="/recordings" routerLinkActive="is-active" class="shell__nav">Recordings</a>
+      <a routerLink="/my-documents" routerLinkActive="is-active" class="shell__nav">My documents</a>
     }
     <hr />
     @for (s of spaces(); track s.id) {

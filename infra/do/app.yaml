@@ -58,6 +58,14 @@ envs:
     value: "null"
   - key: BILLING_WEBHOOK_SECRET
     type: SECRET
+  # Operator alerts (infra/runbooks): the `alerts` log channel posts to Slack when this is set.
+  - key: LOG_SLACK_WEBHOOK_URL
+    type: SECRET
+
+# Platform alerts to the account's alert email (component/deploy level; product alerts are in infra/runbooks).
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
 
 databases:
   - name: mysql

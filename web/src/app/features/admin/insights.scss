@@ -111,3 +111,14 @@
     content: ' · ';
   }
 }
+
+.ins__list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  li {
+    padding: 3px 0;
+  }
+  .adm__hint {
+    margin-left: 6px;
+  }
+}

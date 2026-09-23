@@ -58,7 +58,7 @@ final class CheckIndex extends Command
                 }
                 if ($overdue !== []) {
                     $totals['alerted'] += count($overdue);
-                    Log::error('retrieval.unindexed_approved_documents', ['workspace_id' => $wsId, 'documents' => array_column($overdue, 'document_id'), 'alert_after_minutes' => $alertAfter]);
+                    Log::channel('alerts')->error('retrieval.unindexed_approved_documents', ['workspace_id' => $wsId, 'documents' => array_column($overdue, 'document_id'), 'alert_after_minutes' => $alertAfter]);
                     if (! $dry) {
                         $admins = User::query()->whereIn('id', WorkspaceMember::query()->where('role', 'admin')->pluck('user_id'))->get();
                         foreach ($admins as $admin) {

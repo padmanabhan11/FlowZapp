@@ -15,16 +15,17 @@ use Illuminate\Support\Carbon;
  * @property array<mixed>|null $citations
  * @property bool $refused
  * @property int|null $latency_ms
+ * @property float|null $cost_usd
  * @property bool|null $rated_helpful
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
 class ChatMessage extends TenantModel
 {
-    protected $fillable = ['session_id', 'role', 'content', 'citations', 'refused', 'latency_ms', 'rated_helpful'];
+    protected $fillable = ['session_id', 'role', 'content', 'citations', 'refused', 'latency_ms', 'cost_usd', 'rated_helpful'];
 
     protected function casts(): array
     {
-        return ['citations' => 'array', 'refused' => 'boolean', 'rated_helpful' => 'boolean'];
+        return ['citations' => 'array', 'refused' => 'boolean', 'cost_usd' => 'float', 'rated_helpful' => 'boolean'];
     }
 }

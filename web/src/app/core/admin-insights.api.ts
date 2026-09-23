@@ -42,6 +42,17 @@ export interface Overview {
   unindexed: { document_id: string; title: string; approved_at: string | null }[];
 }
 
+export interface PastReviewRow {
+  id: string;
+  title: string;
+  state: string;
+  space: { id: string; name: string } | null;
+  owner: { id: string; name: string } | null;
+  review_due_at: string;
+  days_overdue: number;
+  approved_at: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminInsightsApi {
   private readonly http = inject(HttpClient);
@@ -69,6 +80,15 @@ export class AdminInsightsApi {
         responseType: 'blob' as const,
       }),
     );
+  }
+
+  /** L2-T2: every document past its review date, most overdue first (admin). */
+  async pastReview(): Promise<PastReviewRow[]> {
+    return (
+      await firstValueFrom(
+        this.http.get<{ data: PastReviewRow[] }>('/api/v1/analytics/past-review'),
+      )
+    ).data;
   }
 
   async overview(): Promise<Overview> {

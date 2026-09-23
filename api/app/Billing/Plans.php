@@ -13,6 +13,7 @@ use App\Models\WorkspaceMember;
 use App\Tenancy\CurrentWorkspace;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
@@ -194,6 +195,7 @@ final class Plans
             } elseif ($event['type'] === 'payment.failed') {
                 $sub->forceFill(['status' => 'past_due'])->save();
                 Audit::record('billing.payment_failed', 'workspace', $ws->id);
+                Log::channel('alerts')->warning('billing.payment_failed', ['workspace_id' => $ws->id, 'provider_sub_id' => $sub->provider_sub_id]);
             }
 
             return $sub->refresh();

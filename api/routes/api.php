@@ -14,6 +14,7 @@ use App\Http\Controllers\Billing\BillingController;
 use App\Http\Controllers\Documents\DocumentAssetController;
 use App\Http\Controllers\Documents\DocumentController;
 use App\Http\Controllers\Documents\DocumentLinkController;
+use App\Http\Controllers\Documents\MyDocumentsController;
 use App\Http\Controllers\Documents\StepController;
 use App\Http\Controllers\Documents\TemplateController;
 use App\Http\Controllers\Governance\ApprovalController;
@@ -146,6 +147,8 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/chat/messages/{id}/rating', [ChatController::class, 'rate']);
             Route::get('/analytics/knowledge-gaps', [ChatController::class, 'gaps']);
             Route::get('/analytics/overview', [AnalyticsController::class, 'overview']);
+            Route::get('/analytics/past-review', [AnalyticsController::class, 'pastReview']);
+            Route::get('/me/documents', [MyDocumentsController::class, 'index']);
             Route::get('/audit-log', [AuditLogController::class, 'index']);
             Route::get('/audit-log/export', [AuditLogController::class, 'export']);
 

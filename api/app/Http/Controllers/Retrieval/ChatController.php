@@ -79,7 +79,8 @@ final class ChatController extends Controller
         $answer = $this->answerer->answer($question, $hits, $history);
         $latency = (int) round((microtime(true) - $started) * 1000);
 
-        $msg = ChatMessage::create(['session_id' => $s->id, 'role' => 'assistant', 'content' => $answer['text'], 'citations' => $answer['citations'], 'refused' => $answer['refused'], 'latency_ms' => $latency]);
+        $msg = ChatMessage::create(['session_id' => $s->id, 'role' => 'assistant', 'content' => $answer['text'], 'citations' => $answer['citations'], 'refused' => $answer['refused'], 'latency_ms' => $latency,
+            'cost_usd' => round($answer['cost_usd'] + $standalone['cost_usd'], 5)]);
         $s->touch();
         if ($answer['refused']) {
             Audit::record('chat.refused', 'chat_message', $msg->id, ['question' => mb_substr($question, 0, 200)]);

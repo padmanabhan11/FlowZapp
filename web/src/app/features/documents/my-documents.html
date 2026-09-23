@@ -1,0 +1,56 @@
+<section class="mine">
+  <header class="mine__head">
+    <h1>My documents</h1>
+    @if (data(); as d) {
+      <p class="mine__summary">
+        <span class="control-value">{{ d.summary.total }}</span> owned ·
+        <span class="control-value">{{ d.summary.needing_attention }}</span> need attention
+        @if (d.summary.review_overdue) {
+          · <span class="control-value">{{ d.summary.review_overdue }}</span> overdue for review
+        }
+      </p>
+    }
+  </header>
+  @if (error(); as e) {
+    <p class="mine__error" role="alert">{{ e }}</p>
+  }
+  @if (data(); as d) {
+    @if (d.documents.length === 0 && !loading()) {
+      <section class="mine__empty document-surface">
+        <p>
+          You don't own any documents yet. When you create one, or someone hands one to you, it
+          appears here with what it needs.
+        </p>
+        <a pButton routerLink="/recordings" size="small">Record a procedure</a>
+      </section>
+    }
+    @if (d.documents.length) {
+      <div class="mine__list document-surface">
+        @for (doc of d.documents; track doc.id) {
+          <div class="mine__row" [class.mine__row--quiet]="doc.needs.length === 0">
+            <div class="mine__main">
+              <a class="mine__title" [routerLink]="link(doc)">{{ doc.title }}</a>
+              <span class="state-pill state-pill--{{ doc.state }}">{{
+                stateLabel(doc.state)
+              }}</span>
+              @if (doc.space) {
+                <span class="mine__meta">{{ doc.space.name }}</span>
+              }
+            </div>
+            <div class="mine__needs">
+              @if (doc.needs.length === 0) {
+                <span class="mine__meta">Nothing needed</span>
+              }
+              @for (n of doc.needs; track n) {
+                <span class="mine__need">{{ needText(n, doc) }}</span>
+              }
+              @if (doc.review_due_at) {
+                <span class="mine__meta">Review {{ doc.review_due_at | date: 'd MMM y' }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</section>

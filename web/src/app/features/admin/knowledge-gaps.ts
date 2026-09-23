@@ -3,7 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { DocState, KnowledgeGap } from '../../core/api.types';
-import { AdminInsightsApi, Overview } from '../../core/admin-insights.api';
+import { AdminInsightsApi, Overview, PastReviewRow } from '../../core/admin-insights.api';
 import { ChatApi } from '../../core/retrieval.api';
 
 /**
@@ -23,6 +23,8 @@ export class KnowledgeGaps implements OnInit {
   private readonly insights = inject(AdminInsightsApi);
   readonly gaps = signal<KnowledgeGap[]>([]);
   readonly overview = signal<Overview | null>(null);
+  readonly pastReview = signal<PastReviewRow[]>([]);
+  readonly showPastReview = signal(false);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
@@ -54,6 +56,18 @@ export class KnowledgeGaps implements OnInit {
       this.overview.set(await this.insights.overview());
     } catch {
       /* analytics are secondary; the gaps still show */
+    }
+  }
+
+  /** L2-T2: the documents behind the past-review counts. */
+  async togglePastReview(): Promise<void> {
+    this.showPastReview.set(!this.showPastReview());
+    if (this.showPastReview() && this.pastReview().length === 0) {
+      try {
+        this.pastReview.set(await this.insights.pastReview());
+      } catch {
+        this.error.set('The past-review list could not be loaded.');
+      }
     }
   }
 
