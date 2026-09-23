@@ -127,7 +127,18 @@ export interface DocumentSummary {
   review_due_at: string | null;
   requires_ack: boolean;
   language: string;
+  translation_of?: string | null;
+  translation_stale?: boolean;
   updated_at: string;
+}
+
+/** I2-T3: one end of a translation link, only present when the caller can open it. */
+export interface TranslationLink {
+  id: string;
+  language: string;
+  title: string;
+  state: DocState;
+  translation_stale: boolean;
 }
 
 export interface DocumentFull extends DocumentSummary {
@@ -135,6 +146,8 @@ export interface DocumentFull extends DocumentSummary {
   steps: Step[];
   translation_of?: string | null;
   translation_stale?: boolean;
+  source?: TranslationLink | null;
+  translations?: TranslationLink[];
   created_by: string | null;
   source_recording_id: string | null;
   created_at: string;
@@ -216,6 +229,8 @@ export interface PublishedDocument {
   translation_of?: string | null;
   translation_stale?: boolean;
   translation_stale_since?: string | null;
+  source?: TranslationLink | null;
+  translations?: TranslationLink[];
   content: Content;
   steps: Step[];
 }

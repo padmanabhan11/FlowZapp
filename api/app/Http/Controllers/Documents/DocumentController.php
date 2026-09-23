@@ -161,7 +161,8 @@ final class DocumentController extends Controller
             'version_number' => $v->version_number, 'approved_at' => $v->approved_at, 'approved_by' => $v->approved_by,
             'owner' => $doc->owner?->only(['id', 'name']), 'review_due_at' => $doc->review_due_at,
             'language' => $doc->language, 'translation_of' => $doc->translation_of, 'translation_stale' => $doc->translation_stale,   // FR-804
-            'translation_stale_since' => $doc->translation_stale ? Document::query()->whereKey($doc->translation_of)->first()?->approvedVersion?->approved_at : null,
+            'translation_stale_since' => $doc->translation_stale ? $doc->source?->approvedVersion?->approved_at : null,
+            ...$this->translationLinks($doc, true),   // readers only see translations that are published themselves
             'content' => array_diff_key($v->content ?? [], ['_steps' => 1]),
             'steps' => $v->steps()->get()->map(fn (DocumentStep $s) => $this->step($s)),
         ]]);
@@ -298,6 +299,26 @@ final class DocumentController extends Controller
             'steps' => $steps->map(fn (DocumentStep $s) => $this->step($s))->values(),
             'created_by' => $d->created_by, 'source_recording_id' => $d->source_recording_id,
             'created_at' => $d->created_at,
+        ] + $this->translationLinks($d);
+    }
+
+    /**
+     * I2-T3: the translation link in both directions — the source a translation
+     * came from, and the translations a source has — limited to documents the
+     * caller can see (a link to something they cannot open is not shown at all);
+     * the published payload additionally hides translations that are not yet live.
+     *
+     * @return array{source: ?array<string, mixed>, translations: list<array<string, mixed>>}
+     */
+    private function translationLinks(Document $d, bool $liveOnly = false): array
+    {
+        $user = request()->user();
+        $brief = fn (Document $x) => ['id' => $x->id, 'language' => $x->language, 'title' => $x->approvedVersion->title ?? $x->title, 'state' => $x->state, 'translation_stale' => $x->translation_stale];
+        $source = $d->translation_of ? $d->source()->with('approvedVersion:id,title')->first() : null;
+
+        return [
+            'source' => $source !== null && $user?->can('view', $source) ? $brief($source) : null,
+            'translations' => $d->translations()->when($liveOnly, fn ($q) => $q->live())->with('approvedVersion:id,title')->get()->filter(fn (Document $t) => $user?->can('view', $t))->map($brief)->values()->all(),
         ];
     }
 

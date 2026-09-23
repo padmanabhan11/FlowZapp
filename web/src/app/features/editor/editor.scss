@@ -20,6 +20,14 @@
     font-size: 0.9rem;
     margin: 0 0 8px;
   }
+  &__links {
+    margin: 0 0 10px;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    a {
+      margin-right: 10px;
+    }
+  }
   &__banner {
     background: var(--paper);
     border: 1px solid var(--line);

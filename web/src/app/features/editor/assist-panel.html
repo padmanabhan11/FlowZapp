@@ -108,10 +108,16 @@
       type="button"
       size="small"
       [loading]="busy() === 'translate'"
-      [disabled]="language() === doc().language"
+      [disabled]="language() === doc().language || hasTranslation(language())"
       (click)="translate()"
     >
       Translate
     </button>
   </div>
+  @if (hasTranslation(language())) {
+    <p class="ap__hint">
+      A {{ language() | uppercase }} translation already exists — open it from the links above the
+      document.
+    </p>
+  }
 </aside>

@@ -45,6 +45,12 @@
     text-decoration: none;
     font-weight: 500;
   }
+  &__lang {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
   &__meta {
     color: var(--ink-soft);
     font-size: 0.9rem;
@@ -66,4 +72,8 @@
   }
 }
 
-.browser__hint { margin: -4px 0 8px; color: var(--ink-soft); font-size: 0.85rem; }
+.browser__hint {
+  margin: -4px 0 8px;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}

@@ -61,6 +61,17 @@
           >{{ d.title }}</a
         >
         <span class="state-pill state-pill--{{ d.state }}">{{ stateLabel(d.state) }}</span>
+        @if (d.translation_of) {
+          <span
+            class="browser__lang"
+            [title]="
+              d.translation_stale
+                ? 'Translation — the source changed since it was translated'
+                : 'Translation'
+            "
+            >{{ d.language | uppercase }}{{ d.translation_stale ? ' · out of date' : '' }}</span
+          >
+        }
         <span class="browser__meta">{{ d.owner?.name ?? '—' }}</span>
         <span class="browser__meta control-value">{{ d.updated_at | date: 'd MMM y' }}</span>
       </div>

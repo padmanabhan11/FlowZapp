@@ -19,6 +19,27 @@
         @if (d.review_due_at) {
           <span>Review due {{ d.review_due_at | date: 'MMM y' }}</span>
         }
+        @if (d.source; as s) {
+          <span
+            >Translated from
+            <a class="reader__lang" [routerLink]="['/d', s.id]">{{
+              s.language | uppercase
+            }}</a></span
+          >
+        }
+        @if ((d.translations ?? []).length) {
+          <span
+            >Also in
+            @for (t of d.translations; track t.id) {
+              <a
+                class="reader__lang"
+                [routerLink]="['/d', t.id]"
+                [title]="t.title + (t.translation_stale ? ' (may be out of date)' : '')"
+                >{{ t.language | uppercase }}{{ t.translation_stale ? '*' : '' }}</a
+              >
+            }
+          </span>
+        }
       </div>
       <div class="control__actions">
         @if (canEdit()) {

@@ -101,8 +101,15 @@ final class AssistanceTest extends TestCase
         $this->actingAs($this->editor)->postJson('/api/v1/ai/translate', ['document_id' => $id, 'target_language' => 'de'], $this->h())->assertStatus(409);
 
         // Source stays approved and untouched; the translation is not stale yet.
-        $this->assertSame('approved', $this->actingAs($this->editor)->getJson("/api/v1/documents/{$id}", $this->h())->json('data.state'));
+        $src = $this->actingAs($this->editor)->getJson("/api/v1/documents/{$id}", $this->h())->json('data');
+        $this->assertSame('approved', $src['state']);
         $this->assertFalse($copy['translation_stale']);
+
+        // I2-T3: the link reads both ways — and readers only see translations that are published.
+        $this->assertSame([['id' => $de, 'language' => 'de', 'title' => 'Erstattungen', 'state' => 'draft', 'translation_stale' => false]], $src['translations']);
+        $this->assertNull($src['source']);
+        $this->assertSame(['id' => $id, 'language' => 'en', 'title' => 'Refunds', 'state' => 'approved', 'translation_stale' => false], $copy['source']);
+        $this->assertSame([], $this->actingAs($this->editor)->getJson("/api/v1/documents/{$id}/published", $this->h())->json('data.translations'), 'a draft translation is not offered to readers');
 
         // Approve the translation, then re-approve the source → translation marked stale (FR-804), visible to readers.
         $this->actingAs($this->editor)->postJson("/api/v1/documents/{$de}/submit", [], $this->h())->assertOk();
@@ -114,6 +121,9 @@ final class AssistanceTest extends TestCase
         $pub = $this->actingAs($this->editor)->getJson("/api/v1/documents/{$de}/published", $this->h())->assertOk()->json('data');
         $this->assertTrue($pub['translation_stale']);
         $this->assertNotNull($pub['translation_stale_since']);
+        $this->assertSame('Refunds', $pub['source']['title']);
+        $srcPub = $this->actingAs($this->editor)->getJson("/api/v1/documents/{$id}/published", $this->h())->json('data');
+        $this->assertSame([['id' => $de, 'language' => 'de', 'title' => 'Erstattungen', 'state' => 'approved', 'translation_stale' => true]], $srcPub['translations'], 'once approved, the translation is offered from the source, flagged stale');
         $this->assertTrue(app(CurrentWorkspace::class)->runAs($this->ws->id, fn () => Document::query()->findOrFail($de)->translation_stale));
     }
 }

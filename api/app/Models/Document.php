@@ -136,6 +136,26 @@ class Document extends TenantModel
     }
 
     /**
+     * The document this one is a translation of (FR-803).
+     *
+     * @return BelongsTo<Document, $this>
+     */
+    public function source(): BelongsTo
+    {
+        return $this->belongsTo(Document::class, 'translation_of');
+    }
+
+    /**
+     * Translations of this document, one per language (I2-T3: the link reads both ways).
+     *
+     * @return HasMany<Document, $this>
+     */
+    public function translations(): HasMany
+    {
+        return $this->hasMany(Document::class, 'translation_of')->orderBy('language');
+    }
+
+    /**
      * Steps of the working copy, in order.
      *
      * @return HasMany<DocumentStep, $this>

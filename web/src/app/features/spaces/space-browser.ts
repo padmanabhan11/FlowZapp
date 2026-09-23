@@ -1,5 +1,5 @@
 import { Component, OnChanges, computed, inject, input, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -17,7 +17,15 @@ import { SpaceApi } from '../../core/workspace.api';
  */
 @Component({
   selector: 'app-space-browser',
-  imports: [DatePipe, FormsModule, ButtonModule, InputTextModule, SelectModule, RouterLink],
+  imports: [
+    DatePipe,
+    UpperCasePipe,
+    FormsModule,
+    ButtonModule,
+    InputTextModule,
+    SelectModule,
+    RouterLink,
+  ],
   templateUrl: './space-browser.html',
   styleUrl: './space-browser.scss',
 })

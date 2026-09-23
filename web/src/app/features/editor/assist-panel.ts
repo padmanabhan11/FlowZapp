@@ -1,3 +1,4 @@
+import { UpperCasePipe } from '@angular/common';
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -20,7 +21,7 @@ export interface Accepted {
  */
 @Component({
   selector: 'app-assist-panel',
-  imports: [FormsModule, ButtonModule, SelectModule],
+  imports: [FormsModule, UpperCasePipe, ButtonModule, SelectModule],
   templateUrl: './assist-panel.html',
   styleUrl: './assist-panel.scss',
 })
@@ -49,6 +50,11 @@ export class AssistPanel {
     { label: 'Italiano', value: 'it' },
     { label: 'English', value: 'en' },
   ];
+
+  /** I2-T3: one translation per language; the server answers 409 for a second one. */
+  hasTranslation(language: string): boolean {
+    return (this.doc().translations ?? []).some((t) => t.language === language);
+  }
 
   readonly pending = computed(() => {
     const p = this.proposal();

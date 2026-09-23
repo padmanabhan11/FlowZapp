@@ -135,7 +135,27 @@
       <div class="editor__banner" role="status">
         The source of this translation changed since it was translated. Review it against the source
         before submitting.
+        @if (d.source; as s) {
+          <a [routerLink]="['/d', s.id]">Open the source ({{ s.language | uppercase }})</a>
+        }
       </div>
+    } @else if (d.source; as s) {
+      <p class="editor__links">
+        Translation of <a [routerLink]="['/d', s.id]">{{ s.title }}</a> ({{
+          s.language | uppercase
+        }}).
+      </p>
+    }
+    @if ((d.translations ?? []).length) {
+      <p class="editor__links">
+        Translations:
+        @for (t of d.translations; track t.id) {
+          <a [routerLink]="['/d', t.id, 'edit']"
+            >{{ t.language | uppercase }} — {{ t.title
+            }}{{ t.translation_stale ? ' (out of date)' : '' }}</a
+          >
+        }
+      </p>
     }
 
     <div class="editor__layout" [class.editor__layout--assist]="assist()">

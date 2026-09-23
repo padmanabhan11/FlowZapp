@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, UpperCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   CdkDrag,
@@ -46,6 +46,7 @@ import { Router } from '@angular/router';
   selector: 'app-editor',
   imports: [
     DatePipe,
+    UpperCasePipe,
     FormsModule,
     ButtonModule,
     CheckboxModule,

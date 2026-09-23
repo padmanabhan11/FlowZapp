@@ -1,4 +1,4 @@
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -16,7 +16,7 @@ import { SessionStore } from '../../core/session.store';
  */
 @Component({
   selector: 'app-reader',
-  imports: [DatePipe, NgTemplateOutlet, ButtonModule, RouterLink],
+  imports: [DatePipe, NgTemplateOutlet, UpperCasePipe, ButtonModule, RouterLink],
   templateUrl: './reader.html',
   styleUrl: './reader.scss',
 })
