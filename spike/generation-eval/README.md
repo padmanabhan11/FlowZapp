@@ -1,4 +1,28 @@
-# Generation spike — recording → draft SOP
+# Generation eval — recording → draft SOP
+
+There are two runners that write the same output layout, and one scorer:
+
+- `php artisan pipeline:eval` (in `api/`) runs **the product pipeline** — the same transcription drivers, scene detection, segmenter, frame picker and draft writer the queue jobs use. This is the eval set for D2-T4 (segmentation accuracy) and D4-T5 (generation), and the harness for D0-T2 (provider benchmark). Use it for every prompt or pipeline change, as `CLAUDE.md` requires.
+- `run_eval.py` is the original throwaway spike (standalone Python, its own prompts). Kept for reference; it predates the product pipeline.
+- `score.py` scores either one.
+
+## The fixed eval set (20 recordings)
+
+`eval-set.csv` lists the 20 slots the set must cover: short, medium and long; clear, messy, noisy and accented narration; click-heavy, talk-heavy, multi-app and same-screen work; one non-English; and two that **must halt** (almost no speech; no process shown). Record real work, narrating as you go, unscripted. Put the files in `recordings/`, fill in `file_name` for each slot, and keep the set fixed — scores are only comparable run to run if the recordings do not change.
+
+## Product pipeline run
+
+```bash
+cd api
+php artisan pipeline:eval ../spike/generation-eval/recordings --out=../spike/generation-eval/out-product --providers=whisper,deepgram
+php artisan pipeline:eval ../spike/generation-eval/recordings --out=/tmp/eval --mock      # harness check, no API calls
+```
+
+Needs `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` and/or `DEEPGRAM_API_KEY` in `api/.env`, and FFmpeg. Runs are resumable (`--force` redoes them). Besides the files listed below, each run writes `scenes.json` (detected screen changes), `segments.json` (the segments with their time ranges) and `frames/segment-NN.jpg`, and `out/segments-review.csv` gets one row per run with the boundaries the pipeline chose.
+
+For segmentation, fill `human_boundaries` in `segments-review.csv` once per recording: the times (seconds, space-separated) where you judge one action ends and the next begins. `score.py` reports boundary precision, recall and F1 within ±2 s.
+
+# Original spike — recording → draft SOP
 
 A one-week, throwaway evaluation that answers two questions before M0 starts:
 

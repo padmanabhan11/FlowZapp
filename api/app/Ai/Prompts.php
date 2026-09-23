@@ -7,7 +7,7 @@ namespace App\Ai;
 /**
  * Generation prompts (F9). Kept in one place because prompt changes are code
  * changes: re-run spike/generation-eval before merging (08 §4). The markers
- * ("[segment]", "[generate]") let FakeLlm pick a scripted reply.
+ * ("[segment]", "[generate]", "[digest]") let FakeLlm pick a scripted reply.
  */
 final class Prompts
 {
@@ -25,6 +25,14 @@ Rules: use ONLY what is in the transcript — never invent steps, tools, names o
 write instructions in the imperative, one sentence where possible; add a warning only when the narration states a risk; add expected_result only when the
 narration states what should happen; set confidence low and explain in note when the narration is unclear. Output JSON only, exactly this shape:
 {"title":"…","purpose":"…","scope":"…","prerequisites":["…"],"steps":[{"segment":1,"instruction":"…","warning":null,"expected_result":null,"note":null,"confidence":0.9}],"outcome":"…"}
+TXT;
+
+    /** D4-T2: condenses long transcripts per segment before generation, keeping everything a step could need. */
+    public const DIGEST_SYSTEM = <<<'TXT'
+[digest] You condense the narration of each segment of a screen recording so a later step can write an SOP from it.
+Rules: for every segment keep each action in order, and keep exactly every name, value, UI label, menu path, URL, number, warning ("don't", "make sure",
+"otherwise") and stated result; drop filler, repetition, false starts and chit-chat; never add anything that was not said; write terse imperative notes,
+at most about 80 words per segment. Output JSON only: {"segments":[{"position":1,"digest":"…"}]} with one entry per input segment.
 TXT;
 
     public const REWRITE_SYSTEM = <<<'TXT'
@@ -69,18 +77,35 @@ TXT;
         return implode("\n", $lines);
     }
 
-    public static function segmentUser(string $title, float $duration, string $lines): string
+    /**
+     * @param  list<float>  $scenes  screen changes detected in the video (D2-T2)
+     */
+    public static function segmentUser(string $title, float $duration, string $lines, array $scenes = []): string
     {
-        return "Recording: {$title}\nDuration: ".round($duration)." seconds\nTranscript (each line is \"[start–end] words\"):\n\n{$lines}";
+        $hint = $scenes === [] ? '' : "\nScreen changes detected at (seconds): ".implode(', ', array_map(fn ($t) => sprintf('%.1f', $t), array_slice($scenes, 0, 400)))
+            ."\nA new action often starts at a screen change; use them to place boundaries, but only the transcript decides what the actions are.";
+
+        return "Recording: {$title}\nDuration: ".round($duration)." seconds{$hint}\nTranscript (each line is \"[start–end] words\"):\n\n{$lines}";
+    }
+
+    /**
+     * @param  list<array{position:int,ts_start:float,ts_end:float,text:string}>  $segments
+     */
+    public static function digestUser(array $segments): string
+    {
+        $parts = array_map(fn ($s) => sprintf("### Segment %d [%.1f–%.1f]\n%s", $s['position'], $s['ts_start'], $s['ts_end'], $s['text']), $segments);
+
+        return "Segments:\n\n".implode("\n\n", $parts);
     }
 
     /**
      * @param  list<array{position:int,ts_start:float,ts_end:float,summary:?string}>  $segments
      */
-    public static function generateUser(string $title, array $segments, string $lines): string
+    public static function generateUser(string $title, array $segments, string $lines, bool $condensed = false): string
     {
         $seg = implode("\n", array_map(fn ($s) => sprintf('%d. [%.1f–%.1f] %s', $s['position'], $s['ts_start'], $s['ts_end'], $s['summary'] ?? ''), $segments));
+        $label = $condensed ? 'Transcript (long recording: narration condensed per segment, every name, value and warning kept)' : 'Transcript';
 
-        return "Recording: {$title}\n\nSegments:\n{$seg}\n\nTranscript:\n{$lines}";
+        return "Recording: {$title}\n\nSegments:\n{$seg}\n\n{$label}:\n{$lines}";
     }
 }

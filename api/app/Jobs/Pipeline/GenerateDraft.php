@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Jobs\Pipeline;
 
-use App\Ai\Json;
-use App\Ai\LlmDriver;
-use App\Ai\Prompts;
 use App\Audit\Audit;
 use App\Documents\Content;
 use App\Models\Document;
@@ -16,6 +13,7 @@ use App\Models\Recording;
 use App\Models\User;
 use App\Notifications\RecordingDraftReadyNotification;
 use App\Observers\DocumentObserver;
+use App\Pipeline\DraftWriter;
 use App\Pipeline\PipelineFailed;
 use Illuminate\Support\Facades\DB;
 
@@ -47,16 +45,11 @@ final class GenerateDraft extends PipelineStage
     {
         $t = $rec->transcript()->firstOrFail();
         $segments = $rec->segments()->get();
-        $segIn = $segments->map(fn ($s) => ['position' => $s->position, 'ts_start' => (float) $s->ts_start, 'ts_end' => (float) $s->ts_end, 'summary' => $s->summary])->all();
-        $lines = Prompts::transcriptLines($t->words ?? []);
+        $segIn = $segments->map(fn ($s) => ['position' => (int) $s->position, 'ts_start' => (float) $s->ts_start, 'ts_end' => (float) $s->ts_end, 'summary' => $s->summary])->values()->all();
 
-        $res = app(LlmDriver::class)->complete(Prompts::GENERATE_SYSTEM, Prompts::generateUser((string) $rec->title, $segIn, $lines), 8192);
+        $res = app(DraftWriter::class)->write((string) $rec->title, $segIn, $t->words ?? []);
         $job->forceFill(['cost_usd' => $res['cost_usd']])->save();
-
-        $d = Json::fromText($res['text']);
-        if (! is_array($d) || empty($d['steps']) || ! is_array($d['steps'])) {
-            throw new PipelineFailed('A draft could not be generated from this recording. Try again, or record it with clearer narration.');
-        }
+        $d = $res['draft'];
 
         $doc = DB::transaction(function () use ($rec, $d, $segments): Document {
             $doc = Document::create([
@@ -97,7 +90,7 @@ final class GenerateDraft extends PipelineStage
         if ($rec->uploaded_by) {
             User::query()->find($rec->uploaded_by)?->notify(new RecordingDraftReadyNotification($doc->title, $rec->id, $doc->id));
         }
-        Audit::record('document.generated', 'document', $doc->id, ['recording_id' => $rec->id, 'steps' => $doc->steps()->count(), 'cost_usd' => $res['cost_usd']]);
+        Audit::record('document.generated', 'document', $doc->id, ['recording_id' => $rec->id, 'steps' => $doc->steps()->count(), 'cost_usd' => $res['cost_usd'], 'condensed' => $res['condensed']]);
     }
 
     /**

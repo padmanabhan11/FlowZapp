@@ -33,14 +33,7 @@ final class MediaServiceProvider extends ServiceProvider
             return $driver === 'fake' ? new FakeMediaStorage : new SpacesStorage;
         });
 
-        $this->app->singleton(Transcriber::class, function (): Transcriber {
-            return match ((string) config('flowzapp.transcription_driver', 'null')) {
-                'whisper' => new WhisperTranscriber((string) config('services.openai.key')),
-                'deepgram' => new DeepgramTranscriber((string) config('services.deepgram.key')),
-                'fake' => new FakeTranscriber,
-                default => new NullTranscriber,
-            };
-        });
+        $this->app->singleton(Transcriber::class, fn (): Transcriber => self::transcriber((string) config('flowzapp.transcription_driver', 'null')));
 
         $this->app->singleton(Embeddings::class, function (): Embeddings {
             return match ((string) config('flowzapp.embeddings_driver', 'openai')) {
@@ -62,5 +55,16 @@ final class MediaServiceProvider extends ServiceProvider
                 default => new ClaudeDriver((string) config('services.anthropic.key'), (string) config('services.anthropic.model')),
             };
         });
+    }
+
+    /** Builds a transcription driver by name; also used by pipeline:eval to benchmark providers side by side (D0-T2). */
+    public static function transcriber(string $driver): Transcriber
+    {
+        return match ($driver) {
+            'whisper' => new WhisperTranscriber((string) config('services.openai.key')),
+            'deepgram' => new DeepgramTranscriber((string) config('services.deepgram.key')),
+            'fake' => new FakeTranscriber,
+            default => new NullTranscriber,
+        };
     }
 }

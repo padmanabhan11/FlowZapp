@@ -8,7 +8,7 @@ namespace App\Ai;
  * Scripted responses for tests (LLM_DRIVER=fake). Each prompt kind is
  * recognised by a marker the prompt classes put in the system text.
  */
-final class FakeLlm implements LlmDriver
+class FakeLlm implements LlmDriver
 {
     /**
      * @var array<string, string> marker => JSON

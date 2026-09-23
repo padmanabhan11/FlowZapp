@@ -41,7 +41,7 @@ These come from the specs and are enforced by CI. Do not weaken them to make a t
 - Start from the spec, not the code: find the FR/BR the task serves, then the screen in document 11 and the endpoint in document 05.
 - When a task conflicts with a non-negotiable above, do not work around it. Explain the conflict and propose a change to the spec instead.
 - When adding a table: migration with `workspace_id` + leading index → model extending `TenantModel` → seed it in `CrossTenantIsolationTest::test_every_tenant_model_is_scoped` → run the tenancy suite. In that order.
-- When touching the pipeline or prompts: the spike in `spike/generation-eval/` is the eval harness; run it on the fixed recording set and compare `summary.md` before and after.
+- When touching the pipeline or prompts: `php artisan pipeline:eval` runs the product pipeline over the fixed recording set (`spike/generation-eval/eval-set.csv`); score it with `spike/generation-eval/score.py` and compare `summary.md` before and after.
 - Open decisions (transcription provider, embeddings provider, vector store, seats above 10, recording retention default) are listed in document 03 §12 and document 14 §12. Do not silently decide them in code.
 
 ## Commands

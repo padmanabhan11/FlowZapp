@@ -6,7 +6,10 @@ namespace App\Pipeline;
 
 use Illuminate\Support\Facades\Http;
 
-/** Deepgram nova-3 via URL ingestion: Deepgram fetches the signed media URL itself, so nothing is proxied. */
+/**
+ * Deepgram nova-3 via URL ingestion: Deepgram fetches the signed media URL itself, so nothing is proxied.
+ * A local file path (the pipeline:eval harness) is sent as compressed audio instead.
+ */
 final class DeepgramTranscriber implements Transcriber
 {
     public const PRICE_PER_MIN = 0.0077;
@@ -15,9 +18,18 @@ final class DeepgramTranscriber implements Transcriber
 
     public function transcribe(string $signedMediaUrl, float $durationSec): array
     {
-        $res = Http::withHeaders(['Authorization' => "Token {$this->apiKey}"])->timeout(900)
-            ->post('https://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&punctuate=true&detect_language=true', ['url' => $signedMediaUrl])
-            ->throw()->json();
+        $endpoint = 'https://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&punctuate=true&detect_language=true';
+        $http = Http::withHeaders(['Authorization' => "Token {$this->apiKey}"])->timeout(900);
+        if (is_file($signedMediaUrl)) {
+            $audio = Audio::extractMp3($signedMediaUrl);
+            try {
+                $res = $http->withBody((string) file_get_contents($audio), 'audio/mpeg')->post($endpoint)->throw()->json();
+            } finally {
+                @unlink($audio);
+            }
+        } else {
+            $res = $http->post($endpoint, ['url' => $signedMediaUrl])->throw()->json();
+        }
 
         $alt = $res['results']['channels'][0]['alternatives'][0] ?? [];
         $words = array_map(fn ($w) => [

@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $mime_type
  * @property int|null $size_bytes
  * @property float|null $duration_sec
+ * @property list<float>|null $scene_changes
  * @property string $state
  * @property string|null $failed_stage
  * @property string|null $failure_reason
@@ -41,13 +42,13 @@ class Recording extends TenantModel
     public const MIME_TYPES = ['video/webm', 'video/mp4', 'video/quicktime'];
 
     protected $fillable = [
-        'space_id', 'uploaded_by', 'title', 'storage_key', 'upload_id', 'mime_type', 'size_bytes', 'duration_sec',
+        'space_id', 'uploaded_by', 'title', 'storage_key', 'upload_id', 'mime_type', 'size_bytes', 'duration_sec', 'scene_changes',
         'state', 'failed_stage', 'failure_reason', 'document_id',
     ];
 
     protected function casts(): array
     {
-        return ['duration_sec' => 'float', 'size_bytes' => 'integer'];
+        return ['duration_sec' => 'float', 'size_bytes' => 'integer', 'scene_changes' => 'array'];
     }
 
     /**

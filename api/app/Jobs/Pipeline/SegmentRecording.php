@@ -4,15 +4,20 @@ declare(strict_types=1);
 
 namespace App\Jobs\Pipeline;
 
-use App\Ai\Json;
-use App\Ai\LlmDriver;
-use App\Ai\Prompts;
+use App\Media\MediaStorage;
 use App\Models\PipelineJob;
 use App\Models\Recording;
 use App\Models\RecordingSegment;
-use App\Pipeline\PipelineFailed;
+use App\Pipeline\Segmenter;
+use App\Pipeline\Vision;
+use Illuminate\Support\Facades\Log;
 
-/** Stage 2 — Segment into distinct actions (03 §5). Falls back to paragraph segmentation when the model output is unusable. */
+/**
+ * Stage 2 — Segment into distinct actions (03 §5). Reads both the narration
+ * and the screen: scene changes are detected once per recording (D2-T2) and
+ * kept on the recording for the frames stage. Falls back to splitting at
+ * screen changes, then to ~20-second paragraphs, when the model output is unusable.
+ */
 final class SegmentRecording extends PipelineStage
 {
     protected function stage(): string
@@ -33,59 +38,40 @@ final class SegmentRecording extends PipelineStage
     protected function run(Recording $rec, PipelineJob $job): void
     {
         $t = $rec->transcript()->firstOrFail();
-        $words = $t->words ?? [];
-        $lines = Prompts::transcriptLines($words);
-        $res = app(LlmDriver::class)->complete(Prompts::SEGMENT_SYSTEM, Prompts::segmentUser((string) $rec->title, (float) ($rec->duration_sec ?? 0), $lines), 4096);
+        $scenes = $this->scenes($rec);
+        $res = app(Segmenter::class)->segment((string) $rec->title, (float) ($rec->duration_sec ?? 0), $t->words ?? [], $scenes);
         $job->forceFill(['cost_usd' => $res['cost_usd']])->save();
 
-        $data = Json::fromText($res['text']);
-        if (is_array($data) && ! empty($data['halt'])) {
-            throw new PipelineFailed('This recording does not seem to show a process with distinct steps: '.($data['reason'] ?? 'too little narrated action').'. Record it again, narrating each action as you do it.');
-        }
-        $segments = is_array($data['segments'] ?? null) ? $data['segments'] : [];
-        $segments = array_values(array_filter($segments, fn ($s) => isset($s['ts_start'], $s['ts_end']) && (float) $s['ts_end'] > (float) $s['ts_start']));
-        if (count($segments) < 2) {
-            $segments = $this->paragraphFallback($words);   // 03 §5 failure behaviour: fall back to paragraph segmentation
-        }
-        if (count($segments) < 2) {
-            throw new PipelineFailed('Too little narration to identify steps. Record it again, explaining each action as you do it.');
-        }
-
         RecordingSegment::query()->where('recording_id', $rec->id)->delete();
-        foreach ($segments as $i => $s) {
+        foreach ($res['segments'] as $i => $s) {
             RecordingSegment::create([
                 'recording_id' => $rec->id, 'position' => $i + 1,
-                'ts_start' => round((float) $s['ts_start'], 3), 'ts_end' => round((float) $s['ts_end'], 3),
-                'summary' => isset($s['summary']) ? mb_substr((string) $s['summary'], 0, 500) : null,
-                'confidence' => isset($s['confidence']) ? max(0, min(1, (float) $s['confidence'])) : null,
+                'ts_start' => round($s['ts_start'], 3), 'ts_end' => round($s['ts_end'], 3),
+                'summary' => $s['summary'], 'confidence' => $s['confidence'],
             ]);
         }
     }
 
     /**
-     * ~20-second windows over the spoken span.
+     * Screen changes for this recording, detected on first use. A failed scan
+     * is stored as an empty list: segmentation then relies on the narration alone.
      *
-     * @param  list<array{w:string,start:float,end:float}>  $words
-     * @return list<array<string,mixed>>
+     * @return list<float>
      */
-    private function paragraphFallback(array $words): array
+    private function scenes(Recording $rec): array
     {
-        if (count($words) < 10) {
-            return [];
+        if (is_array($rec->scene_changes)) {
+            return array_map('floatval', $rec->scene_changes);
         }
-        $out = [];
-        $start = $words[0]['start'];
-        $buf = [];
-        foreach ($words as $w) {
-            if ($buf && $w['start'] - $start >= 20) {
-                $out[] = ['ts_start' => $start, 'ts_end' => end($buf)['end'], 'summary' => null, 'confidence' => 0.3];
-                $buf = [];
-                $start = $w['start'];
-            }
-            $buf[] = $w;
+        try {
+            $url = app(MediaStorage::class)->signedUrl($rec->storage_key, 3600);
+            $scenes = app(Vision::class)->sceneChanges($url);
+        } catch (\Throwable $e) {
+            Log::warning('scene detection skipped', ['recording' => $rec->id, 'error' => $e->getMessage()]);
+            $scenes = [];
         }
-        $out[] = ['ts_start' => $start, 'ts_end' => end($buf)['end'], 'summary' => null, 'confidence' => 0.3];
+        $rec->forceFill(['scene_changes' => $scenes])->save();
 
-        return $out;
+        return $scenes;
     }
 }

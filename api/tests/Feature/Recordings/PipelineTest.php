@@ -7,10 +7,12 @@ namespace Tests\Feature\Recordings;
 use App\Ai\FakeLlm;
 use App\Jobs\Pipeline\TranscribeRecording;
 use App\Models\Document;
+use App\Models\MediaAsset;
 use App\Models\PipelineJob;
 use App\Models\Recording;
 use App\Models\Space;
 use App\Pipeline\FakeTranscriber;
+use App\Pipeline\Vision;
 use App\Tenancy\CurrentWorkspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\ActsInWorkspace;
@@ -91,6 +93,54 @@ final class PipelineTest extends TestCase
             $this->assertSame(2, Document::query()->where('source_recording_id', $rec->id)->count());
             $this->assertSame('Client onboarding', Document::query()->findOrFail($docId)->title);
         });
+    }
+
+    public function test_screen_changes_shape_segments_and_repeated_screens_share_one_frame(): void
+    {
+        [$ws, $admin] = $this->makeWorkspace('acme');
+        $rec = $this->recording($ws, $admin);
+        $vision = new class extends Vision
+        {
+            public int $scans = 0;
+
+            public function sceneChanges(string $inputUrl, ?float $threshold = null, ?int $fps = null): array
+            {
+                $this->scans++;
+
+                return [21.0, 41.5];
+            }
+
+            public function frameAt(string $inputUrl, float $ts): ?string
+            {
+                return 'jpeg@'.$ts;
+            }
+
+            public function dhash(string $imageBytes): ?string
+            {
+                return str_starts_with($imageBytes, 'jpeg@42.5') ? '0f0f0f0f0f0f0f0f' : 'ffff0000ffff0000';   // steps 1 and 2 show the same screen
+            }
+        };
+        $this->app->instance(Vision::class, $vision);
+
+        TranscribeRecording::dispatch($ws->id, $rec->id, 'h1');
+
+        app(CurrentWorkspace::class)->runAs($ws->id, function () use ($rec, $vision): void {
+            $rec->refresh();
+            $this->assertSame([21.0, 41.5], array_map('floatval', $rec->scene_changes ?? []));
+            $segs = $rec->segments()->orderBy('position')->get();
+            $this->assertSame(21.0, (float) $segs[1]->ts_start, 'boundary at 20 snapped to the screen change at 21');
+            $this->assertSame(41.5, (float) $segs[2]->ts_start, 'boundary at 40 snapped to 41.5');
+            $this->assertSame($segs[0]->frame_asset_id, $segs[1]->frame_asset_id, 'same screen: one stored frame');
+            $this->assertNotSame($segs[0]->frame_asset_id, $segs[2]->frame_asset_id);
+            $this->assertSame(2, MediaAsset::query()->where('recording_id', $rec->id)->where('kind', 'frame')->count());
+
+            $doc = $rec->document()->firstOrFail();
+            $this->assertSame($segs[0]->frame_asset_id, $doc->steps()->where('position', 1)->value('media_asset_id'));
+            $this->assertSame(1, $vision->scans);
+        });
+
+        TranscribeRecording::dispatch($ws->id, $rec->id, 'h2');   // a re-run reuses the stored scene list
+        $this->assertSame(1, $vision->scans);
     }
 
     public function test_generation_halts_cleanly_when_the_recording_shows_no_process(): void
