@@ -268,7 +268,9 @@ final class DocumentController extends Controller
         return response()->json(['data' => $this->summary($doc)]);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function summary(Document $d): array
     {
         return [
@@ -279,7 +281,9 @@ final class DocumentController extends Controller
         ];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function full(Document $d): array
     {
         $steps = $d->relationLoaded('steps') ? $d->steps : $d->steps()->get();
@@ -292,7 +296,9 @@ final class DocumentController extends Controller
         ];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function step(DocumentStep $s): array
     {
         return $s->only(['id', 'position', 'instruction', 'note', 'expected_result', 'is_critical', 'is_checkpoint', 'media_asset_id', 'source_ts_start', 'source_ts_end', 'verified_at']);

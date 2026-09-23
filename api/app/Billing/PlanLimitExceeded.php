@@ -14,7 +14,9 @@ final class PlanLimitExceeded extends HttpException
         parent::__construct(429, $message);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     public function details(): array
     {
         return ['limit' => $this->limit, 'max' => $this->max, 'used' => $this->used, 'plan' => $this->plan];

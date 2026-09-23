@@ -28,7 +28,7 @@ jobs:
       - name: Pint
         run: vendor/bin/pint --test
       - name: PHPStan
-        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G --error-format=table
       - name: Tenancy suite (schema conformance + cross-tenant isolation)
         run: php artisan test --filter Tenancy
       - name: Full test suite

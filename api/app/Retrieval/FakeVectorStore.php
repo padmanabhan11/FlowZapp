@@ -7,7 +7,9 @@ namespace App\Retrieval;
 /** In-memory cosine search with the same payload filter semantics as Qdrant, for tests. */
 final class FakeVectorStore implements VectorStore
 {
-    /** @var array<string, array<string, array{vector: list<float>, payload: array<string, mixed>}>> workspace → id → point */
+    /**
+     * @var array<string, array<string, array{vector: list<float>, payload: array<string, mixed>}>> workspace → id → point
+     */
     public array $points = [];
 
     public function upsert(string $workspaceId, array $points): void

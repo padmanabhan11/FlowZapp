@@ -25,7 +25,7 @@ final class SegmentRecording extends PipelineStage
         return 'segmenting';
     }
 
-    protected function next(): ?string
+    protected function next(): string
     {
         return ExtractFrames::class;
     }
@@ -62,7 +62,12 @@ final class SegmentRecording extends PipelineStage
         }
     }
 
-    /** ~20-second windows over the spoken span. @param list<array{w:string,start:float,end:float}> $words @return list<array<string,mixed>> */
+    /**
+     * ~20-second windows over the spoken span.
+     *
+     * @param  list<array{w:string,start:float,end:float}>  $words
+     * @return list<array<string,mixed>>
+     */
     private function paragraphFallback(array $words): array
     {
         if (count($words) < 10) {
@@ -79,9 +84,7 @@ final class SegmentRecording extends PipelineStage
             }
             $buf[] = $w;
         }
-        if ($buf) {
-            $out[] = ['ts_start' => $start, 'ts_end' => end($buf)['end'], 'summary' => null, 'confidence' => 0.3];
-        }
+        $out[] = ['ts_start' => $start, 'ts_end' => end($buf)['end'], 'summary' => null, 'confidence' => 0.3];
 
         return $out;
     }

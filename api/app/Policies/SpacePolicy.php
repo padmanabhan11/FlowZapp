@@ -51,7 +51,9 @@ final class SpacePolicy
 
     private function roleIn(User $user, Space $space): ?string
     {
-        /** @var SpaceMember|null $m */
+        /**
+         * @var SpaceMember|null $m
+         */
         $m = SpaceMember::query()->where('space_id', $space->id)->where('user_id', $user->getKey())->first();
 
         return $m?->role;

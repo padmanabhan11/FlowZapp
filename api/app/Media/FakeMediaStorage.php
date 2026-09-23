@@ -7,13 +7,19 @@ namespace App\Media;
 /** In-memory storage for tests and local development without Spaces credentials. */
 final class FakeMediaStorage implements MediaStorage
 {
-    /** @var array<string, int> key => size */
+    /**
+     * @var array<string, int> key => size
+     */
     public array $objects = [];
 
-    /** @var array<string, string> uploadId => key */
+    /**
+     * @var array<string, string> uploadId => key
+     */
     public array $uploads = [];
 
-    /** @var array<string, array<int, array{etag: string, size: int}>> uploadId => part number => stored part (tests set this to simulate parts that arrived) */
+    /**
+     * @var array<string, array<int, array{etag: string, size: int}>> uploadId => part number => stored part (tests set this to simulate parts that arrived)
+     */
     public array $parts = [];
 
     public function createMultipartUpload(string $key, string $mimeType, int $sizeBytes): array

@@ -11,7 +11,9 @@ namespace App\Billing;
  */
 final class PlanLimits
 {
-    /** @var array<string, array<string, int|null>> */
+    /**
+     * @var array<string, array<string, int|null>>
+     */
     private const LIMITS = [
         'free' => ['seats' => 3,    'documents' => 50,   'sop_generations' => 5,   'recording_minutes' => 30,   'chat_queries_per_day' => 0,   'api_per_min' => 60],
         'pro' => ['seats' => null, 'documents' => null, 'sop_generations' => 100, 'recording_minutes' => 600,  'chat_queries_per_day' => 0,   'api_per_min' => 120],
@@ -20,10 +22,17 @@ final class PlanLimits
 
     public static function for(string $plan, string $limit): ?int
     {
-        return self::LIMITS[$plan][$limit] ?? throw new \InvalidArgumentException("Unknown plan/limit $plan/$limit");
+        // null means unlimited, so array_key_exists — `??` would treat an unlimited limit as unknown and throw.
+        if (! isset(self::LIMITS[$plan]) || ! array_key_exists($limit, self::LIMITS[$plan])) {
+            throw new \InvalidArgumentException("Unknown plan/limit $plan/$limit");
+        }
+
+        return self::LIMITS[$plan][$limit];
     }
 
-    /** @return array<string, int|null> */
+    /**
+     * @return array<string, int|null>
+     */
     public static function all(string $plan): array
     {
         return self::LIMITS[$plan] ?? throw new \InvalidArgumentException("Unknown plan $plan");

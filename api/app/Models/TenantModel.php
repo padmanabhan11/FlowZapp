@@ -28,7 +28,9 @@ abstract class TenantModel extends Model
 {
     use HasUlids;
 
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     protected $guarded = ['id', 'workspace_id'];
 
     protected static function booted(): void
@@ -49,6 +51,9 @@ abstract class TenantModel extends Model
         });
     }
 
+    /**
+     * @return BelongsTo<Workspace, $this>
+     */
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);

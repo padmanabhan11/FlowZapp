@@ -53,7 +53,9 @@ final class Workflow
         });
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function submitBlockers(Document $doc): array
     {
         $b = [];
@@ -192,6 +194,9 @@ final class Workflow
         });
     }
 
+    /**
+     * @param  list<string>  $allowed
+     */
     private function assertState(Document $doc, array $allowed): void
     {
         if (! in_array($doc->state, $allowed, true)) {

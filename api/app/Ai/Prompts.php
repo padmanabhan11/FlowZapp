@@ -45,7 +45,9 @@ TXT;
 process ("Issue a refund for orders under 30 days"), never generic ("Process"). Output JSON only: {"titles":["…","…","…"]}.
 TXT;
 
-    /** @param list<array{w:string,start:float,end:float}> $words */
+    /**
+     * @param  list<array{w:string,start:float,end:float}>  $words
+     */
     public static function transcriptLines(array $words, float $window = 10.0): string
     {
         if ($words === []) {
@@ -62,9 +64,7 @@ TXT;
             }
             $buf[] = $w;
         }
-        if ($buf) {
-            $lines[] = sprintf('[%.1f–%.1f] %s', $start, end($buf)['end'], implode(' ', array_column($buf, 'w')));
-        }
+        $lines[] = sprintf('[%.1f–%.1f] %s', $start, end($buf)['end'], implode(' ', array_column($buf, 'w')));
 
         return implode("\n", $lines);
     }
@@ -74,7 +74,9 @@ TXT;
         return "Recording: {$title}\nDuration: ".round($duration)." seconds\nTranscript (each line is \"[start–end] words\"):\n\n{$lines}";
     }
 
-    /** @param list<array{position:int,ts_start:float,ts_end:float,summary:?string}> $segments */
+    /**
+     * @param  list<array{position:int,ts_start:float,ts_end:float,summary:?string}>  $segments
+     */
     public static function generateUser(string $title, array $segments, string $lines): string
     {
         $seg = implode("\n", array_map(fn ($s) => sprintf('%d. [%.1f–%.1f] %s', $s['position'], $s['ts_start'], $s['ts_end'], $s['summary'] ?? ''), $segments));

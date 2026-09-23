@@ -11,10 +11,14 @@ namespace App\Retrieval;
  */
 interface VectorStore
 {
-    /** @param list<array{id: string, vector: list<float>, payload: array<string, mixed>}> $points */
+    /**
+     * @param  list<array{id: string, vector: list<float>, payload: array<string, mixed>}>  $points
+     */
     public function upsert(string $workspaceId, array $points): void;
 
-    /** @param list<string> $ids */
+    /**
+     * @param  list<string>  $ids
+     */
     public function delete(string $workspaceId, array $ids): void;
 
     /** Remove every vector for a document (by payload filter). */

@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Request;
 
 final class Audit
 {
-    /** @param  array<string, mixed>  $metadata */
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
     public static function record(string $action, string $entityType, ?string $entityId = null, array $metadata = []): AuditEntry
     {
         $ip = Request::ip();

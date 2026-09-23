@@ -10,6 +10,9 @@ interface Embeddings
 
     public function dimensions(): int;
 
-    /** @param list<string> $texts @return list<list<float>> */
+    /**
+     * @param  list<string>  $texts
+     * @return list<list<float>>
+     */
     public function embed(array $texts): array;
 }

@@ -11,11 +11,12 @@ use App\Models\DocumentVersion;
  * Semantic chunking (03 §6): one chunk per SOP step, one per section for
  * prose, one per block for free-form content. Each carries section_ref so a
  * citation can deep-link to the exact step.
- *
- * @return list<array{section_ref: string, heading_path: ?string, content: string}>
  */
 final class Chunker
 {
+    /**
+     * @return list<array{section_ref: string, heading_path: ?string, content: string}>
+     */
     public static function chunks(DocumentVersion $v): array
     {
         $out = [];

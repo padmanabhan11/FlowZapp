@@ -133,7 +133,7 @@ final class ChatController extends Controller
         }
         usort($groups, fn ($a, $b) => $b['count'] <=> $a['count']);
 
-        return response()->json(['data' => array_values($groups)]);
+        return response()->json(['data' => $groups]);   // usort already re-indexed
     }
 
     private function own(Request $request, string $sessionId): ChatSession
@@ -144,13 +144,17 @@ final class ChatController extends Controller
         return $s;
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     private function session(ChatSession $s): array
     {
         return $s->only(['id', 'title', 'scope_document_id', 'created_at', 'updated_at']);
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     private function message(ChatMessage $m): array
     {
         return $m->only(['id', 'role', 'content', 'citations', 'refused', 'latency_ms', 'rated_helpful', 'created_at']);

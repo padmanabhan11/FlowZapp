@@ -22,7 +22,9 @@ final class NotificationPrefs
     /** Email defaults (doc 11 "Notification triggers"): approved is in-app only by default. */
     public const DEFAULTS = ['review_requested' => true, 'changes_requested' => true, 'document_approved' => false, 'acknowledgement_due' => true, 'recording_failed' => true, 'weekly_digest' => true];
 
-    /** @return array{prefs: array<string,bool>, locked: list<string>} */
+    /**
+     * @return array{prefs: array<string,bool>, locked: list<string>}
+     */
     public static function for(User $user, ?string $workspaceId = null): array
     {
         $workspaceId ??= app(CurrentWorkspace::class)->id();
@@ -43,7 +45,11 @@ final class NotificationPrefs
         return ['prefs' => $prefs, 'locked' => $locked];
     }
 
-    /** Channels for a notification of the given kind: database always, mail when the preference allows. */
+    /**
+     * Channels for a notification of the given kind: database always, mail when the preference allows.
+     *
+     * @return list<string>
+     */
     public static function channels(object $notifiable, string $key): array
     {
         if (! $notifiable instanceof User) {

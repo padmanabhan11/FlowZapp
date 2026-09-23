@@ -16,7 +16,9 @@ final class ReviewRequestedNotification extends Notification implements ShouldQu
 
     public function __construct(public readonly string $title, public readonly string $submitter, public readonly string $documentId) {}
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function via(object $notifiable): array
     {
         return NotificationPrefs::channels($notifiable, 'review_requested');
@@ -29,7 +31,9 @@ final class ReviewRequestedNotification extends Notification implements ShouldQu
             ->action('Review', rtrim((string) config('flowzapp.frontend_url'), '/')."/d/{$this->documentId}/review");
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     public function toArray(object $notifiable): array
     {
         return ['type' => 'review_requested', 'title' => $this->title, 'document_id' => $this->documentId, 'by' => $this->submitter];

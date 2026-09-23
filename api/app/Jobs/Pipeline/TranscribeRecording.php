@@ -26,7 +26,7 @@ final class TranscribeRecording extends PipelineStage
         return 'transcribing';
     }
 
-    protected function next(): ?string
+    protected function next(): string
     {
         return SegmentRecording::class;
     }

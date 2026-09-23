@@ -24,11 +24,15 @@ final class Access
 {
     public const ORDER = ['none' => 0, 'guest' => 1, 'reader' => 2, 'editor' => 3, 'approver' => 4, 'admin' => 5];
 
-    /** @return array{role: ?string, chain: list<array{level: string, id: ?string, name: ?string, role: ?string, note?: string}>} */
+    /**
+     * @return array{role: ?string, chain: list<array{level: string, id: ?string, name: ?string, role: ?string, note?: string}>}
+     */
     public static function resolve(User $user, Space $space, ?Folder $folder = null): array
     {
         $chain = [];
-        /** @var WorkspaceMember|null $wm */
+        /**
+         * @var WorkspaceMember|null $wm
+         */
         $wm = WorkspaceMember::query()->where('user_id', $user->getKey())->first();
         $chain[] = ['level' => 'workspace', 'id' => $space->workspace_id, 'name' => null, 'role' => $wm?->role];
         if ($wm === null) {
@@ -40,14 +44,18 @@ final class Access
             return ['role' => 'admin', 'chain' => $chain];
         }
 
-        /** @var SpaceMember|null $sm */
+        /**
+         * @var SpaceMember|null $sm
+         */
         $sm = SpaceMember::query()->where('space_id', $space->id)->where('user_id', $user->getKey())->first();
         $role = $sm?->role;
         $chain[] = ['level' => 'space', 'id' => $space->id, 'name' => $space->name, 'role' => $role, 'note' => $role ? null : 'Not a member of this space: no access unless a folder grants it.'];
 
         if ($folder !== null) {
             foreach (self::ancestry($folder) as $f) {
-                /** @var FolderPermission|null $fp */
+                /**
+                 * @var FolderPermission|null $fp
+                 */
                 $fp = FolderPermission::query()->where('folder_id', $f->id)->where('user_id', $user->getKey())->first();
                 $chain[] = ['level' => 'folder', 'id' => $f->id, 'name' => $f->name, 'role' => $fp?->role, 'note' => $fp ? 'Override' : 'Inherited'];
                 if ($fp !== null) {
@@ -66,7 +74,11 @@ final class Access
         return $role !== null && (self::ORDER[$role] ?? -1) >= (self::ORDER[$minimum] ?? 99);
     }
 
-    /** Root → … → the folder itself. @return list<Folder> */
+    /**
+     * Root → … → the folder itself.
+     *
+     * @return list<Folder>
+     */
     public static function ancestry(Folder $folder): array
     {
         $path = [$folder];
@@ -86,7 +98,9 @@ final class Access
     /**
      * Folder ids in a space the user must NOT see (a 'none' override on the
      * folder or an ancestor) and folder ids they gain via override while not a
-     * space member. Used by the document list. @return array{deny: list<string>, grant: list<string>}
+     * space member. Used by the document list.
+     *
+     * @return array{deny: list<string>, grant: list<string>}
      */
     public static function folderOverridesFor(User $user, string $spaceId): array
     {
@@ -106,7 +120,9 @@ final class Access
         return ['deny' => array_values(array_unique($deny)), 'grant' => array_values(array_unique(array_diff($grant, $deny)))];
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public static function subtreeIds(string $folderId): array
     {
         $out = [$folderId];

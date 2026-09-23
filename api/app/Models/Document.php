@@ -9,8 +9,36 @@ use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 #[ObservedBy(DocumentObserver::class)]
+
+/**
+ * @property string $id
+ * @property string $workspace_id
+ * @property string $space_id
+ * @property string|null $folder_id
+ * @property string $title
+ * @property string $doc_type
+ * @property string $state
+ * @property string|null $owner_id
+ * @property string|null $created_by
+ * @property string|null $source_recording_id
+ * @property array<string, mixed> $content
+ * @property string|null $body_text
+ * @property string|null $approved_version_id
+ * @property bool $requires_ack
+ * @property Carbon|null $review_due_at
+ * @property string $language
+ * @property string|null $translation_of
+ * @property bool $translation_stale
+ * @property Carbon|null $deleted_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property string|null $submitted_by
+ * @property Carbon|null $submitted_at
+ * @property int|null $handbook_position
+ */
 class Document extends TenantModel
 {
     use SoftDeletes;
@@ -19,7 +47,11 @@ class Document extends TenantModel
 
     public const STATES = ['draft', 'in_review', 'approved', 'archived'];
 
-    /** version_id sentinel for the working copy's steps (doc 04). */
+    /**
+     * version_id sentinel for the working copy's steps (doc 04).
+     *
+     * @return HasMany<DocumentStep, $this>
+     */
     public const WORKING = '0';
 
     protected $fillable = [
@@ -38,42 +70,67 @@ class Document extends TenantModel
         ];
     }
 
+    /**
+     * @return BelongsTo<Space, $this>
+     */
     public function space(): BelongsTo
     {
         return $this->belongsTo(Space::class);
     }
 
+    /**
+     * @return BelongsTo<Folder, $this>
+     */
     public function folder(): BelongsTo
     {
         return $this->belongsTo(Folder::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
+    /**
+     * @return BelongsTo<DocumentVersion, $this>
+     */
     public function approvedVersion(): BelongsTo
     {
         return $this->belongsTo(DocumentVersion::class, 'approved_version_id');
     }
 
+    /**
+     * @return HasMany<DocumentVersion, $this>
+     */
     public function versions(): HasMany
     {
         return $this->hasMany(DocumentVersion::class)->orderByDesc('version_number');
     }
 
+    /**
+     * @return HasMany<AcknowledgementTarget, $this>
+     */
     public function ackTargets(): HasMany
     {
         return $this->hasMany(AcknowledgementTarget::class);
     }
 
+    /**
+     * @return HasMany<Approval, $this>
+     */
     public function approvals(): HasMany
     {
         return $this->hasMany(Approval::class)->orderBy('created_at');
     }
 
-    /** Steps of the working copy, in order. */
+    /**
+     * Steps of the working copy, in order.
+     *
+     * @return HasMany<DocumentStep, $this>
+     */
     public function steps(): HasMany
     {
         return $this->hasMany(DocumentStep::class)->where('version_id', self::WORKING)->orderBy('position');

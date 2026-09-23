@@ -25,7 +25,9 @@ final class Retriever
 {
     public function __construct(private readonly CurrentWorkspace $current, private readonly Embeddings $emb, private readonly VectorStore $store) {}
 
-    /** @return array{space_ids: list<string>, deny_folder_ids: list<string>, grant_folder_ids: list<string>} */
+    /**
+     * @return array{space_ids: list<string>, deny_folder_ids: list<string>, grant_folder_ids: list<string>}
+     */
     public function scopeFor(User $user, bool $isAdmin): array
     {
         if ($isAdmin) {

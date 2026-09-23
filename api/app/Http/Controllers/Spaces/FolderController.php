@@ -164,7 +164,9 @@ final class FolderController extends Controller
         }
     }
 
-    /** @return Collection<int, Folder> */
+    /**
+     * @return Collection<int, Folder>
+     */
     private function descendants(Folder $folder): Collection
     {
         $out = collect();
@@ -191,7 +193,10 @@ final class FolderController extends Controller
         return $max === null ? 0 : (int) $max - $folder->depth;
     }
 
-    /** @param  Collection<int, Folder>  $all */
+    /**
+     * @param  Collection<int, Folder>  $all
+     * @return list<array<string, mixed>>
+     */
     private function tree(Collection $all, ?string $parentId): array
     {
         return $all->where('parent_id', $parentId)->values()
@@ -199,7 +204,9 @@ final class FolderController extends Controller
             ->all();
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function present(Folder $f): array
     {
         return $f->only(['id', 'space_id', 'parent_id', 'name', 'position', 'depth']);

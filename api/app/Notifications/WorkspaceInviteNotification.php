@@ -20,7 +20,9 @@ final class WorkspaceInviteNotification extends Notification implements ShouldQu
         private readonly string $acceptUrl,
     ) {}
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function via(object $notifiable): array
     {
         return ['mail'];

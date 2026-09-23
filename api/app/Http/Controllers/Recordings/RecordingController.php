@@ -239,7 +239,9 @@ final class RecordingController extends Controller
         return null;
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function present(Recording $r): array
     {
         return [

@@ -11,20 +11,26 @@ use App\Models\DocumentVersion;
 /** Builds the comparable snapshot shape used by Diff for the working copy or a version. */
 final class Snapshot
 {
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     public static function ofWorkingCopy(Document $doc): array
     {
         return ['title' => $doc->title, 'content' => $doc->content ?? [], 'steps' => $doc->steps()->get()->map(fn (DocumentStep $s) => self::step($s, $s->id))->all()];
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     public static function ofVersion(DocumentVersion $v): array
     {
         // Version steps keep the working-copy step id in `origin_step_id` (content JSON) so diffs match across approvals.
         return ['title' => $v->title, 'content' => $v->content ?? [], 'steps' => array_values($v->content['_steps'] ?? [])];
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     public static function step(DocumentStep $s, string $id): array
     {
         return [

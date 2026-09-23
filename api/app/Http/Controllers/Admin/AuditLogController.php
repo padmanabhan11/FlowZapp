@@ -66,7 +66,9 @@ final class AuditLogController extends Controller
         }, 'audit-log-'.now()->format('Ymd-Hi').'.csv', ['Content-Type' => 'text/csv']);
     }
 
-    /** @return array<string, string|null> */
+    /**
+     * @return array<string, string|null>
+     */
     private function filters(Request $request): array
     {
         return $request->validate([
@@ -89,7 +91,9 @@ final class AuditLogController extends Controller
             ->when(! empty($f['to']), fn ($q) => $q->where('created_at', '<', Carbon::parse($f['to'])->addDay()));
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function present(AuditEntry $e, ?User $actor): array
     {
         return [

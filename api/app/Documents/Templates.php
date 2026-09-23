@@ -14,7 +14,9 @@ use App\Models\DocumentTemplate;
  */
 final class Templates
 {
-    /** @return list<array<string, mixed>> */
+    /**
+     * @return list<array<string, mixed>>
+     */
     public static function all(): array
     {
         return [
@@ -77,7 +79,9 @@ final class Templates
         ];
     }
 
-    /** @return array<string, mixed>|null */
+    /**
+     * @return array<string, mixed>|null
+     */
     public static function find(string $id): ?array
     {
         foreach (self::all() as $t) {
@@ -90,7 +94,11 @@ final class Templates
         return $custom ? self::present($custom) : null;
     }
 
-    /** Built-ins followed by this workspace's templates. @return list<array<string, mixed>> */
+    /**
+     * Built-ins followed by this workspace's templates.
+     *
+     * @return list<array<string, mixed>>
+     */
     public static function forWorkspace(): array
     {
         $builtIn = array_map(fn (array $t) => $t + ['custom' => false], self::all());
@@ -99,7 +107,9 @@ final class Templates
         return array_values(array_merge($builtIn, $custom));
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     public static function present(DocumentTemplate $t): array
     {
         return [

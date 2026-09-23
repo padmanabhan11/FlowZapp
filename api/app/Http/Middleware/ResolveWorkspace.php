@@ -26,7 +26,9 @@ final class ResolveWorkspace
 
     public function handle(Request $request, Closure $next): Response
     {
-        /** @var User|null $user */
+        /**
+         * @var User|null $user
+         */
         $user = $request->user();
         if ($user === null) {
             return response()->json(['error' => ['code' => 'unauthenticated', 'message' => 'Sign in required.']], 401);

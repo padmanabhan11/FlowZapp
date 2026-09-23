@@ -4,9 +4,21 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Support\Carbon;
+
 /**
  * Append-only. No updated_at; never updated or deleted through the model.
  * Write through App\Audit\Audit::record().
+ *
+ * @property int $id
+ * @property string $workspace_id
+ * @property string|null $actor_id
+ * @property string $action
+ * @property string $entity_type
+ * @property string|null $entity_id
+ * @property array<string, mixed>|null $metadata
+ * @property string|null $ip
+ * @property Carbon|null $created_at
  */
 class AuditEntry extends TenantModel
 {

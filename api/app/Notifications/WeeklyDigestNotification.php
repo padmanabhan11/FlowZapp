@@ -26,7 +26,9 @@ final class WeeklyDigestNotification extends Notification implements ShouldQueue
      */
     public function __construct(public readonly string $workspaceName, public readonly array $reviewDue, public readonly array $acksDue) {}
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function via(object $notifiable): array
     {
         return ['mail'];

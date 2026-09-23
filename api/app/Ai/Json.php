@@ -6,7 +6,11 @@ namespace App\Ai;
 
 final class Json
 {
-    /** Extract the first JSON object from model output. @return array<string, mixed>|null */
+    /**
+     * Extract the first JSON object from model output.
+     *
+     * @return array<string, mixed>|null
+     */
     public static function fromText(string $text): ?array
     {
         $text = trim($text);

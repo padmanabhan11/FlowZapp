@@ -27,14 +27,14 @@ TXT;
     public function __construct(private readonly LlmDriver $llm) {}
 
     /**
-     * @param  list<array{chunk: DocumentChunk, document: Document, score: float}>  $hits
+     * @param  list<array{chunk: DocumentChunk, document: Document, score: float, vector_rank: ?int, keyword_rank: ?int}>  $hits
      * @param  list<array{role: string, content: string}>  $history
      * @return array{text: string, refused: bool, citations: list<array<string, mixed>>, cost_usd: float, input_tokens: int, output_tokens: int}
      */
     public function answer(string $question, array $hits, array $history = []): array
     {
         $minScore = (float) config('flowzapp.retrieval.min_score');
-        $usable = array_values(array_filter($hits, fn ($h) => $h['score'] >= $minScore || $h['score'] === 0.0 && ($h['keyword_rank'] ?? null) !== null));
+        $usable = array_values(array_filter($hits, fn ($h) => $h['score'] >= $minScore || $h['score'] === 0.0 && $h['keyword_rank'] !== null));
         if ($usable === []) {
             return ['text' => 'No approved document covers this yet.', 'refused' => true, 'citations' => [], 'cost_usd' => 0.0, 'input_tokens' => 0, 'output_tokens' => 0];
         }

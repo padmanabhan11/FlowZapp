@@ -24,7 +24,9 @@ final class Usage
 {
     public function __construct(private readonly CurrentWorkspace $current) {}
 
-    /** @return array{plan: string, period_start: string, period_end: string, counters: array<string, array{used: int|float, max: int|null, unlimited: bool, near: bool, over: bool}>} */
+    /**
+     * @return array{plan: string, period_start: string, period_end: string, counters: array<string, array{used: int|float, max: int|null, unlimited: bool, near: bool, over: bool}>}
+     */
     public function summary(?Workspace $ws = null): array
     {
         $ws ??= Workspace::query()->findOrFail($this->current->require());

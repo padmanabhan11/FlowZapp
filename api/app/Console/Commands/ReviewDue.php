@@ -30,7 +30,9 @@ final class ReviewDue extends Command
                 $n = 0;
                 $due = Document::query()->with('owner')->where('state', 'approved')->whereNotNull('owner_id')->where('review_due_at', '<=', now())->get();
                 foreach ($due as $doc) {
-                    /** @var User|null $owner */
+                    /**
+                     * @var User|null $owner
+                     */
                     $owner = $doc->owner;
                     if ($owner === null) {
                         continue;

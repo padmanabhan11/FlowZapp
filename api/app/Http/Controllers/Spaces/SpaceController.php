@@ -120,7 +120,9 @@ final class SpaceController extends Controller
         return response()->json(['data' => ['user_id' => $userId, 'removed' => true]]);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function present(Space $s): array
     {
         return $s->only(['id', 'name', 'description', 'is_handbook', 'created_at', 'updated_at']);

@@ -28,7 +28,7 @@ final class ExtractFrames extends PipelineStage
         return 'segmenting'; // frames are part of the "segmenting" phase from the user's point of view (S10 states)
     }
 
-    protected function next(): ?string
+    protected function next(): string
     {
         return GenerateDraft::class;
     }

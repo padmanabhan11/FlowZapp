@@ -100,7 +100,9 @@ final class GenerateDraft extends PipelineStage
         Audit::record('document.generated', 'document', $doc->id, ['recording_id' => $rec->id, 'steps' => $doc->steps()->count(), 'cost_usd' => $res['cost_usd']]);
     }
 
-    /** @param array<string,mixed> $s */
+    /**
+     * @param  array<string,mixed>  $s
+     */
     private static function note(array $s): ?string
     {
         $parts = array_filter([

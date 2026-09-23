@@ -60,7 +60,7 @@ final class AiController extends Controller
         $changed = array_keys(array_filter($proposed, fn ($v, $k) => trim($v) !== trim($original[$k]), ARRAY_FILTER_USE_BOTH));
         Audit::record('ai.rewrite_proposed', 'document', $doc->id, ['scope' => $data['scope'], 'changed' => count($changed), 'cost_usd' => $res['cost_usd']]);
 
-        return response()->json(['data' => ['original' => $original, 'proposed' => $proposed, 'changed' => array_values($changed), 'cost_usd' => $res['cost_usd']]]);
+        return response()->json(['data' => ['original' => $original, 'proposed' => $proposed, 'changed' => $changed, 'cost_usd' => $res['cost_usd']]]);
     }
 
     /** POST /v1/ai/translate  body { document_id, target_language } → 201 with the new linked draft. */
@@ -88,7 +88,7 @@ final class AiController extends Controller
                     $content[$k] = $t["section:$k"];
                 }
             }
-            $content['prerequisites'] = array_values(array_map(fn ($i) => $t["prereq:$i"] ?? $content['prerequisites'][$i] ?? '', array_keys($content['prerequisites'] ?? [])));
+            $content['prerequisites'] = array_map(fn ($i) => $t["prereq:$i"] ?? $content['prerequisites'][$i] ?? '', array_keys($content['prerequisites'] ?? []));
             $content['blocks'] = array_map(function (array $b) use ($t): array {
                 if (isset($t['block:'.$b['id']])) {
                     $b['text'] = $t['block:'.$b['id']];

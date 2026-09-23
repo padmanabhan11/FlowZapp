@@ -15,7 +15,9 @@ final class MagicLinkNotification extends Notification implements ShouldQueue
 
     public function __construct(private readonly string $url, private readonly int $ttlMinutes) {}
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function via(object $notifiable): array
     {
         return ['mail'];

@@ -153,7 +153,9 @@ final class ApprovalController extends Controller
         return response()->json(['data' => ['id' => $doc->id, 'state' => $doc->state, 'title' => $doc->title, 'restored_from' => $v->version_number, 'approved_version_id' => $doc->approved_version_id]]);
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     private function versionMeta(DocumentVersion $v, Document $doc): array
     {
         return [

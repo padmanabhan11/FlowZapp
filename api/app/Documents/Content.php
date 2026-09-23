@@ -27,13 +27,19 @@ final class Content
         'code', 'callout', 'image', 'video', 'file', 'divider', 'link',
     ];
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     public static function empty(): array
     {
         return ['version' => self::SCHEMA_VERSION, 'purpose' => '', 'scope' => '', 'prerequisites' => [], 'outcome' => '', 'blocks' => []];
     }
 
-    /** Laravel validation rules for a `content` payload, prefixed with $key. @return array<string, mixed> */
+    /**
+     * Laravel validation rules for a `content` payload, prefixed with $key.
+     *
+     * @return array<string, mixed>
+     */
     public static function rules(string $key = 'content'): array
     {
         return [
@@ -58,7 +64,13 @@ final class Content
         ];
     }
 
-    /** Merge a partial payload over existing content, keeping the schema whole. @param array<string,mixed> $current @param array<string,mixed> $patch @return array<string,mixed> */
+    /**
+     * Merge a partial payload over existing content, keeping the schema whole.
+     *
+     * @param  array<string,mixed>  $current
+     * @param  array<string,mixed>  $patch
+     * @return array<string,mixed>
+     */
     public static function merge(array $current, array $patch): array
     {
         $out = array_replace(self::empty(), $current);
@@ -72,7 +84,11 @@ final class Content
         return $out;
     }
 
-    /** Flatten to plain text for FULLTEXT / LIKE search (title is added by the observer). @param array<string,mixed> $content */
+    /**
+     * Flatten to plain text for FULLTEXT / LIKE search (title is added by the observer).
+     *
+     * @param  array<string,mixed>  $content
+     */
     public static function toText(array $content): string
     {
         $parts = [];
@@ -91,7 +107,9 @@ final class Content
         return trim(preg_replace('/\s+/u', ' ', implode("\n", array_filter($parts))) ?? '');
     }
 
-    /** @param array<string,mixed> $b */
+    /**
+     * @param  array<string,mixed>  $b
+     */
     private static function blockText(array $b): string
     {
         $t = [];

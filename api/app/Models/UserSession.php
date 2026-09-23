@@ -9,6 +9,13 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Laravel's database session row (global table, no tenant — a session belongs
  * to a person). Read-only view for S24 "Active sessions"; revocation deletes.
+ *
+ * @property string $id
+ * @property string|null $user_id
+ * @property string|null $ip_address
+ * @property string|null $user_agent
+ * @property string $payload
+ * @property int $last_activity
  */
 class UserSession extends Model
 {

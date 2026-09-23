@@ -41,7 +41,7 @@ final class QdrantStore implements VectorStore
         }
         $this->http()->post("/collections/{$this->collection}/points/delete?wait=true", ['filter' => ['must' => [
             ['key' => 'workspace_id', 'match' => ['value' => $workspaceId]],
-            ['key' => 'chunk_id', 'match' => ['any' => array_values($ids)]],
+            ['key' => 'chunk_id', 'match' => ['any' => $ids]],
         ]]])->throw();
     }
 

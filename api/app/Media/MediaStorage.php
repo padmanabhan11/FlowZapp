@@ -13,10 +13,14 @@ namespace App\Media;
  */
 interface MediaStorage
 {
-    /** @return array{upload_id: string, parts: list<array{part_number: int, url: string}>, part_size: int} */
+    /**
+     * @return array{upload_id: string, parts: list<array{part_number: int, url: string}>, part_size: int}
+     */
     public function createMultipartUpload(string $key, string $mimeType, int $sizeBytes): array;
 
-    /** @param list<array{part_number: int, etag: string}> $parts */
+    /**
+     * @param  list<array{part_number: int, etag: string}>  $parts
+     */
     public function completeMultipartUpload(string $key, string $uploadId, array $parts): void;
 
     public function abortMultipartUpload(string $key, string $uploadId): void;

@@ -108,7 +108,9 @@ final class InviteController extends Controller
     public function resend(Request $request, Workspace $workspace, string $inviteId): JsonResponse
     {
         $this->guard($workspace);
-        /** @var WorkspaceInvite $invite */
+        /**
+         * @var WorkspaceInvite $invite
+         */
         $invite = WorkspaceInvite::query()->findOrFail($inviteId);
         abort_unless($invite->accepted_at === null, 409, 'Already accepted.');
 
@@ -122,7 +124,9 @@ final class InviteController extends Controller
     public function destroy(Workspace $workspace, string $inviteId): JsonResponse
     {
         $this->guard($workspace);
-        /** @var WorkspaceInvite $invite */
+        /**
+         * @var WorkspaceInvite $invite
+         */
         $invite = WorkspaceInvite::query()->findOrFail($inviteId);
         if ($invite->isOpen()) {
             $invite->forceFill(['revoked_at' => now()])->save();
@@ -141,7 +145,9 @@ final class InviteController extends Controller
         $data = $request->validate(['token' => ['required', 'string', 'size:64']]);
         $user = $request->user();
 
-        /** @var WorkspaceInvite|null $invite */
+        /**
+         * @var WorkspaceInvite|null $invite
+         */
         $invite = WorkspaceInvite::withoutGlobalScopes() // allowlisted: token lookup precedes tenant resolution; token is unique and unguessable
             ->where('token_hash', hash('sha256', $data['token']))->first();
 
@@ -173,7 +179,9 @@ final class InviteController extends Controller
         ]]);
     }
 
-    /** @param  list<string>  $spaceIds */
+    /**
+     * @param  list<string>  $spaceIds
+     */
     private function issue(Workspace $workspace, User $inviter, string $email, string $role, array $spaceIds): WorkspaceInvite
     {
         $token = Str::random(64);
@@ -201,7 +209,9 @@ final class InviteController extends Controller
         $this->authorize('workspace-admin');
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function present(WorkspaceInvite $i): array
     {
         return [

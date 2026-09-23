@@ -39,7 +39,9 @@ final class MemberController extends Controller
         $this->guard($workspace);
         $data = $request->validate(['role' => ['required', Rule::in(WorkspaceMember::ROLES)]]);
 
-        /** @var WorkspaceMember $member */
+        /**
+         * @var WorkspaceMember $member
+         */
         $member = WorkspaceMember::query()->where('user_id', $userId)->firstOrFail();
 
         if ($member->role === 'admin' && $data['role'] !== 'admin' && $this->adminCount() <= 1) {
@@ -58,7 +60,9 @@ final class MemberController extends Controller
     {
         $this->guard($workspace);
 
-        /** @var WorkspaceMember $member */
+        /**
+         * @var WorkspaceMember $member
+         */
         $member = WorkspaceMember::query()->where('user_id', $userId)->firstOrFail();
         if ($member->role === 'admin' && $this->adminCount() <= 1) {
             return $this->lastAdmin();

@@ -16,7 +16,9 @@ final class ChangesRequestedNotification extends Notification implements ShouldQ
 
     public function __construct(public readonly string $title, public readonly string $comment, public readonly string $documentId) {}
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function via(object $notifiable): array
     {
         return NotificationPrefs::channels($notifiable, 'changes_requested');
@@ -30,7 +32,9 @@ final class ChangesRequestedNotification extends Notification implements ShouldQ
             ->action('Open the draft', rtrim((string) config('flowzapp.frontend_url'), '/')."/d/{$this->documentId}/edit");
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     public function toArray(object $notifiable): array
     {
         return ['type' => 'changes_requested', 'title' => $this->title, 'document_id' => $this->documentId, 'comment' => $this->comment];

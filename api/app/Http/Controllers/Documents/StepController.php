@@ -115,7 +115,9 @@ final class StepController extends Controller
         return response()->json(['data' => ['id' => $stepId, 'deleted' => true]]);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function rules(bool $creating): array
     {
         return [
@@ -140,7 +142,9 @@ final class StepController extends Controller
         $doc->save();
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function present(DocumentStep $s): array
     {
         return $s->only(['id', 'position', 'instruction', 'note', 'expected_result', 'is_critical', 'is_checkpoint', 'media_asset_id', 'source_ts_start', 'source_ts_end', 'verified_at']);

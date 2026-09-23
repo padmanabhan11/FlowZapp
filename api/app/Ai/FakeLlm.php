@@ -10,7 +10,9 @@ namespace App\Ai;
  */
 final class FakeLlm implements LlmDriver
 {
-    /** @var array<string, string> marker => JSON */
+    /**
+     * @var array<string, string> marker => JSON
+     */
     public static array $responses = [];
 
     public function complete(string $system, string $user, int $maxTokens = 4096, float $temperature = 0.0): array

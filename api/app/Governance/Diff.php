@@ -15,7 +15,11 @@ namespace App\Governance;
  */
 final class Diff
 {
-    /** @param array<string,mixed> $from @param array<string,mixed> $to @return list<array<string,mixed>> */
+    /**
+     * @param  array<string,mixed>  $from
+     * @param  array<string,mixed>  $to
+     * @return list<array<string,mixed>>
+     */
     public static function compute(array $from, array $to): array
     {
         $out = [];
@@ -49,15 +53,19 @@ final class Diff
         return $out;
     }
 
-    /** @param list<array<string,mixed>> $a @param list<array<string,mixed>> $b @return list<array<string,mixed>> */
+    /**
+     * @param  list<array<string,mixed>>  $a
+     * @param  list<array<string,mixed>>  $b
+     * @return list<array<string,mixed>>
+     */
     private static function diffList(array $a, array $b, string $type, callable $id, callable $fingerprint): array
     {
         $aById = [];
-        foreach (array_values($a) as $i => $x) {
+        foreach ($a as $i => $x) {
             $aById[$id($x)] = ['i' => $i, 'v' => $x];
         }
         $bById = [];
-        foreach (array_values($b) as $i => $x) {
+        foreach ($b as $i => $x) {
             $bById[$id($x)] = ['i' => $i, 'v' => $x];
         }
         $out = [];
@@ -92,7 +100,11 @@ final class Diff
         return $out;
     }
 
-    /** @param list<string> $a @param list<string> $b @return list<string> */
+    /**
+     * @param  list<string>  $a
+     * @param  list<string>  $b
+     * @return list<string>
+     */
     private static function longestCommonSubsequence(array $a, array $b): array
     {
         $n = count($a);

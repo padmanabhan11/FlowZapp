@@ -25,7 +25,9 @@ final class TenantScope implements Scope
 {
     public function apply(Builder $builder, Model $model): void
     {
-        /** @var CurrentWorkspace $current */
+        /**
+         * @var CurrentWorkspace $current
+         */
         $current = app(CurrentWorkspace::class);
         $column = $model->qualifyColumn('workspace_id');
 

@@ -42,7 +42,9 @@ abstract class PipelineStage implements ShouldBeUnique, ShouldQueue
 
     abstract protected function recordingState(): string;
 
-    /** @return string the next stage's job class, or null when this is the last stage */
+    /**
+     * @return string the next stage's job class, or null when this is the last stage
+     */
     abstract protected function next(): ?string;
 
     abstract protected function run(Recording $rec, PipelineJob $job): void;

@@ -17,7 +17,9 @@ final class RecordingFailedNotification extends Notification implements ShouldQu
 
     public function __construct(public readonly string $title, public readonly string $reason, public readonly string $recordingId) {}
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function via(object $notifiable): array
     {
         return NotificationPrefs::channels($notifiable, 'recording_failed');
@@ -30,7 +32,9 @@ final class RecordingFailedNotification extends Notification implements ShouldQu
             ->action('Open recordings', rtrim((string) config('flowzapp.frontend_url'), '/').'/recordings');
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     public function toArray(object $notifiable): array
     {
         return ['type' => 'recording_failed', 'title' => $this->title, 'recording_id' => $this->recordingId, 'reason' => $this->reason];

@@ -11,6 +11,8 @@ namespace App\Pipeline;
  */
 interface Transcriber
 {
-    /** @return array{provider: string, language: ?string, confidence: ?float, full_text: string, words: list<array{w: string, start: float, end: float, conf: ?float}>, cost_usd: float} */
+    /**
+     * @return array{provider: string, language: ?string, confidence: ?float, full_text: string, words: list<array{w: string, start: float, end: float, conf: ?float}>, cost_usd: float}
+     */
     public function transcribe(string $signedMediaUrl, float $durationSec): array;
 }
