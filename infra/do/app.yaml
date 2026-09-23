@@ -53,6 +53,11 @@ envs:
     type: SECRET
   - key: QDRANT_COLLECTION
     value: flowzapp-staging
+  # Billing: the provider is an open decision; 'null' answers 501 on self-service changes until a driver exists.
+  - key: BILLING_DRIVER
+    value: "null"
+  - key: BILLING_WEBHOOK_SECRET
+    type: SECRET
 
 databases:
   - name: mysql

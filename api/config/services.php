@@ -59,5 +59,5 @@ return [
     ],
 
     // Billing provider is an open decision (doc 03 §12); until chosen, the portal link is a plain URL or absent.
-    'billing' => ['portal_url' => env('BILLING_PORTAL_URL')],
+    'billing' => ['portal_url' => env('BILLING_PORTAL_URL'), 'webhook_secret' => env('BILLING_WEBHOOK_SECRET')],
 ];

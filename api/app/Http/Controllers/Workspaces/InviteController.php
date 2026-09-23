@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Workspaces;
 
 use App\Audit\Audit;
-use App\Billing\PlanLimits;
+use App\Billing\Plans;
 use App\Http\Controllers\Controller;
 use App\Models\Space;
 use App\Models\SpaceMember;
@@ -64,7 +64,7 @@ final class InviteController extends Controller
             ->where('expires_at', '>', now())->pluck('email')->all();
         $validSpaceIds = Space::query()->pluck('id')->all();
 
-        $seatLimit = PlanLimits::for($workspace->plan, 'seats');
+        $seatLimit = app(Plans::class)->seatLimit($workspace);   // K2: billed seats
         $seatsUsed = count($memberUserIds) + count($pendingEmails);
 
         $results = [];

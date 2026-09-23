@@ -14,6 +14,9 @@ return [
     // Speech-to-text driver: 'null' until the D0 evaluation picks one ('whisper' | 'deepgram').
     'transcription_driver' => env('TRANSCRIPTION_DRIVER', 'null'),
 
+    // Payment provider driver: 'null' until the provider is chosen (03 §12); 'fake' for tests and local dev.
+    'billing_driver' => env('BILLING_DRIVER', 'null'),
+
     // 'claude' (default) or 'fake' for tests.
     'llm_driver' => env('LLM_DRIVER', 'claude'),
 

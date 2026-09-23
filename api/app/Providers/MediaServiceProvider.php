@@ -7,6 +7,9 @@ namespace App\Providers;
 use App\Ai\ClaudeDriver;
 use App\Ai\FakeLlm;
 use App\Ai\LlmDriver;
+use App\Billing\BillingProvider;
+use App\Billing\Providers\FakeBillingProvider;
+use App\Billing\Providers\NullBillingProvider;
 use App\Media\FakeMediaStorage;
 use App\Media\MediaStorage;
 use App\Media\SpacesStorage;
@@ -46,6 +49,13 @@ final class MediaServiceProvider extends ServiceProvider
             return match ((string) config('flowzapp.vector_driver', 'qdrant')) {
                 'fake' => new FakeVectorStore,
                 default => new QdrantStore((string) config('services.qdrant.url'), config('services.qdrant.key'), (string) config('services.qdrant.collection', 'flowzapp'), (int) config('services.openai.embedding_dims', 1536)),
+            };
+        });
+
+        $this->app->singleton(BillingProvider::class, function (): BillingProvider {
+            return match ((string) config('flowzapp.billing_driver', 'null')) {
+                'fake' => new FakeBillingProvider((string) config('services.billing.webhook_secret', 'fake-secret')),
+                default => new NullBillingProvider,   // the payment provider is an open decision (03 §12)
             };
         });
 

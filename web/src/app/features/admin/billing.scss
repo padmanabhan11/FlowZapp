@@ -72,3 +72,15 @@
     font-weight: 600;
   }
 }
+
+.bill__crow--choose {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.bill__seats {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}

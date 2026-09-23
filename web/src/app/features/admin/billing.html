@@ -38,6 +38,39 @@
         Billing is not connected yet. Plan changes are handled by FlowZapp support for now.
       </p>
     }
+    @if (notice(); as n) {
+      <p class="adm__notice" role="status">{{ n }}</p>
+    }
+    @if (billing(); as b) {
+      @if (b.scheduled; as s) {
+        <p class="adm__notice" role="status">
+          Changing to {{ planNames[s.tier] }}
+          @if (s.seats) {
+            with {{ s.seats }} seats
+          }
+          @if (s.at) {
+            on {{ s.at | date: 'mediumDate' }}
+          }
+          . Until then everything stays as it is.
+          <button
+            pButton
+            type="button"
+            size="small"
+            [text]="true"
+            [loading]="busy() === 'keep'"
+            (click)="keepCurrent()"
+          >
+            Keep {{ planNames[b.tier] }}
+          </button>
+        </p>
+      }
+      @if (b.status === 'past_due') {
+        <p class="bill__over" role="status">
+          The last payment failed. Update the payment method in the billing portal to keep
+          {{ planNames[b.tier] }}.
+        </p>
+      }
+    }
 
     @for (o of over(); track o.key) {
       <p class="bill__over" role="status">
@@ -117,6 +150,40 @@
             }
           </div>
         }
+        <div class="bill__crow bill__crow--choose">
+          <span>
+            @if (billing()?.max_team_seats; as max) {
+              <span class="bill__seats">
+                <label for="team-seats">Team seats</label>
+                <p-inputNumber
+                  [ngModel]="teamSeats()"
+                  (ngModelChange)="teamSeats.set($event ?? 1)"
+                  [min]="1"
+                  [max]="max"
+                  [showButtons]="true"
+                  inputId="team-seats"
+                  [style]="{ width: '7rem' }"
+                />
+                <span class="adm__hint">up to {{ max }}</span>
+              </span>
+            }
+          </span>
+          @for (p of plans; track p) {
+            <span>
+              <button
+                pButton
+                type="button"
+                size="small"
+                [outlined]="!isCurrent(p)"
+                [disabled]="isCurrent(p) || busy() !== null"
+                [loading]="busy() === p"
+                (click)="choose(p)"
+              >
+                {{ isCurrent(p) ? 'Current plan' : 'Choose ' + planNames[p] }}
+              </button>
+            </span>
+          }
+        </div>
       </div>
     }
 

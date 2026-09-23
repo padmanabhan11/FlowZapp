@@ -22,7 +22,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 final class Usage
 {
-    public function __construct(private readonly CurrentWorkspace $current) {}
+    public function __construct(private readonly CurrentWorkspace $current, private readonly Plans $plans) {}
 
     /**
      * @return array{plan: string, period_start: string, period_end: string, counters: array<string, array{used: int|float, max: int|null, unlimited: bool, near: bool, over: bool}>}
@@ -31,6 +31,7 @@ final class Usage
     {
         $ws ??= Workspace::query()->findOrFail($this->current->require());
         $limits = PlanLimits::all($ws->plan);
+        $limits['seats'] = $this->plans->seatLimit($ws);   // K2: the billed seat count, not just the tier default
         $used = [
             'seats' => WorkspaceMember::query()->count(),
             'documents' => Document::query()->count(),
@@ -51,7 +52,7 @@ final class Usage
     public function assert(string $limit, float $amount = 1): void
     {
         $ws = Workspace::query()->findOrFail($this->current->require());
-        $max = PlanLimits::for($ws->plan, $limit);
+        $max = $limit === 'seats' ? $this->plans->seatLimit($ws) : PlanLimits::for($ws->plan, $limit);
         if ($max === null) {
             return;
         }

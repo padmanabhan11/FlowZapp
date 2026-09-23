@@ -26,6 +26,7 @@ use App\Models\Recording;
 use App\Models\RecordingSegment;
 use App\Models\Space;
 use App\Models\SpaceMember;
+use App\Models\Subscription;
 use App\Models\TenantModel;
 use App\Models\Transcript;
 use App\Models\User;
@@ -154,6 +155,7 @@ final class CrossTenantIsolationTest extends TestCase
         RecordingSegment::create(['recording_id' => $rec->id, 'position' => 1, 'ts_start' => 0, 'ts_end' => 1]);
         MediaAsset::create(['recording_id' => $rec->id, 'kind' => 'frame', 'storage_key' => 'k/f.jpg']);
         PipelineJob::create(['recording_id' => $rec->id, 'stage' => 'transcribe', 'job_key' => 'seed:transcribe:0']);
+        Subscription::create(['tier' => 'free', 'seats' => 3]);
 
         $unseeded = [];
         $this->current()->set($this->b->id);

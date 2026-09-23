@@ -41,6 +41,9 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/auth/magic-link', [MagicLinkController::class, 'request'])->middleware('throttle:magic-link');
     Route::get('/auth/magic-link/{nonce}', [MagicLinkController::class, 'consume'])->middleware(['web', 'signed'])->name('auth.magic.consume'); // web: needs the session store
 
+    // Payment provider webhooks: no session, no workspace header; the driver verifies the signature.
+    Route::post('/billing/webhook', [BillingController::class, 'webhook'])->middleware('throttle:60,1');
+
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/auth/logout', [MagicLinkController::class, 'logout'])->middleware('web');
         Route::get('/auth/me', [MagicLinkController::class, 'me']);
@@ -151,6 +154,9 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/ai/suggest-title', [AiController::class, 'suggestTitle']);
 
             Route::get('/usage', [BillingController::class, 'usage']);
+            Route::get('/billing', [BillingController::class, 'show']);
+            Route::post('/billing/change', [BillingController::class, 'change']);
+            Route::delete('/billing/scheduled', [BillingController::class, 'cancelScheduled']);
             Route::get('/billing/portal', [BillingController::class, 'portal']);
 
             Route::get('/handbook', [HandbookController::class, 'index']);
