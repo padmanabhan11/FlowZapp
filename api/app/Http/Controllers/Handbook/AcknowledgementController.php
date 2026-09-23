@@ -161,17 +161,22 @@ final class AcknowledgementController extends Controller
         $acks = Acknowledgement::query()->whereIn('version_id', $docs->pluck('approved_version_id'))->get()
             ->keyBy(fn (Acknowledgement $a) => $a->version_id.':'.$a->user_id);
 
-        return $targets->map(function (AcknowledgementTarget $t) use ($docs, $acks): array {
-            $d = $docs[$t->document_id];
-            $ack = $acks->get($d->approved_version_id.':'.$t->user_id);
+        $rows = $targets->map(fn (AcknowledgementTarget $t) => self::row($t, $docs[$t->document_id], $acks->get($docs[$t->document_id]->approved_version_id.':'.$t->user_id)));
 
-            return [
-                'document_id' => $d->id, 'title' => $d->title, 'space_id' => $d->space_id,
-                'version_id' => $d->approved_version_id, 'version_number' => $d->approvedVersion?->version_number,
-                'user' => $t->user?->only(['id', 'name', 'email']),
-                'status' => $ack ? 'done' : 'outstanding', 'acknowledged_at' => $ack?->acknowledged_at, 'assigned_at' => $t->created_at,
-            ];
-        })->when(! empty($f['status']), fn ($c) => $c->filter(fn ($r) => $r['status'] === $f['status']));
+        return empty($f['status']) ? $rows : $rows->filter(fn (array $r) => $r['status'] === $f['status'])->values();
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private static function row(AcknowledgementTarget $t, Document $d, ?Acknowledgement $ack): array
+    {
+        return [
+            'document_id' => $d->id, 'title' => $d->title, 'space_id' => $d->space_id,
+            'version_id' => $d->approved_version_id, 'version_number' => $d->approvedVersion?->version_number,
+            'user' => $t->user?->only(['id', 'name', 'email']),
+            'status' => $ack ? 'done' : 'outstanding', 'acknowledged_at' => $ack?->acknowledged_at, 'assigned_at' => $t->created_at,
+        ];
     }
 
     /** Admin, or approver on the document's space ("HR" in S17). */

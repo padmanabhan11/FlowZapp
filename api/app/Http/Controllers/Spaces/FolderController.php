@@ -169,15 +169,15 @@ final class FolderController extends Controller
      */
     private function descendants(Folder $folder): Collection
     {
-        $out = collect();
+        $out = [];
         $frontier = [$folder->id];
         while ($frontier) {
             $rows = Folder::query()->whereIn('parent_id', $frontier)->get();
-            $out = $out->concat($rows);
+            array_push($out, ...$rows->all());
             $frontier = $rows->pluck('id')->all();
         }
 
-        return $out;
+        return collect($out);
     }
 
     private function isDescendant(Folder $candidate, Folder $of): bool

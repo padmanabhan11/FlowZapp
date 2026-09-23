@@ -37,7 +37,11 @@ class AuditEntry extends TenantModel
         return ['metadata' => 'array', 'created_at' => 'datetime'];
     }
 
-    // audit_log uses a bigint auto-increment key, not a ULID (doc 04).
+    /**
+     * audit_log uses a bigint auto-increment key, not a ULID (doc 04).
+     *
+     * @return list<string>
+     */
     public function uniqueIds(): array
     {
         return [];

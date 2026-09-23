@@ -20,6 +20,7 @@ use App\Models\SpaceMember;
 use App\Observers\DocumentObserver;
 use App\Policies\SpacePolicy;
 use App\Retrieval\Deindex;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -149,7 +150,11 @@ final class DocumentController extends Controller
         if ($v === null) {
             return response()->json(['error' => ['code' => 'not_published', 'message' => 'This document has no approved version yet.']], 409);
         }
-        DocumentRead::query()->firstOrCreate(['document_id' => $doc->id, 'user_id' => request()->user()->id, 'read_on' => now()->toDateString()]);
+        try {
+            DocumentRead::query()->firstOrCreate(['document_id' => $doc->id, 'user_id' => request()->user()->id, 'read_on' => now()->toDateString()]);
+        } catch (UniqueConstraintViolationException) {
+            // already counted today (a concurrent read, or a driver that stores the date with a time part)
+        }
 
         return response()->json(['data' => [
             'id' => $doc->id, 'title' => $v->title, 'doc_type' => $doc->doc_type, 'state' => $doc->state,

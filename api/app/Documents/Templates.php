@@ -104,7 +104,7 @@ final class Templates
         $builtIn = array_map(fn (array $t) => $t + ['custom' => false], self::all());
         $custom = DocumentTemplate::query()->with('creator:id,name')->orderBy('name')->get()->map(fn (DocumentTemplate $t) => self::present($t))->all();
 
-        return array_values(array_merge($builtIn, $custom));
+        return array_merge($builtIn, $custom);
     }
 
     /**

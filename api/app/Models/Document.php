@@ -11,8 +11,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
-#[ObservedBy(DocumentObserver::class)]
-
 /**
  * @property string $id
  * @property string $workspace_id
@@ -39,6 +37,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $submitted_at
  * @property int|null $handbook_position
  */
+#[ObservedBy(DocumentObserver::class)]
 class Document extends TenantModel
 {
     use SoftDeletes;
@@ -47,11 +46,7 @@ class Document extends TenantModel
 
     public const STATES = ['draft', 'in_review', 'approved', 'archived'];
 
-    /**
-     * version_id sentinel for the working copy's steps (doc 04).
-     *
-     * @return HasMany<DocumentStep, $this>
-     */
+    /** version_id sentinel for the working copy's steps (doc 04). */
     public const WORKING = '0';
 
     protected $fillable = [

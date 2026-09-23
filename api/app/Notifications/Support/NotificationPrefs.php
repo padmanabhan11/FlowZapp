@@ -33,7 +33,7 @@ final class NotificationPrefs
         if ($workspaceId !== null) {
             $m = WorkspaceMember::withoutGlobalScopes() // allowlisted: preferences are read from notification via() outside any request
                 ->where('workspace_id', $workspaceId)->where('user_id', $user->id)->first();
-            $prefs = array_merge($prefs, array_intersect_key($m?->notification_prefs ?? [], self::DEFAULTS));
+            $prefs = array_merge($prefs, array_intersect_key($m->notification_prefs ?? [], self::DEFAULTS));
             $assigned = AcknowledgementTarget::withoutGlobalScopes() // allowlisted: same — cross-context read by user id
                 ->where('workspace_id', $workspaceId)->where('user_id', $user->id)->exists();
             if ($assigned) {

@@ -119,10 +119,11 @@ final class ChatController extends Controller
     {
         $this->authorize('workspace-admin');
         $refused = ChatMessage::query()->where('role', 'assistant')->where('refused', true)->orderByDesc('created_at')->limit(500)->get();
-        $users = ChatMessage::query()->where('role', 'user')->whereIn('session_id', $refused->pluck('session_id')->unique())->orderBy('created_at')->get()->groupBy('session_id');
+        $users = ChatMessage::query()->where('role', 'user')->whereIn('session_id', $refused->pluck('session_id')->unique())->orderBy('id')->get()->groupBy('session_id');
         $rows = $refused->map(function (ChatMessage $a) use ($users) {
-            // The question is the last user message in the session before this refusal.
-            return $users->get($a->session_id, collect())->filter(fn (ChatMessage $u) => $u->created_at <= $a->created_at)->last();
+            // The question is the last user message in the session before this refusal. ULIDs are
+            // monotonic, so id order is insertion order even when timestamps share a second.
+            return $users->get($a->session_id, collect())->filter(fn (ChatMessage $u) => strcmp($u->id, $a->id) < 0)->last();
         })->filter();
         $groups = [];
         foreach ($rows as $m) {

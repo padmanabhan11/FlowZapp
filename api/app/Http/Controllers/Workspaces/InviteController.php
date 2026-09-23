@@ -57,7 +57,7 @@ final class InviteController extends Controller
             'invites.*.space_ids.*' => ['string', 'size:26'],
         ]);
 
-        $emails = collect($data['invites'])->pluck('email')->map(fn ($e) => Str::lower($e))->unique();
+        $emails = $request->collect('invites')->pluck('email')->map(fn ($e) => Str::lower($e))->unique();
         $existing = User::query()->whereIn('email', $emails)->get()->keyBy('email');
         $memberUserIds = WorkspaceMember::query()->pluck('user_id')->all();
         $pendingEmails = WorkspaceInvite::query()->whereNull('accepted_at')->whereNull('revoked_at')

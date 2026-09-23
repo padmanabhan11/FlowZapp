@@ -37,7 +37,7 @@ final class AnalyticsController extends Controller
         foreach (Document::query()->where('state', 'approved')->where('review_due_at', '<=', now())->get(['space_id']) as $d) {
             $overdue[$d->space_id] = ($overdue[$d->space_id] ?? 0) + 1;
         }
-        $pastReview = collect($overdue)->map(fn (int $n, string $sid) => ['space_id' => $sid, 'space' => $spaces->get($sid)?->name ?? '—', 'count' => $n])->sortByDesc('count')->values()->all();
+        $pastReview = collect($overdue)->map(fn (int $n, string $sid) => ['space_id' => $sid, 'space' => $spaces->get($sid)->name ?? '—', 'count' => $n])->sortByDesc('count')->values()->all();
 
         $approvals = Approval::query()->where('to_state', 'approved')->where('created_at', '>=', $since)->count();
 
@@ -55,7 +55,7 @@ final class AnalyticsController extends Controller
         arsort($readCounts);
         $top = array_slice($readCounts, 0, 10, true);
         $titles = Document::query()->whereIn('id', array_keys($top))->get(['id', 'title'])->keyBy('id');
-        $mostRead = collect($top)->map(fn (int $n, string $id) => ['document_id' => $id, 'title' => $titles->get($id)?->title ?? '—', 'reads' => $n])->values()->all();
+        $mostRead = collect($top)->map(fn (int $n, string $id) => ['document_id' => $id, 'title' => $titles->get($id)->title ?? '—', 'reads' => $n])->values()->all();
 
         return response()->json(['data' => [
             'window_days' => 30,

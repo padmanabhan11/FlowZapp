@@ -27,7 +27,7 @@ final class WorkspaceController extends Controller
         $rows = $request->user()->workspaces()->orderBy('name')->get(['workspaces.id', 'name', 'slug', 'plan']);
 
         return response()->json(['data' => $rows->map(fn (Workspace $w) => [
-            'id' => $w->id, 'name' => $w->name, 'slug' => $w->slug, 'plan' => $w->plan, 'role' => $w->pivot->role,
+            'id' => $w->id, 'name' => $w->name, 'slug' => $w->slug, 'plan' => $w->plan, 'role' => data_get($w, 'pivot.role'),
         ])]);
     }
 

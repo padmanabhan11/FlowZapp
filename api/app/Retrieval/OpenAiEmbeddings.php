@@ -31,7 +31,7 @@ final class OpenAiEmbeddings implements Embeddings
             $res = Http::withToken($this->apiKey)->timeout(120)->retry(2, 1000)
                 ->post('https://api.openai.com/v1/embeddings', ['model' => $this->model, 'input' => $batch, 'dimensions' => $this->dims])
                 ->throw()->json();
-            $rows = collect($res['data'] ?? [])->sortBy('index');
+            $rows = collect(is_array($res['data'] ?? null) ? $res['data'] : [])->sortBy('index');   // a malformed response embeds nothing rather than crashing
             foreach ($rows as $r) {
                 $out[] = array_map('floatval', $r['embedding']);
             }

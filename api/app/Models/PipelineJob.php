@@ -36,6 +36,9 @@ class PipelineJob extends TenantModel
         return ['started_at' => 'datetime', 'finished_at' => 'datetime', 'cost_usd' => 'float'];
     }
 
+    /**
+     * @return list<string>
+     */
     public function uniqueIds(): array
     {
         return [];

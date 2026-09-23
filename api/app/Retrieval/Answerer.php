@@ -41,7 +41,7 @@ TXT;
 
         $passages = [];
         foreach ($usable as $i => $h) {
-            $passages[] = '['.($i + 1)."] ({$h['document']->title} v".($h['document']->approvedVersion?->version_number ?? '?').", {$h['chunk']->section_ref})\n{$h['chunk']->content}";
+            $passages[] = '['.($i + 1)."] ({$h['document']->title} v".($h['document']->approvedVersion->version_number ?? '?').", {$h['chunk']->section_ref})\n{$h['chunk']->content}";
         }
         $hist = '';
         foreach (array_slice($history, -6) as $m) {

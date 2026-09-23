@@ -65,7 +65,7 @@ final class MagicLinkController extends Controller
         return response()->json([
             'user' => $user?->only(['id', 'name', 'email', 'locale', 'avatar_path']),
             'workspaces' => $user?->workspaces()->get(['workspaces.id', 'name', 'slug', 'plan'])
-                ->map(fn ($w) => ['id' => $w->id, 'name' => $w->name, 'slug' => $w->slug, 'plan' => $w->plan, 'role' => $w->pivot->role]),
+                ->map(fn ($w) => ['id' => $w->id, 'name' => $w->name, 'slug' => $w->slug, 'plan' => $w->plan, 'role' => data_get($w, 'pivot.role')]),
         ]);
     }
 }

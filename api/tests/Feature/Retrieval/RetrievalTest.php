@@ -79,7 +79,7 @@ final class RetrievalTest extends TestCase
         $this->assertSame('Refund Policy', $r->json('data.results.0.title'));
         $this->assertNotNull($r->json('data.instant_answer'));
         $this->assertSame($refunds, $r->json('data.instant_answer.citations.0.document_id'));
-        $this->assertStringStartsWith('step:', $r->json('data.instant_answer.citations.0.section_ref') ?? $r->json('data.instant_answer.citations.0.section_ref'));
+        $this->assertMatchesRegularExpression('/^(step|section):/', (string) $r->json('data.instant_answer.citations.0.section_ref'), 'the citation deep-links to a step or section');
     }
 
     public function test_chat_answers_with_citations_refuses_without_source_and_never_sees_other_spaces(): void
@@ -119,7 +119,7 @@ final class RetrievalTest extends TestCase
 
         // SSE variant streams retrieval → tokens → done.
         FakeLlm::$responses['[answer]'] = json_encode(['answer' => 'Refunds after 30 days need ops-lead approval [1].', 'citations' => [1], 'refused' => false]);
-        $sse = $this->actingAs($reader)->withHeaders($this->h() + ['Accept' => 'text/event-stream'])->post("/api/v1/chat/sessions/{$sess}/messages", ['content' => 'refund after 30 days?']);
+        $sse = $this->actingAs($reader)->withHeaders(['Accept' => 'text/event-stream'] + $this->h())->post("/api/v1/chat/sessions/{$sess}/messages", ['content' => 'refund after 30 days?']);
         $sse->assertOk();
         $body = $sse->streamedContent();
         $this->assertStringContainsString('event: retrieval', $body);

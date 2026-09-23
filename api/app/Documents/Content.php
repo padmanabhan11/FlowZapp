@@ -79,9 +79,27 @@ final class Content
                 $out[$k] = $patch[$k] ?? ($k === 'prerequisites' || $k === 'blocks' ? [] : '');
             }
         }
+        $out['blocks'] = array_map(fn ($b) => is_array($b) ? self::normaliseBlock($b) : $b, is_array($out['blocks']) ? $out['blocks'] : []);
         $out['version'] = self::SCHEMA_VERSION;
 
         return $out;
+    }
+
+    /**
+     * The HTTP layer turns empty strings into null (ConvertEmptyStringsToNull);
+     * an empty table cell is still an empty string in the document, so
+     * save → load returns exactly what the editor sent.
+     *
+     * @param  array<string,mixed>  $b
+     * @return array<string,mixed>
+     */
+    private static function normaliseBlock(array $b): array
+    {
+        if (isset($b['rows']) && is_array($b['rows'])) {
+            $b['rows'] = array_map(fn ($row) => is_array($row) ? array_map(fn ($cell) => $cell ?? '', $row) : $row, $b['rows']);
+        }
+
+        return $b;
     }
 
     /**
