@@ -4,6 +4,56 @@
 name: flowzapp-staging
 region: nyc
 
+# App-level env vars apply to every component (web, workers, scheduler, the
+# migrate job): the index worker and `vector:ensure-collection` need the same
+# database, queue, Spaces, model and vector-store settings as the API.
+envs:
+  - key: APP_ENV
+    value: staging
+  - key: APP_KEY
+    type: SECRET
+  - key: DB_CONNECTION
+    value: mysql
+  - key: DATABASE_URL
+    value: ${mysql.DATABASE_URL}
+  - key: MYSQL_ATTR_SSL_CA
+    value: ${mysql.CA_CERT}
+  - key: REDIS_URL
+    value: ${valkey.REDIS_URL}
+  - key: CACHE_STORE
+    value: redis
+  - key: QUEUE_CONNECTION
+    value: redis
+  - key: SESSION_DRIVER
+    value: redis
+  - key: FILESYSTEM_DISK
+    value: spaces
+  - key: DO_SPACES_KEY
+    type: SECRET
+  - key: DO_SPACES_SECRET
+    type: SECRET
+  - key: DO_SPACES_BUCKET
+    value: flowzapp-staging
+  - key: DO_SPACES_REGION
+    value: nyc3
+  - key: ANTHROPIC_API_KEY
+    type: SECRET
+  - key: SENTRY_LARAVEL_DSN
+    type: SECRET
+  # Retrieval (decisions 21 Sep 2026): OpenAI embeddings + self-hosted Qdrant (infra/qdrant).
+  - key: EMBEDDINGS_DRIVER
+    value: openai
+  - key: OPENAI_API_KEY
+    type: SECRET
+  - key: VECTOR_DRIVER
+    value: qdrant
+  - key: QDRANT_URL
+    value: https://qdrant.staging.example.com    # the droplet's TLS endpoint (infra/qdrant/README.md)
+  - key: QDRANT_API_KEY
+    type: SECRET
+  - key: QDRANT_COLLECTION
+    value: flowzapp-staging
+
 databases:
   - name: mysql
     engine: MYSQL
@@ -31,39 +81,6 @@ services:
       - path: /api
     health_check:
       http_path: /up
-    envs:
-      - key: APP_ENV
-        value: staging
-      - key: APP_KEY
-        type: SECRET
-      - key: DB_CONNECTION
-        value: mysql
-      - key: DATABASE_URL
-        value: ${mysql.DATABASE_URL}
-      - key: MYSQL_ATTR_SSL_CA
-        value: ${mysql.CA_CERT}
-      - key: REDIS_URL
-        value: ${valkey.REDIS_URL}
-      - key: CACHE_STORE
-        value: redis
-      - key: QUEUE_CONNECTION
-        value: redis
-      - key: SESSION_DRIVER
-        value: redis
-      - key: FILESYSTEM_DISK
-        value: spaces
-      - key: DO_SPACES_KEY
-        type: SECRET
-      - key: DO_SPACES_SECRET
-        type: SECRET
-      - key: DO_SPACES_BUCKET
-        value: flowzapp-staging
-      - key: DO_SPACES_REGION
-        value: nyc3
-      - key: ANTHROPIC_API_KEY
-        type: SECRET
-      - key: SENTRY_LARAVEL_DSN
-        type: SECRET
 
 workers:
   - name: worker-pipeline
@@ -91,7 +108,8 @@ workers:
     instance_count: 1
 
   - name: scheduler
-    # Runs routes/console.php: review-due (daily), weekly digest, scheduled workspace purge.
+    # Runs routes/console.php: review-due (daily), weekly digest, scheduled workspace purge,
+    # stale-upload cleanup, and the retrieval index monitor every 10 minutes (G1-T5).
     source_dir: api
     github:
       repo: OWNER/FlowZapp

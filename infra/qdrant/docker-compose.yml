@@ -1,0 +1,37 @@
+# Qdrant for FlowZapp (decision 21 Sep 2026; 03 §4.3), one droplet per environment.
+# Caddy terminates TLS on 443 and is the only thing exposed; Qdrant listens on
+# the Docker network only. The API key is required on every request.
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.19.1
+    restart: unless-stopped
+    environment:
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:?set QDRANT_API_KEY in .env}
+      QDRANT__SERVICE__ENABLE_TLS: "false"          # TLS is Caddy's job
+      QDRANT__TELEMETRY_DISABLED: "true"
+      QDRANT__STORAGE__ON_DISK_PAYLOAD: "true"
+    volumes:
+      - /mnt/qdrant/storage:/qdrant/storage         # the attached block-storage volume
+      - /mnt/qdrant/snapshots:/qdrant/snapshots
+    expose:
+      - "6333"
+    ulimits:
+      nofile: { soft: 65535, hard: 65535 }
+
+  caddy:
+    image: caddy:2.11
+    restart: unless-stopped
+    depends_on: [qdrant]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      QDRANT_HOSTNAME: ${QDRANT_HOSTNAME:?set QDRANT_HOSTNAME in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

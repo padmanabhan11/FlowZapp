@@ -34,6 +34,45 @@ jobs:
       - name: Full test suite
         run: php artisan test
 
+  api-mysql:
+    name: API — full suite on MySQL 8.4 (tenancy, FULLTEXT keyword leg)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: '3306'
+      DB_DATABASE: flowzapp
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      DB_URL: ''
+    steps:
+      - uses: actions/checkout@v4
+      - name: MySQL 8.4 with the doc 04 full-text setting
+        run: |
+          docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=flowzapp mysql:8.4 --innodb-ft-min-token-size=2
+          for i in $(seq 1 60); do docker exec mysql mysqladmin -uroot -proot ping --silent && break; sleep 2; done
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo, pdo_mysql, intl, zip
+          coverage: none
+      - name: Install
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Environment
+        run: cp .env.example .env && php artisan key:generate --force
+      - name: Tenancy suite on MySQL (CLAUDE.md — required before a release)
+        run: php artisan test --filter Tenancy
+      - name: Full test suite on MySQL
+        run: php artisan test
+      - name: QdrantStore against real Qdrant (version pinned in infra/qdrant)
+        run: |
+          docker run -d --name qdrant -p 6333:6333 -e QDRANT__SERVICE__API_KEY=testkey qdrant/qdrant:v1.19.1
+          for i in $(seq 1 30); do curl -sf -H 'api-key: testkey' http://127.0.0.1:6333/ >/dev/null && break; sleep 2; done
+          QDRANT_TEST_URL=http://127.0.0.1:6333 QDRANT_TEST_KEY=testkey vendor/bin/phpunit tests/Integration
+
   web:
     name: Web — lint, test, build
     runs-on: ubuntu-latest

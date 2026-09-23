@@ -1,0 +1,12 @@
+# Automatic HTTPS (Let's Encrypt) for the Qdrant endpoint. Only the REST API
+# is proxied; the gRPC port and the web dashboard are not exposed.
+{$QDRANT_HOSTNAME} {
+	encode zstd gzip
+	@dashboard path /dashboard*
+	respond @dashboard 404
+	reverse_proxy qdrant:6333
+	log {
+		output stdout
+		format json
+	}
+}

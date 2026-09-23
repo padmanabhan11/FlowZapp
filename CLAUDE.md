@@ -8,8 +8,10 @@ FlowZapp turns screen recordings into approved, searchable standard operating pr
 |---|---|
 | `api/` | Laravel 12 REST API (PHP 8.3+), MySQL 8.4, Valkey 8. See `api/SETUP.md`. |
 | `web/` | Angular 21 + PrimeNG (Aura preset, `src/app/theme/flowzapp-preset.ts`). |
-| `spike/generation-eval/` | Throwaway transcription/generation evaluation. Not product code. |
-| `infra/do/app.yaml` | DigitalOcean App Platform spec — web, worker-pipeline, worker-default. |
+| `spike/generation-eval/` | Generation eval set and scorer (`php artisan pipeline:eval` runs the product pipeline over it). |
+| `spike/retrieval-eval/` | Retrieval eval set format (`php artisan retrieval:eval`). |
+| `infra/do/app.yaml` | DigitalOcean App Platform spec — web, worker-pipeline, worker-default, scheduler. |
+| `infra/qdrant/` | Self-hosted Qdrant droplet: compose file, TLS, backups, runbook. |
 | `Documentation/` | Specs 00–14, concept deck, Jira backlog. Read 12 → 03 → 04 → 05 → 02 when joining. |
 
 ## Non-negotiables
@@ -25,7 +27,7 @@ These come from the specs and are enforced by CI. Do not weaken them to make a t
 7. **Document content is structured JSON, never HTML.** Diffing, chunking, citation deep links and translation all depend on it. `body_text` is a flattened plain-text mirror maintained by a model observer for MySQL FULLTEXT; it is never edited directly.
 8. **Colour means document state and nothing else.** Draft amber `#B8730B`, review blue `#1F5C99`, approved green `#2F6F4E`, archived grey `#8A94A0`. PrimeNG's primary is navy `#1E2761`; brand gold `#D9A441` appears only in the logo, top-bar mark, sign-in and marketing. Every state pill carries its word. Controls have 4px radius; document surfaces have 0.
 9. **The API never proxies media.** Recordings upload directly to DigitalOcean Spaces via presigned multipart URLs; playback uses signed URLs with TTL ≤ 15 minutes issued after a Policy check. Storage keys are `{workspace_id}/{recording_id}/…`. The bucket is private.
-10. **Providers sit behind driver interfaces.** Claude API for generation, rewrite, translation and answers (zero data retention). Transcription, embeddings and the vector store are separate drivers and are still to be selected — do not hard-code a vendor into pipeline code. Record `provider` on transcripts and `embed_model` on chunks.
+10. **Providers sit behind driver interfaces.** Claude API for generation, rewrite, translation and answers (zero data retention). Transcription, embeddings and the vector store are separate drivers. Embeddings (OpenAI `text-embedding-3-small`) and the vector store (self-hosted Qdrant) were decided on 21 Sep 2026; transcription is still open. Either way, do not hard-code a vendor outside its driver. Record `provider` on transcripts and `embed_model` on chunks.
 11. **No production SQL by hand, ever.** Schema changes are Laravel migrations run as an App Platform pre-deploy job. Keys are 26-char ULIDs generated in PHP. Every tenant table's primary lookup index leads with `workspace_id`.
 
 ## Conventions
@@ -33,7 +35,7 @@ These come from the specs and are enforced by CI. Do not weaken them to make a t
 - **Backend:** `declare(strict_types=1)` in every file; Pint (`laravel` preset) and PHPStan level 6 must pass. Authorization lives in Policies and Gates, not in controllers. Pipeline stages are separate, idempotent job classes with a `job_key` of `{recording_id}:{stage}:{input_hash}` on the `pipeline` queue; notifications go on `default`; embedding on `index`. FFmpeg must be present in the worker image.
 - **Frontend:** standalone components, signal-based stores per feature, lazy-loaded feature routes (auth, workspace, editor, reader, recordings, search, chat, admin, billing). ESLint + Prettier must pass. PrimeNG supplies chrome (buttons, tables, dialogs, selects, toasts, upload); the document surfaces — reader, editor, step list, control block, state pills, diff view — are custom. The editor is a structured-JSON block editor, not PrimeNG's Quill-based editor. Permissions in the UI mirror server truth and are never the source of it.
 - **API shape:** base `/v1`, ULID ids, ISO 8601 UTC timestamps, cursor pagination, errors as `{ "error": { "code", "message", "details" } }`, optimistic concurrency via `expected_updated_at` → 409. Endpoints are listed in document 05; add there first, then implement.
-- **Tests:** PHPUnit on SQLite in memory for speed; the tenancy suite must also be run against MySQL 8.4 before a release. Prompt and model changes are code changes: re-run the generation and retrieval eval sets before merging them.
+- **Tests:** PHPUnit on SQLite in memory for speed; CI also runs the whole suite on MySQL 8.4 (job `api-mysql`, which includes the tenancy suite and the FULLTEXT keyword leg) and `tests/Integration` against a real Qdrant. Prompt and model changes are code changes: re-run the generation and retrieval eval sets before merging them.
 - **Commits:** small, one concern each. Commit messages say what changed and why in terms of the spec (cite FR/BR ids when relevant). Never commit `.env`, keys, or `node_modules`/`vendor`.
 
 ## How to work here
@@ -42,7 +44,7 @@ These come from the specs and are enforced by CI. Do not weaken them to make a t
 - When a task conflicts with a non-negotiable above, do not work around it. Explain the conflict and propose a change to the spec instead.
 - When adding a table: migration with `workspace_id` + leading index → model extending `TenantModel` → seed it in `CrossTenantIsolationTest::test_every_tenant_model_is_scoped` → run the tenancy suite. In that order.
 - When touching the pipeline or prompts: `php artisan pipeline:eval` runs the product pipeline over the fixed recording set (`spike/generation-eval/eval-set.csv`); score it with `spike/generation-eval/score.py` and compare `summary.md` before and after.
-- Open decisions (transcription provider, embeddings provider, vector store, seats above 10, recording retention default) are listed in document 03 §12 and document 14 §12. Do not silently decide them in code.
+- Open decisions (transcription provider, seats above 10, recording retention default; embeddings and vector store were decided 21 Sep 2026) are listed in document 03 §12 and document 14 §12. Do not silently decide them in code.
 
 ## Commands
 
