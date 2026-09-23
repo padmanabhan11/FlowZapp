@@ -11,3 +11,4 @@ Schedule::command('workspaces:purge-scheduled')->dailyAt('03:00');
 Schedule::command('recordings:abandon-stale')->dailyAt('03:30');
 Schedule::command('retrieval:check-index')->everyTenMinutes()->withoutOverlapping();   // G1-T5
 Schedule::command('billing:apply-scheduled')->hourly();   // K2
+Schedule::command('ops:check-health')->everyTenMinutes()->withoutOverlapping();   // M4-T4

@@ -1,15 +1,17 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, ErrorHandler, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient, withInterceptors, withXsrfConfiguration } from '@angular/common/http';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { providePrimeNG } from 'primeng/config';
 
 import { routes } from './app.routes';
+import { TrackingErrorHandler } from './core/error-tracking';
 import { apiInterceptor } from './core/api.interceptor';
 import { FlowZappPreset } from './theme/flowzapp-preset';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    { provide: ErrorHandler, useClass: TrackingErrorHandler }, // M4-T1
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(
       withInterceptors([apiInterceptor]),

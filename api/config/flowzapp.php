@@ -52,6 +52,14 @@ return [
         'digest_batch_chars' => 8000,
     ],
 
+    /** M4-T4 alert thresholds (ops:check-health). */
+    'ops' => [
+        'generation_failure_rate' => (float) env('OPS_GENERATION_FAILURE_RATE', 0.25),
+        'generation_min_attempts' => 3,
+        'index_backlog' => (int) env('OPS_INDEX_BACKLOG', 10),
+        'index_backlog_minutes' => (int) env('OPS_INDEX_BACKLOG_MINUTES', 60),
+    ],
+
     /** H4: how much of a conversation the assistant sees (turns are questions and answers). */
     'chat' => [
         'history_turns' => 6,

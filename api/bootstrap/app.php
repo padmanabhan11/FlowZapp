@@ -11,6 +11,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sentry\Laravel\Integration;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -26,6 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        Integration::handles($exceptions);   // M4-T1: unhandled exceptions to Sentry (no-op without SENTRY_LARAVEL_DSN)
+
         // 05-API-Specification error envelope: { "error": { code, message, details } }
         $exceptions->render(function (ValidationException $e, Request $r) {
             if ($r->expectsJson() || $r->is('api/*')) {

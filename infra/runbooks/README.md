@@ -6,6 +6,8 @@ Operator alerts come out of the `alerts` log channel (`api/config/logging.php`):
 |---|---|---|
 | `retrieval.unindexed_approved_documents` | `retrieval:check-index` every 10 min | [retrieval-index.md](retrieval-index.md) |
 | `billing.payment_failed` | payment provider webhook | [billing.md](billing.md) |
+| `pipeline.generation_failures` | `ops:check-health` every 10 min | [pipeline.md](pipeline.md) |
+| `retrieval.embedding_backlog` | `ops:check-health` every 10 min | [retrieval-index.md](retrieval-index.md) |
 | pipeline stage failures | recordings page (per recording) and `pipeline_jobs.error` | [pipeline.md](pipeline.md) |
 
 Cost: `php artisan ops:cost-report [--month=YYYY-MM] [--csv=path]` shows model spend per workspace and per generated SOP against plan price (BR-32).

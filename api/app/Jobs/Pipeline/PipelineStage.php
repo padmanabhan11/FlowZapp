@@ -16,6 +16,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -82,12 +83,16 @@ abstract class PipelineStage implements ShouldBeUnique, ShouldQueue
             }
             $job->forceFill(['status' => 'running', 'attempts' => $job->attempts + 1, 'started_at' => now(), 'error' => null])->save();
             $rec->forceFill(['state' => $this->recordingState(), 'failed_stage' => null, 'failure_reason' => null])->save();
+            $ctx = ['workspace_id' => $this->workspaceId, 'recording_id' => $rec->id, 'stage' => $this->stage(), 'attempt' => $job->attempts, 'job_key' => $this->jobKey()];
+            $t0 = microtime(true);
+            Log::channel('pipeline')->info('pipeline.stage.started', $ctx);   // M4-T2: one JSON line per stage event
 
             try {
                 $this->run($rec, $job);
             } catch (Throwable $e) {
                 $job->forceFill(['status' => 'failed', 'finished_at' => now(), 'error' => mb_substr($e->getMessage(), 0, 2000)])->save();
                 $final = $e instanceof PipelineFailed || $this->attempts() >= $this->tries;
+                Log::channel('pipeline')->{$final ? 'error' : 'warning'}('pipeline.stage.failed', $ctx + ['duration_ms' => (int) round((microtime(true) - $t0) * 1000), 'final' => $final, 'halt' => $e instanceof PipelineFailed, 'error' => mb_substr($e->getMessage(), 0, 500)]);
                 if ($final) {
                     $rec->forceFill(['state' => 'failed', 'failed_stage' => $this->stage(), 'failure_reason' => mb_substr($this->reasonFor($e), 0, 500)])->save();
                     if ($rec->uploaded_by) {
@@ -101,6 +106,7 @@ abstract class PipelineStage implements ShouldBeUnique, ShouldQueue
             }
 
             $job->forceFill(['status' => 'succeeded', 'finished_at' => now()])->save();
+            Log::channel('pipeline')->info('pipeline.stage.succeeded', $ctx + ['duration_ms' => (int) round((microtime(true) - $t0) * 1000), 'cost_usd' => $job->refresh()->cost_usd]);
             $this->advance($rec);
         });
     }

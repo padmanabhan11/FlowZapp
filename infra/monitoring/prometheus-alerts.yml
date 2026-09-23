@@ -1,0 +1,23 @@
+groups:
+  - name: flowzapp
+    rules:
+      - alert: GenerationFailures
+        expr: flowzapp_generation_failure_rate > 0.25 and (flowzapp_generation_sops + flowzapp_generation_failed) >= 3
+        for: 10m
+        labels: { severity: page }
+        annotations: { summary: "SOP generation failing", runbook: "infra/runbooks/pipeline.md" }
+      - alert: EmbeddingBacklog
+        expr: flowzapp_index_unindexed_documents > 10 or flowzapp_index_oldest_unindexed_minutes > 60 or flowzapp_index_failed_jobs > 0
+        for: 10m
+        labels: { severity: page }
+        annotations: { summary: "Approved documents not reaching the search index", runbook: "infra/runbooks/retrieval-index.md" }
+      - alert: SlowDrafts
+        expr: flowzapp_pipeline_duration_ms{stage="generate",quantile="0.95"} > 300000
+        for: 30m
+        labels: { severity: warn }
+        annotations: { summary: "Draft generation p95 over 5 minutes" }
+      - alert: AssistantSlow
+        expr: flowzapp_chat_latency_ms{quantile="0.95"} > 2000
+        for: 15m
+        labels: { severity: warn }
+        annotations: { summary: "Assistant p95 latency over 2 s" }

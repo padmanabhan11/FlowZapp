@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -60,6 +61,15 @@ return [
             'driver' => 'stack',
             'channels' => array_values(array_filter(['stderr', env('LOG_SLACK_WEBHOOK_URL') ? 'slack-alerts' : null])),
             'ignore_exceptions' => false,
+        ],
+
+        // M4-T2: pipeline stage events as one JSON object per line on stdout, for the log forwarder and metrics.
+        'pipeline' => [
+            'driver' => 'monolog',
+            'level' => 'debug',
+            'handler' => StreamHandler::class,
+            'formatter' => JsonFormatter::class,
+            'with' => ['stream' => env('PIPELINE_LOG_STREAM', 'php://stdout')],   // tests point this at php://memory
         ],
 
         'slack-alerts' => [

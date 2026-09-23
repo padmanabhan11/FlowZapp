@@ -1,7 +1,7 @@
 # DigitalOcean App Platform spec — 03-Technical-Architecture §9.
-# One app per environment (staging, production); this file is the template.
+# Production app spec. Generated from app.yaml the first time; keep both in step (CI diffs them).
 # Secrets are App Platform encrypted env vars, never in the repo.
-name: flowzapp-staging
+name: flowzapp-production
 region: nyc
 
 # App-level env vars apply to every component (web, workers, scheduler, the
@@ -9,7 +9,7 @@ region: nyc
 # database, queue, Spaces, model and vector-store settings as the API.
 envs:
   - key: APP_ENV
-    value: staging
+    value: production
   - key: APP_KEY
     type: SECRET
   - key: DB_CONNECTION
@@ -33,7 +33,7 @@ envs:
   - key: DO_SPACES_SECRET
     type: SECRET
   - key: DO_SPACES_BUCKET
-    value: flowzapp-staging
+    value: flowzapp-production
   - key: DO_SPACES_REGION
     value: nyc3
   - key: ANTHROPIC_API_KEY
@@ -48,11 +48,11 @@ envs:
   - key: VECTOR_DRIVER
     value: qdrant
   - key: QDRANT_URL
-    value: https://qdrant.staging.example.com    # the droplet's TLS endpoint (infra/qdrant/README.md)
+    value: https://qdrant.example.com    # the droplet's TLS endpoint (infra/qdrant/README.md)
   - key: QDRANT_API_KEY
     type: SECRET
   - key: QDRANT_COLLECTION
-    value: flowzapp-staging
+    value: flowzapp-production
   # Billing: the provider is an open decision; 'null' answers 501 on self-service changes until a driver exists.
   - key: BILLING_DRIVER
     value: "null"
@@ -65,7 +65,7 @@ envs:
   - key: SENTRY_RELEASE
     value: unset
   - key: SENTRY_ENVIRONMENT
-    value: staging
+    value: production
   - key: SENTRY_DSN_WEB
     type: SECRET
   - key: METRICS_TOKEN
@@ -93,11 +93,11 @@ services:
     github:
       repo: OWNER/FlowZapp
       branch: main
-      deploy_on_push: true
+      deploy_on_push: false   # production deploys only through the gated CD job
     build_command: composer install --no-dev --optimize-autoloader --no-interaction
     run_command: heroku-php-apache2 public/
-    instance_size_slug: apps-s-1vcpu-1gb
-    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-2gb
+    instance_count: 2
     http_port: 8080
     routes:
       - path: /api
@@ -116,7 +116,7 @@ workers:
       branch: main
     dockerfile_path: api/Dockerfile.worker
     run_command: php artisan queue:work redis --queue=pipeline --tries=3 --timeout=3600 --max-jobs=50
-    instance_size_slug: apps-s-1vcpu-2gb
+    instance_size_slug: apps-s-2vcpu-4gb
     instance_count: 1
 
   - name: worker-default

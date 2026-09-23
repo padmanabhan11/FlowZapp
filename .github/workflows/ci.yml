@@ -67,6 +67,18 @@ jobs:
         run: php artisan test --filter Tenancy
       - name: Full test suite on MySQL
         run: php artisan test
+      - name: Migration rollback drill (M3-T3)
+        run: |
+          php artisan migrate:fresh --force
+          php artisan migrate:rollback --step=3 --force
+          php artisan migrate --force
+          php artisan migrate:reset --force
+          php artisan migrate --force
+          php artisan migrate:status
+      - name: Staging and production specs stay in step (M2-T2)
+        run: |
+          cd .. && diff <(grep -vE 'flowzapp-(staging|production)|APP_ENV|value: (staging|production)|qdrant\.|instance_(size_slug|count)|deploy_on_push|^#' infra/do/app.yaml) \
+                        <(grep -vE 'flowzapp-(staging|production)|APP_ENV|value: (staging|production)|qdrant\.|instance_(size_slug|count)|deploy_on_push|^#' infra/do/app.production.yaml)
       - name: QdrantStore against real Qdrant (version pinned in infra/qdrant)
         run: |
           docker run -d --name qdrant -p 6333:6333 -e QDRANT__SERVICE__API_KEY=testkey qdrant/qdrant:v1.19.1

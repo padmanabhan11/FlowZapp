@@ -59,5 +59,7 @@ return [
     ],
 
     // Billing provider is an open decision (doc 03 §12); until chosen, the portal link is a plain URL or absent.
+    'metrics' => ['token' => env('METRICS_TOKEN')],   // M4-T3: bearer token for /internal/metrics; unset = endpoint off
+
     'billing' => ['portal_url' => env('BILLING_PORTAL_URL'), 'webhook_secret' => env('BILLING_WEBHOOK_SECRET')],
 ];

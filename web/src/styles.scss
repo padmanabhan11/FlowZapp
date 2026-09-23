@@ -8,14 +8,14 @@
 
 :root {
   /* palette */
-  --ink: #1e2761;         /* primary text, primary buttons, interactive chrome */
-  --ink-soft: #5b6b7c;    /* secondary text, metadata */
-  --paper: #ffffff;       /* document canvas, cards */
-  --rail: #f2f4f6;        /* app chrome, sidebars, table headers */
-  --select: #cadcfc;      /* selection, focus halo, row hover — not fills */
-  --line: #dde2e7;        /* borders, rules */
-  --brand-gold: #d9a441;  /* logo, top-bar mark, sign-in, marketing ONLY */
-  --danger: #a32b2b;      /* destructive confirmation only */
+  --ink: #1e2761; /* primary text, primary buttons, interactive chrome */
+  --ink-soft: #5b6b7c; /* secondary text, metadata */
+  --paper: #ffffff; /* document canvas, cards */
+  --rail: #f2f4f6; /* app chrome, sidebars, table headers */
+  --select: #cadcfc; /* selection, focus halo, row hover — not fills */
+  --line: #dde2e7; /* borders, rules */
+  --brand-gold: #d9a441; /* logo, top-bar mark, sign-in, marketing ONLY */
+  --danger: #a32b2b; /* destructive confirmation only */
 
   /* document state — load-bearing; do not reuse these hues for anything else */
   --state-draft: #b8730b;
@@ -74,12 +74,28 @@ a {
   font-weight: 600;
   color: #fff;
 
-  &--draft { background: var(--state-draft); }
-  &--in_review { background: var(--state-review); }
-  &--approved { background: var(--state-approved); }
-  &--archived { background: var(--state-archived); }
+  /* M5-T4: text colour per fill so every pill meets AA (4.5:1) at its small, bold size —
+     white on review blue 6.9:1 and approved green 6.0:1; near-black on draft amber 5.5:1
+     and archived grey 6.8:1 (white would be 3.8:1 and 3.1:1). The fills are the spec colours. */
+  &--draft {
+    background: var(--state-draft);
+    color: #111111;
+  }
+  &--in_review {
+    background: var(--state-review);
+  }
+  &--approved {
+    background: var(--state-approved);
+  }
+  &--archived {
+    background: var(--state-archived);
+    color: #111111;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }

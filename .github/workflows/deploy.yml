@@ -1,0 +1,101 @@
+name: Deploy
+
+# M2-T2 — CD. Staging deploys on every green CI run on main; production is the
+# same artefact promoted behind a manual gate (the GitHub "production"
+# environment requires a reviewer). Both push the App Platform spec with
+# doctl, stamping SENTRY_RELEASE with the commit (M4-T1), then wait for the
+# deployment and fail the job if App Platform does.
+#
+# Repository secrets: DIGITALOCEAN_ACCESS_TOKEN, DO_STAGING_APP_ID, DO_PRODUCTION_APP_ID.
+# Environments: staging (no gate), production (required reviewers).
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'staging or production'
+        required: true
+        default: staging
+
+concurrency:
+  group: deploy-${{ github.event.inputs.target || 'staging' }}
+  cancel-in-progress: false
+
+jobs:
+  staging:
+    name: Deploy staging
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'staging')
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Stamp the release into the spec
+        run: |
+          python3 - <<'PY'
+          import re,subprocess
+          sha=subprocess.check_output(['git','rev-parse','--short','HEAD']).decode().strip()
+          p='infra/do/app.yaml'; s=open(p).read()
+          s=re.sub(r"(- key: SENTRY_RELEASE\n\s+value: )\S+", r"\g<1>"+sha, s)
+          open(p,'w').write(s); print('release', sha)
+          PY
+      - name: Update the app and wait for the deployment
+        run: |
+          doctl apps update "${{ secrets.DO_STAGING_APP_ID }}" --spec infra/do/app.yaml --wait --format ID,DefaultIngress,ActiveDeployment.Phase
+      - name: Smoke check
+        run: |
+          URL=$(doctl apps get "${{ secrets.DO_STAGING_APP_ID }}" --format DefaultIngress --no-header)
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' "${URL}/api/v1/workspaces")
+          test "$CODE" = "401" && echo "staging up at ${URL} (API answers 401 unauthenticated, as it should)"
+
+  production:
+    name: Deploy production (gated)
+    needs: [staging]
+    if: >-
+      always() && (
+        (github.event_name == 'workflow_run' && needs.staging.result == 'success') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'production')
+      )
+    runs-on: ubuntu-latest
+    environment:
+      name: production          # required reviewers = the manual gate
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Specs must not drift apart
+        run: |
+          # Everything except the values that legitimately differ per environment must match.
+          diff <(grep -vE 'flowzapp-(staging|production)|APP_ENV|value: (staging|production)|qdrant\.|instance_(size_slug|count)|deploy_on_push|^#' infra/do/app.yaml) \
+               <(grep -vE 'flowzapp-(staging|production)|APP_ENV|value: (staging|production)|qdrant\.|instance_(size_slug|count)|deploy_on_push|^#' infra/do/app.production.yaml)
+      - name: Stamp the release into the spec
+        run: |
+          python3 - <<'PY'
+          import re,subprocess
+          sha=subprocess.check_output(['git','rev-parse','--short','HEAD']).decode().strip()
+          p='infra/do/app.production.yaml'; s=open(p).read()
+          s=re.sub(r"(- key: SENTRY_RELEASE\n\s+value: )\S+", r"\g<1>"+sha, s)
+          open(p,'w').write(s); print('release', sha)
+          PY
+      - name: Update the app and wait for the deployment
+        run: |
+          doctl apps update "${{ secrets.DO_PRODUCTION_APP_ID }}" --spec infra/do/app.production.yaml --wait --format ID,DefaultIngress,ActiveDeployment.Phase
+      - name: Smoke check
+        run: |
+          URL=$(doctl apps get "${{ secrets.DO_PRODUCTION_APP_ID }}" --format DefaultIngress --no-header)
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' "${URL}/api/v1/workspaces")
+          test "$CODE" = "401" && echo "production up at ${URL} (API answers 401 unauthenticated, as it should)"

@@ -10,7 +10,9 @@ FlowZapp turns screen recordings into approved, searchable standard operating pr
 | `web/` | Angular 21 + PrimeNG (Aura preset, `src/app/theme/flowzapp-preset.ts`). |
 | `spike/generation-eval/` | Generation eval set and scorer (`php artisan pipeline:eval` runs the product pipeline over it). |
 | `spike/retrieval-eval/` | Retrieval eval set format (`php artisan retrieval:eval`). |
-| `infra/do/app.yaml` | DigitalOcean App Platform spec — web, worker-pipeline, worker-default, scheduler. |
+| `infra/do/app.yaml`, `app.production.yaml` | DigitalOcean App Platform specs (staging, production) — web, workers, scheduler, migrate job. CI checks they do not drift. |
+| `infra/monitoring/` | Prometheus metrics reference, Grafana dashboard, alert rules. |
+| `.github/workflows/` | `ci.yml` (checks) and `deploy.yml` (staging on green main; production behind a reviewer gate). |
 | `infra/qdrant/` | Self-hosted Qdrant droplet: compose file, TLS, backups, runbook. |
 | `infra/runbooks/` | Operator runbooks for each alert on the `alerts` log channel. |
 | `Documentation/` | Specs 00–14, concept deck, Jira backlog. Read 12 → 03 → 04 → 05 → 02 when joining. |

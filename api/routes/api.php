@@ -21,6 +21,7 @@ use App\Http\Controllers\Governance\ApprovalController;
 use App\Http\Controllers\Handbook\AcknowledgementController;
 use App\Http\Controllers\Handbook\HandbookController;
 use App\Http\Controllers\Media\AssetController;
+use App\Http\Controllers\Ops\MetricsController;
 use App\Http\Controllers\Recordings\RecordingController;
 use App\Http\Controllers\Retrieval\ChatController;
 use App\Http\Controllers\Retrieval\SearchController;
@@ -41,6 +42,9 @@ Route::prefix('v1')->group(function (): void {
     // Auth (no session yet)
     Route::post('/auth/magic-link', [MagicLinkController::class, 'request'])->middleware('throttle:magic-link');
     Route::get('/auth/magic-link/{nonce}', [MagicLinkController::class, 'consume'])->middleware(['web', 'signed'])->name('auth.magic.consume'); // web: needs the session store
+
+    // Platform metrics for the scraper (M4-T3): bearer METRICS_TOKEN, no session, no workspace.
+    Route::get('/internal/metrics', MetricsController::class)->middleware('throttle:120,1');
 
     // Payment provider webhooks: no session, no workspace header; the driver verifies the signature.
     Route::post('/billing/webhook', [BillingController::class, 'webhook'])->middleware('throttle:60,1');
