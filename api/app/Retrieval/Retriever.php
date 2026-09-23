@@ -13,6 +13,7 @@ use App\Models\Space;
 use App\Models\SpaceMember;
 use App\Models\User;
 use App\Tenancy\CurrentWorkspace;
+use Illuminate\Support\Carbon;
 
 /**
  * Hybrid retrieval (03 §6): vector leg + keyword leg, fused by reciprocal
@@ -48,10 +49,11 @@ final class Retriever
 
     /**
      * @param  array{space_ids: list<string>, deny_folder_ids: list<string>, grant_folder_ids: list<string>}  $scope
-     * @param  array{space_ids?: list<string>, document_id?: string, doc_type?: string, owner_id?: string}  $filters
-     * @return list<array{chunk: DocumentChunk, document: Document, score: float, vector_rank: ?int, keyword_rank: ?int}>
+     * @param  array{space_ids?: list<string>, document_id?: ?string, doc_type?: ?string, owner_id?: ?string, approved_after?: ?string, approved_before?: ?string}  $filters
+     * @param  array{vector_weight?: float, keyword_weight?: float, legs?: 'both'|'vector'|'keyword'}  $tuning  eval harness only (G3-T3)
+     * @return list<array{chunk: DocumentChunk, document: Document, title: string, score: float, vector_rank: ?int, keyword_rank: ?int}> title is the approved version's title (the working copy may be a draft)
      */
-    public function retrieve(string $query, array $scope, array $filters = [], ?int $keep = null): array
+    public function retrieve(string $query, array $scope, array $filters = [], ?int $keep = null, array $tuning = []): array
     {
         $cfg = config('flowzapp.retrieval');
         $topK = (int) $cfg['top_k'];
@@ -65,45 +67,46 @@ final class Retriever
             return [];
         }
 
-        // Vector leg — the index filters on workspace, state, space, folder inside the query.
-        $vFilter = ['space_ids' => $spaceIds, 'deny_folder_ids' => $scope['deny_folder_ids'], 'grant_folder_ids' => $scope['grant_folder_ids']];
-        if (! empty($filters['document_id'])) {
-            $vFilter['document_id'] = $filters['document_id'];
+        // Document-level filters (type, owner, approval date) resolve to a document set first,
+        // which both legs then filter on inside their queries (G4, FR-506: never a post-filter
+        // that silently shrinks the result list).
+        $docIds = $this->filteredDocumentIds($filters);
+        if ($docIds === []) {
+            return [];
         }
-        [$qv] = $this->emb->embed([$query]);
-        $vector = $this->store->search($this->current->require(), $qv, $vFilter, $topK);
+        $legs = $tuning['legs'] ?? 'both';
 
-        // Keyword leg — same scope expressed in SQL; LIKE here, FULLTEXT on MySQL is the M5 tuning item (03 §6).
-        $terms = array_values(array_filter(preg_split('/\W+/u', mb_strtolower($query)) ?: [], fn ($t) => mb_strlen($t) >= 2));
-        $kq = DocumentChunk::query()->whereNotNull('indexed_at')
-            ->where(function ($w) use ($spaceIds, $scope): void {
-                $w->where(fn ($m) => $m->whereIn('space_id', $spaceIds)->where(fn ($x) => $x->whereNull('folder_id')->orWhereNotIn('folder_id', $scope['deny_folder_ids'])))
-                    ->orWhereIn('folder_id', $scope['grant_folder_ids']);
-            });
-        if (! empty($filters['document_id'])) {
-            $kq->where('document_id', $filters['document_id']);
+        // Vector leg — the index filters on workspace, state, space, folder (and document set) inside the query.
+        $vector = [];
+        if ($legs !== 'keyword') {
+            $vFilter = ['space_ids' => $spaceIds, 'deny_folder_ids' => $scope['deny_folder_ids'], 'grant_folder_ids' => $scope['grant_folder_ids']];
+            if (! empty($filters['document_id'])) {
+                $vFilter['document_id'] = $filters['document_id'];
+            }
+            if ($docIds !== null) {
+                $vFilter['document_ids'] = $docIds;
+            }
+            [$qv] = $this->emb->embed([$query]);
+            $vector = $this->store->search($this->current->require(), $qv, $vFilter, $topK);
         }
-        if ($terms !== []) {
-            $kq->where(function ($w) use ($terms): void {
-                foreach (array_slice($terms, 0, 8) as $t) {
-                    $w->orWhere('content', 'like', '%'.str_replace(['%', '_'], ['\%', '\_'], $t).'%');
-                }
-            });
-        }
-        $keyword = $terms === [] ? collect() : $kq->limit($topK)->get();
 
-        // Reciprocal rank fusion, weighted toward the vector leg (03 §6).
+        // Keyword leg — same scope in SQL: InnoDB FULLTEXT on MySQL (G3-T1), LIKE elsewhere.
+        $keyword = $legs === 'vector' ? [] : $this->keyword($query, $spaceIds, $scope, $filters['document_id'] ?? null, $docIds, $topK);
+
+        // Reciprocal rank fusion by position, weighted toward the vector leg (03 §6).
+        $wv = (float) ($tuning['vector_weight'] ?? $cfg['vector_weight'] ?? 1.0);
+        $wk = (float) ($tuning['keyword_weight'] ?? $cfg['keyword_weight'] ?? 0.6);
         $scores = [];
         $vectorRank = [];
         $keywordRank = [];
         $bestVector = [];
         foreach ($vector as $i => $hit) {
-            $scores[$hit['id']] = ($scores[$hit['id']] ?? 0) + 1.0 / (60 + $i + 1);
+            $scores[$hit['id']] = ($scores[$hit['id']] ?? 0) + $wv / (60 + $i + 1);
             $vectorRank[$hit['id']] = $i + 1;
             $bestVector[$hit['id']] = $hit['score'];
         }
         foreach ($keyword as $i => $chunk) {
-            $scores[$chunk->id] = ($scores[$chunk->id] ?? 0) + 0.6 / (60 + $i + 1);
+            $scores[$chunk->id] = ($scores[$chunk->id] ?? 0) + $wk / (60 + $i + 1);
             $keywordRank[$chunk->id] = $i + 1;
         }
         arsort($scores);
@@ -113,24 +116,104 @@ final class Retriever
         }
 
         $chunks = DocumentChunk::query()->whereIn('id', $ids)->get()->keyBy('id');
-        $docQ = Document::query()->whereIn('id', $chunks->pluck('document_id')->unique())->where('state', 'approved')->with('owner:id,name');
-        if (! empty($filters['doc_type'])) {
-            $docQ->where('doc_type', $filters['doc_type']);
-        }
-        if (! empty($filters['owner_id'])) {
-            $docQ->where('owner_id', $filters['owner_id']);
-        }
-        $docs = $docQ->get()->keyBy('id');
+        $docs = Document::query()->whereIn('id', $chunks->pluck('document_id')->unique())->live()->with(['owner:id,name', 'approvedVersion:id,version_number,title,approved_at'])->get()->keyBy('id');
 
         $out = [];
         foreach ($ids as $id) {
             $c = $chunks->get($id);
             if ($c === null || ! $docs->has($c->document_id) || $docs[$c->document_id]->approved_version_id !== $c->version_id) {
-                continue; // stale chunk or filtered document
+                continue; // stale chunk (superseded version) — the unindexed monitor catches the rest
             }
-            $out[] = ['chunk' => $c, 'document' => $docs[$c->document_id], 'score' => $bestVector[$id] ?? 0.0, 'vector_rank' => $vectorRank[$id] ?? null, 'keyword_rank' => $keywordRank[$id] ?? null];
+            $out[] = ['chunk' => $c, 'document' => $docs[$c->document_id], 'title' => $docs[$c->document_id]->approvedVersion->title ?? $docs[$c->document_id]->title, 'score' => $bestVector[$id] ?? 0.0, 'vector_rank' => $vectorRank[$id] ?? null, 'keyword_rank' => $keywordRank[$id] ?? null];
         }
 
         return $out;
+    }
+
+    /**
+     * Live documents matching the document-level filters, or null when none is set.
+     *
+     * @param  array{doc_type?: ?string, owner_id?: ?string, approved_after?: ?string, approved_before?: ?string}  $filters
+     * @return list<string>|null
+     */
+    private function filteredDocumentIds(array $filters): ?array
+    {
+        $type = $filters['doc_type'] ?? null;
+        $owner = $filters['owner_id'] ?? null;
+        $after = $filters['approved_after'] ?? null;
+        $before = $filters['approved_before'] ?? null;
+        if (! $type && ! $owner && ! $after && ! $before) {
+            return null;
+        }
+        $q = Document::query()->live();
+        if ($type) {
+            $q->where('doc_type', $type);
+        }
+        if ($owner) {
+            $q->where('owner_id', $owner);
+        }
+        if ($after || $before) {
+            $q->whereHas('approvedVersion', function ($v) use ($after, $before): void {
+                if ($after) {
+                    $v->where('approved_at', '>=', Carbon::parse($after)->startOfDay());
+                }
+                if ($before) {
+                    $v->where('approved_at', '<=', Carbon::parse($before)->endOfDay());
+                }
+            });
+        }
+
+        return $q->limit(5000)->pluck('id')->all();
+    }
+
+    /**
+     * @param  list<string>  $spaceIds
+     * @param  array{space_ids: list<string>, deny_folder_ids: list<string>, grant_folder_ids: list<string>}  $scope
+     * @param  list<string>|null  $docIds
+     * @return list<DocumentChunk>
+     */
+    private function keyword(string $query, array $spaceIds, array $scope, ?string $documentId, ?array $docIds, int $topK): array
+    {
+        $terms = Stopwords::terms($query);
+        if ($terms === []) {
+            return [];
+        }
+        $kq = DocumentChunk::query()->whereNotNull('indexed_at')
+            ->where(function ($w) use ($spaceIds, $scope): void {
+                $w->where(fn ($m) => $m->whereIn('space_id', $spaceIds)->where(fn ($x) => $x->whereNull('folder_id')->orWhereNotIn('folder_id', $scope['deny_folder_ids'])))
+                    ->orWhereIn('folder_id', $scope['grant_folder_ids']);
+            });
+        if ($documentId) {
+            $kq->where('document_id', $documentId);
+        }
+        if ($docIds !== null) {
+            $kq->whereIn('document_id', $docIds);
+        }
+
+        if ($kq->getModel()->getConnection()->getDriverName() === 'mysql') {
+            $against = implode(' ', $terms);
+            $kq->whereFullText(['content', 'heading_path'], $against)
+                ->orderByRaw('match (content, heading_path) against (? in natural language mode) desc', [$against]); // allowlisted: FULLTEXT relevance ordering, bound parameter, scope applied above
+
+            return $kq->limit($topK)->get()->all();
+        }
+
+        // LIKE fallback (SQLite): candidates matching any term, ranked by how many distinct terms they contain.
+        $terms = array_slice($terms, 0, 8);
+        $kq->where(function ($w) use ($terms): void {
+            foreach ($terms as $t) {
+                $w->orWhere('content', 'like', '%'.str_replace(['%', '_'], ['\%', '\_'], $t).'%');
+            }
+        });
+        $candidates = $kq->limit(200)->get()->all();
+        $rank = [];
+        foreach ($candidates as $i => $c) {
+            $text = mb_strtolower($c->content);
+            $hits = count(array_filter($terms, fn ($t) => str_contains($text, $t)));
+            $rank[$i] = [$hits, -$i];
+        }
+        uksort($rank, fn ($a, $b) => $rank[$b] <=> $rank[$a]);
+
+        return array_slice(array_map(fn ($i) => $candidates[$i], array_keys($rank)), 0, $topK);
     }
 }

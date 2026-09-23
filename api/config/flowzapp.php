@@ -24,6 +24,11 @@ return [
         'top_k' => 20,
         'keep' => 8,
         'min_score' => (float) env('RETRIEVAL_MIN_SCORE', 0.25),   // below this the assistant refuses (FR-608)
+        // Reciprocal rank fusion weights (03 §6: lean toward the vector leg). Tune with `php artisan retrieval:eval`.
+        'vector_weight' => (float) env('RETRIEVAL_VECTOR_WEIGHT', 1.0),
+        'keyword_weight' => (float) env('RETRIEVAL_KEYWORD_WEIGHT', 0.6),
+        // G1-T5: an approved document still unindexed this many minutes after approval is an alert (doc 04 invariant).
+        'unindexed_alert_minutes' => (int) env('RETRIEVAL_UNINDEXED_ALERT_MINUTES', 30),
     ],
 
     /**

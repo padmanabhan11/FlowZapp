@@ -71,11 +71,11 @@ final class EditorCompletionTest extends TestCase
         ];
         $this->actingAs($this->editor)->patchJson("/api/v1/documents/{$id}", ['content' => ['blocks' => $blocks]], $this->h())->assertOk();
         $back = $this->actingAs($this->editor)->getJson("/api/v1/documents/{$id}", $this->h())->assertOk()->json('data.content.blocks');
-        $this->assertSame($blocks, $back, 'save → load must return the blocks unchanged');
+        $this->assertSame(self::canon($blocks), self::canon($back), 'save → load must return the blocks unchanged');
 
         // A second save of what was loaded is a no-op for content.
         $this->actingAs($this->editor)->patchJson("/api/v1/documents/{$id}", ['content' => ['blocks' => $back]], $this->h())->assertOk();
-        $this->assertSame($blocks, $this->actingAs($this->editor)->getJson("/api/v1/documents/{$id}", $this->h())->json('data.content.blocks'));
+        $this->assertSame(self::canon($blocks), self::canon($this->actingAs($this->editor)->getJson("/api/v1/documents/{$id}", $this->h())->json('data.content.blocks')));
 
         // Unknown block types are rejected, never silently stored.
         $this->actingAs($this->editor)->patchJson("/api/v1/documents/{$id}", ['content' => ['blocks' => [['id' => 'x', 'type' => 'html', 'text' => '<b>x</b>']]]], $this->h())->assertStatus(422);
@@ -120,7 +120,7 @@ final class EditorCompletionTest extends TestCase
         $this->actingAs($this->reader)->postJson('/api/v1/templates', ['document_id' => $id, 'name' => 'Close'], $this->h())->assertStatus(403);
         $t = $this->actingAs($this->editor)->postJson('/api/v1/templates', ['document_id' => $id, 'name' => 'Month-end close', 'description' => 'Finance'], $this->h())->assertStatus(201)->json('data');
         $this->assertTrue($t['custom']);
-        $this->assertSame([['id' => 'p', 'type' => 'paragraph', 'text' => 'Keep']], $t['content']['blocks'], 'image blocks are stripped from templates');
+        $this->assertSame(self::canon([['id' => 'p', 'type' => 'paragraph', 'text' => 'Keep']]), self::canon($t['content']['blocks']), 'image blocks are stripped from templates');
         $this->actingAs($this->editor)->postJson('/api/v1/templates', ['document_id' => $id, 'name' => 'Month-end close'], $this->h())->assertStatus(422);
 
         $list = $this->actingAs($this->reader)->getJson('/api/v1/templates', $this->h())->assertOk()->json('data');
@@ -172,5 +172,22 @@ final class EditorCompletionTest extends TestCase
         $this->actingAs($this->editor)->patchJson("/api/v1/documents/{$source}", ['content' => ['blocks' => [['id' => 'l1', 'type' => 'link', 'document_id' => $target]]]], $this->h())->assertOk();
         $this->actingAs($this->editor)->deleteJson("/api/v1/documents/{$target}", [], $this->h())->assertOk();
         $this->assertSame([], $this->actingAs($this->editor)->postJson('/api/v1/document-links/resolve', ['ids' => [$target]], $this->h())->json('data'));
+    }
+
+    /**
+     * Key order inside a JSON object carries no meaning, and MySQL's JSON type
+     * normalises it; values, types and list order must still match exactly.
+     */
+    private static function canon(mixed $v): mixed
+    {
+        if (! is_array($v)) {
+            return $v;
+        }
+        $out = array_map(fn ($x) => self::canon($x), $v);
+        if (! array_is_list($out)) {
+            ksort($out);
+        }
+
+        return $out;
     }
 }

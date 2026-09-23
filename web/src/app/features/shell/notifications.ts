@@ -89,6 +89,10 @@ export class Notifications implements OnInit, OnDestroy {
         return `Draft ready: “${d.title}”`;
       case 'recording_failed':
         return `Recording failed: ${d.reason ?? d.title}`;
+      case 'index_unhealthy':
+        return d.count && d.count > 1
+          ? `${d.count} approved documents are missing from search`
+          : `“${d.title}” is approved but missing from search`;
       default:
         return d.title ?? d.type;
     }
@@ -107,6 +111,8 @@ export class Notifications implements OnInit, OnDestroy {
       case 'acknowledgement_due':
       case 'acknowledgement_reminder':
         return { path: ['/handbook', d.document_id] };
+      case 'index_unhealthy':
+        return { path: ['/admin/insights'] };
       case 'recording_draft_ready':
         return { path: ['/r', d.recording_id, 'draft'] };
       case 'recording_failed':

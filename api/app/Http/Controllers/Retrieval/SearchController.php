@@ -25,12 +25,15 @@ final class SearchController extends Controller
             'filters' => ['nullable', 'array'],
             'filters.doc_type' => ['nullable', Rule::in(Document::TYPES)],
             'filters.owner_id' => ['nullable', 'string', 'size:26'],
+            'filters.approved_after' => ['nullable', 'date_format:Y-m-d'],
+            'filters.approved_before' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:filters.approved_after'],
             'limit' => ['nullable', 'integer', 'between:1,50'],
             'instant' => ['nullable', 'boolean'],
         ]);
         $scope = $this->retriever->scopeFor($request->user(), $request->attributes->get('workspace_role') === 'admin');
         $hits = $this->retriever->retrieve($data['query'], $scope, [
             'space_ids' => $data['space_ids'] ?? [], 'doc_type' => $data['filters']['doc_type'] ?? null, 'owner_id' => $data['filters']['owner_id'] ?? null,
+            'approved_after' => $data['filters']['approved_after'] ?? null, 'approved_before' => $data['filters']['approved_before'] ?? null,
         ], $data['limit'] ?? 20);
 
         // Group by document, best chunk first.
@@ -38,7 +41,7 @@ final class SearchController extends Controller
         foreach ($hits as $h) {
             $id = $h['document']->id;
             if (! isset($byDoc[$id])) {
-                $byDoc[$id] = ['document_id' => $id, 'title' => $h['document']->title, 'doc_type' => $h['document']->doc_type, 'state' => $h['document']->state,
+                $byDoc[$id] = ['document_id' => $id, 'title' => $h['title'], 'doc_type' => $h['document']->doc_type, 'state' => 'approved',   // results are the approved version, even while a draft revision is open
                     'snippet' => mb_substr($h['chunk']->content, 0, 220), 'section_ref' => $h['chunk']->section_ref,
                     'owner' => $h['document']->owner?->only(['id', 'name']), 'approved_at' => $h['document']->approvedVersion?->approved_at, 'score' => round($h['score'], 3)];
             }

@@ -29,6 +29,24 @@
       (ngModelChange)="docType.set($event); run()"
       aria-label="Document type"
     />
+    <p-select
+      name="owner"
+      [options]="owners"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="owner()"
+      (ngModelChange)="owner.set($event); run()"
+      aria-label="Owner"
+    />
+    <p-select
+      name="approved"
+      [options]="periods"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="period()"
+      (ngModelChange)="period.set($event); run()"
+      aria-label="Approved"
+    />
     <button pButton type="submit" [loading]="loading()">Search</button>
   </form>
 

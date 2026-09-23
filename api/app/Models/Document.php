@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Observers\DocumentObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -53,6 +54,19 @@ class Document extends TenantModel
         'space_id', 'folder_id', 'title', 'doc_type', 'state', 'owner_id', 'submitted_by', 'submitted_at', 'created_by', 'source_recording_id',
         'content', 'approved_version_id', 'requires_ack', 'handbook_position', 'review_due_at', 'language', 'translation_of', 'translation_stale',
     ];
+
+    /**
+     * Documents with a live approved version — what readers, search and the
+     * assistant see. Editing an approved document moves it back to draft while
+     * the approved version stays live (non-negotiable 5), so "state = approved"
+     * alone would hide every document that is being revised. Archived is never live.
+     *
+     * @param  Builder<Document>  $query
+     */
+    public function scopeLive(Builder $query): void
+    {
+        $query->whereNotNull('approved_version_id')->where('state', '!=', 'archived');
+    }
 
     protected function casts(): array
     {

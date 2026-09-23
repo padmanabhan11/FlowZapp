@@ -15,7 +15,13 @@ import { WorkspaceStore } from './workspace.store';
 export interface SearchParams {
   query: string;
   space_ids?: string[];
-  filters?: { doc_type?: DocType | null; owner_id?: string | null };
+  filters?: {
+    doc_type?: DocType | null;
+    owner_id?: string | null;
+    /** YYYY-MM-DD, inclusive (G4-T1). */
+    approved_after?: string | null;
+    approved_before?: string | null;
+  };
   limit?: number;
   instant?: boolean;
 }

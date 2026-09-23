@@ -26,7 +26,7 @@ interface VectorStore
 
     /**
      * @param  list<float>  $vector
-     * @param  array{space_ids: list<string>, deny_folder_ids?: list<string>, grant_folder_ids?: list<string>, document_id?: string}  $filter
+     * @param  array{space_ids: list<string>, deny_folder_ids?: list<string>, grant_folder_ids?: list<string>, document_id?: string, document_ids?: list<string>}  $filter  document_ids: restrict to this document set (search filters)
      * @return list<array{id: string, score: float, payload: array<string, mixed>}>
      */
     public function search(string $workspaceId, array $vector, array $filter, int $topK = 20): array;

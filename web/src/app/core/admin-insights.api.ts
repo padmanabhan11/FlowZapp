@@ -38,6 +38,8 @@ export interface Overview {
     refused_rate_pct: number | null;
   };
   most_read: { document_id: string; title: string; reads: number }[];
+  /** G1-T5: approved documents not yet in the search index. */
+  unindexed: { document_id: string; title: string; approved_at: string | null }[];
 }
 
 @Injectable({ providedIn: 'root' })

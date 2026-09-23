@@ -36,8 +36,8 @@ final class HandbookController extends Controller
         $user = $request->user();
         $role = Access::resolve($user, $space)['role'];
 
-        $docs = Document::query()->with(['approvedVersion:id,version_number,approved_at'])
-            ->where('space_id', $space->id)->where('state', 'approved')
+        $docs = Document::query()->with(['approvedVersion:id,version_number,title,approved_at'])
+            ->where('space_id', $space->id)->live()   // a page being revised stays in the handbook at its approved version
             ->orderByRaw('handbook_position is null, handbook_position asc') // allowlisted: null-last ordering; no user input
             ->orderBy('title')->get()
             ->filter(fn (Document $d) => $user->can('view', $d))->values();
@@ -49,7 +49,7 @@ final class HandbookController extends Controller
             'space' => $space->only(['id', 'name', 'description', 'is_handbook']),
             'can_reorder' => Access::atLeast($role, 'approver'),
             'documents' => $docs->map(fn (Document $d) => [
-                'id' => $d->id, 'title' => $d->title, 'doc_type' => $d->doc_type, 'handbook_position' => $d->handbook_position,
+                'id' => $d->id, 'title' => $d->approvedVersion->title ?? $d->title, 'doc_type' => $d->doc_type, 'handbook_position' => $d->handbook_position,
                 'version_number' => $d->approvedVersion?->version_number, 'approved_at' => $d->approvedVersion?->approved_at,
                 'requires_ack' => $d->requires_ack,
                 'ack_required_from_me' => in_array($d->id, $targets, true),

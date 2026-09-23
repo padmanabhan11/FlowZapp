@@ -70,6 +70,9 @@ final class QdrantStore implements VectorStore
         if (! empty($filter['document_id'])) {
             $must[] = ['key' => 'document_id', 'match' => ['value' => $filter['document_id']]];
         }
+        if (isset($filter['document_ids'])) {
+            $must[] = ['key' => 'document_id', 'match' => ['any' => $filter['document_ids']]];
+        }
         $res = $this->http()->post("/collections/{$this->collection}/points/search", [
             'vector' => $vector, 'limit' => $topK, 'with_payload' => true,
             'filter' => ['must' => $must, 'should' => $should, 'must_not' => $mustNot],

@@ -33,6 +33,7 @@ export interface AppNotification {
     by?: string;
     version?: number;
     due_at?: string;
+    count?: number;
   };
   read_at: string | null;
   created_at: string;

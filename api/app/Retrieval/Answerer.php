@@ -27,7 +27,7 @@ TXT;
     public function __construct(private readonly LlmDriver $llm) {}
 
     /**
-     * @param  list<array{chunk: DocumentChunk, document: Document, score: float, vector_rank: ?int, keyword_rank: ?int}>  $hits
+     * @param  list<array{chunk: DocumentChunk, document: Document, title: string, score: float, vector_rank: ?int, keyword_rank: ?int}>  $hits
      * @param  list<array{role: string, content: string}>  $history
      * @return array{text: string, refused: bool, citations: list<array<string, mixed>>, cost_usd: float, input_tokens: int, output_tokens: int}
      */
@@ -41,7 +41,7 @@ TXT;
 
         $passages = [];
         foreach ($usable as $i => $h) {
-            $passages[] = '['.($i + 1)."] ({$h['document']->title} v".($h['document']->approvedVersion->version_number ?? '?').", {$h['chunk']->section_ref})\n{$h['chunk']->content}";
+            $passages[] = '['.($i + 1)."] ({$h['title']} v".($h['document']->approvedVersion->version_number ?? '?').", {$h['chunk']->section_ref})\n{$h['chunk']->content}";
         }
         $hist = '';
         foreach (array_slice($history, -6) as $m) {
@@ -59,11 +59,11 @@ TXT;
         $citations = [];
         foreach (array_unique($cited) as $n) {
             $h = $usable[$n - 1];
-            $citations[] = ['n' => $n, 'document_id' => $h['document']->id, 'version_id' => $h['chunk']->version_id, 'section_ref' => $h['chunk']->section_ref, 'title' => $h['document']->title, 'heading_path' => $h['chunk']->heading_path, 'score' => round($h['score'], 3)];
+            $citations[] = ['n' => $n, 'document_id' => $h['document']->id, 'version_id' => $h['chunk']->version_id, 'section_ref' => $h['chunk']->section_ref, 'title' => $h['title'], 'heading_path' => $h['chunk']->heading_path, 'score' => round($h['score'], 3)];
         }
         $text = trim((string) ($d['answer'] ?? ''));
         if ($refused) {
-            $nearest = $usable[0]['document']->title;
+            $nearest = $usable[0]['title'];
             $text = $text !== '' && str_contains(mb_strtolower($text), 'no approved') ? $text : "No approved document covers this yet. The closest match is \"{$nearest}\", which doesn't answer it.";
             $citations = [];
         }

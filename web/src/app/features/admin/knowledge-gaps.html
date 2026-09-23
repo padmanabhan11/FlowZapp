@@ -44,6 +44,28 @@
   }
 
   @if (overview(); as o) {
+    @if (o.unindexed.length) {
+      <div class="ins__alert" role="alert">
+        <p class="ins__alert-h">
+          {{ o.unindexed.length }} approved
+          {{ o.unindexed.length === 1 ? 'document is' : 'documents are' }} missing from search
+        </p>
+        <p class="ins__alert-body">
+          They stay approved and readable; search and the assistant cannot find them until indexing
+          catches up. FlowZapp retries every ten minutes.
+        </p>
+        <ul class="ins__alert-list">
+          @for (d of o.unindexed; track d.document_id) {
+            <li>
+              <a [routerLink]="['/d', d.document_id]">{{ d.title }}</a>
+              @if (d.approved_at) {
+                <span class="adm__hint">approved {{ d.approved_at | date: 'medium' }}</span>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
     <h2 class="adm__h2">
       How the knowledge base is doing <span class="adm__hint">last {{ o.window_days }} days</span>
     </h2>

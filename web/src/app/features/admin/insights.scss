@@ -1,5 +1,30 @@
 @use './admin';
 .ins {
+  // Neutral on purpose: colour means document state and nothing else (non-negotiable 8).
+  &__alert {
+    margin: 16px 0 4px;
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--ink);
+    border-radius: var(--radius-control);
+    background: var(--paper);
+  }
+  &__alert-h {
+    margin: 0 0 4px;
+    font-weight: 600;
+  }
+  &__alert-body {
+    margin: 0 0 8px;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+  }
+  &__alert-list {
+    margin: 0;
+    padding-left: 18px;
+    li {
+      padding: 2px 0;
+    }
+  }
   &__grid {
     display: grid;
     grid-template-columns: 1fr 1fr;

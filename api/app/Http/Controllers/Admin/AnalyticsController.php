@@ -11,6 +11,7 @@ use App\Models\ChatSession;
 use App\Models\Document;
 use App\Models\DocumentRead;
 use App\Models\Space;
+use App\Retrieval\IndexHealth;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -64,6 +65,8 @@ final class AnalyticsController extends Controller
             'approvals_30d' => $approvals,
             'chat' => ['questions_30d' => $questions->count(), 'unique_askers_30d' => $askers, 'helpful_rate_pct' => $helpfulRate, 'refused_rate_pct' => $refusedRate],
             'most_read' => $mostRead,
+            // G1-T5: approved documents search cannot see yet (the monitor re-queues them every 10 minutes).
+            'unindexed' => IndexHealth::unindexed()->map(fn (Document $d) => ['document_id' => $d->id, 'title' => $d->title, 'approved_at' => $d->approvedVersion?->approved_at])->all(),
         ]]);
     }
 }

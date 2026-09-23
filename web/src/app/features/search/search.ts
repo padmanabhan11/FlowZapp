@@ -34,6 +34,8 @@ export class Search implements OnInit {
   readonly query = signal('');
   readonly spaceId = signal<string | null>(null);
   readonly docType = signal<DocType | null>(null);
+  readonly owner = signal<'me' | null>(null);
+  readonly period = signal<number | null>(null);
   readonly spaces = signal<Space[]>([]);
   readonly result = signal<SearchResponse | null>(null);
   readonly loading = signal(false);
@@ -48,6 +50,19 @@ export class Search implements OnInit {
     { label: 'Policy', value: 'policy' },
     { label: 'Handbook page', value: 'handbook_page' },
     { label: 'Note', value: 'note' },
+  ];
+
+  readonly owners: { label: string; value: 'me' | null }[] = [
+    { label: 'Any owner', value: null },
+    { label: 'Owned by me', value: 'me' },
+  ];
+
+  /** Approval-date filter (G4-T1): days back from today. */
+  readonly periods: { label: string; value: number | null }[] = [
+    { label: 'Approved any time', value: null },
+    { label: 'Past 30 days', value: 30 },
+    { label: 'Past 90 days', value: 90 },
+    { label: 'Past year', value: 365 },
   ];
 
   constructor() {
@@ -85,7 +100,11 @@ export class Search implements OnInit {
         await this.api.search({
           query: q,
           space_ids: this.spaceId() ? [this.spaceId()!] : undefined,
-          filters: { doc_type: this.docType() },
+          filters: {
+            doc_type: this.docType(),
+            owner_id: this.owner() === 'me' ? (this.session.user()?.id ?? null) : null,
+            approved_after: Search.daysAgo(this.period()),
+          },
         }),
       );
     } catch {
@@ -93,6 +112,13 @@ export class Search implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  /** YYYY-MM-DD for `days` ago in UTC, or null. */
+  static daysAgo(days: number | null, now: Date = new Date()): string | null {
+    if (days === null) return null;
+    const d = new Date(now.getTime() - days * 86_400_000);
+    return d.toISOString().slice(0, 10);
   }
 
   fragment(c: Citation | { section_ref: string }): string | undefined {

@@ -1,0 +1,13 @@
+{
+  "description": "Format example only. The real set is 50 answerable + 15 unanswerable questions over design-partner content (doc 08).",
+  "queries": [
+    { "q": "customer wants money back after a month, who signs off", "expect": ["Refund Policy"], "section": "step:2" },
+    { "q": "refund older than 30 days", "expect": ["Refund Policy"] },
+    { "q": "what do I do first when a new client signs", "expect": ["Client Onboarding"], "section": "step:1" },
+    { "q": "where does the welcome email go out from", "expect": ["Client Onboarding"] },
+    { "q": "how long do we keep invoices", "expect": ["Invoice retention policy"], "section": "section:purpose" },
+    { "q": "what is the parental leave allowance", "unanswerable": true },
+    { "q": "how much equity do board members get", "unanswerable": true },
+    { "q": "what's the wifi password in the london office", "unanswerable": true }
+  ]
+}

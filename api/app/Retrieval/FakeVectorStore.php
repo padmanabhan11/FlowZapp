@@ -46,6 +46,9 @@ final class FakeVectorStore implements VectorStore
             if (! empty($filter['document_id']) && ($pl['document_id'] ?? null) !== $filter['document_id']) {
                 continue;
             }
+            if (isset($filter['document_ids']) && ! in_array($pl['document_id'] ?? null, $filter['document_ids'], true)) {
+                continue;
+            }
             $inSpace = in_array($pl['space_id'] ?? null, $filter['space_ids'], true);
             $granted = ! empty($filter['grant_folder_ids']) && in_array($pl['folder_id'] ?? null, $filter['grant_folder_ids'], true);
             $denied = ! empty($filter['deny_folder_ids']) && in_array($pl['folder_id'] ?? null, $filter['deny_folder_ids'], true);
