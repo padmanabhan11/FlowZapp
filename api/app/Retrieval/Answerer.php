@@ -44,7 +44,7 @@ TXT;
             $passages[] = '['.($i + 1)."] ({$h['title']} v".($h['document']->approvedVersion->version_number ?? '?').", {$h['chunk']->section_ref})\n{$h['chunk']->content}";
         }
         $hist = '';
-        foreach (array_slice($history, -6) as $m) {
+        foreach ($history as $m) {   // already bounded and access-checked by Conversation::history()
             $hist .= strtoupper($m['role']).": {$m['content']}\n";
         }
         $user = ($hist ? "Conversation so far:\n$hist\n" : '')."Question: $question\n\nSources:\n".implode("\n\n", $passages);

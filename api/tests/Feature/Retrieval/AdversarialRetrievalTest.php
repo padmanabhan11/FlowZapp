@@ -106,8 +106,12 @@ final class AdversarialRetrievalTest extends TestCase
     private function assertNoPromptMentions(string ...$needles): void
     {
         foreach ($this->llm->prompts as $p) {
-            // Only the retrieved sources count: the reader's own question naturally repeats their words.
-            $sources = str_contains($p, 'Sources:') ? substr($p, (int) strpos($p, 'Sources:')) : $p;
+            // Only retrieved sources count: the reader's own questions (and the follow-up rewrite,
+            // which sees nothing but those questions) naturally repeat their words.
+            if (! str_contains($p, 'Sources:')) {
+                continue;
+            }
+            $sources = substr($p, (int) strpos($p, 'Sources:'));
             foreach ($needles as $n) {
                 $this->assertStringNotContainsStringIgnoringCase($n, $sources, 'hidden content reached the model prompt');
             }

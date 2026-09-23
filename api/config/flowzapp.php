@@ -49,6 +49,15 @@ return [
         'digest_batch_chars' => 8000,
     ],
 
+    /** H4: how much of a conversation the assistant sees (turns are questions and answers). */
+    'chat' => [
+        'history_turns' => 6,
+        'history_chars' => 6000,
+        'history_turn_chars' => 1500,
+        // FR-614: cosine similarity at which two refused questions count as the same knowledge gap.
+        'gap_similarity' => (float) env('CHAT_GAP_SIMILARITY', 0.8),
+    ],
+
     'workspace_defaults' => [
         'self_approval' => false,
         'review_cadence_months' => null,

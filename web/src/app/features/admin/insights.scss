@@ -103,3 +103,11 @@
     }
   }
 }
+
+.gap__variants {
+  display: block;
+  margin-top: 2px;
+  q + q::before {
+    content: ' · ';
+  }
+}

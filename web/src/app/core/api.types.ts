@@ -298,7 +298,10 @@ export interface ChatMessage {
 }
 
 export interface KnowledgeGap {
+  /** The most-asked phrasing in the group. */
   question: string;
   count: number;
   last_asked_at: string;
+  /** FR-614: other ways the same question was asked (grouped by meaning). */
+  variants?: string[];
 }

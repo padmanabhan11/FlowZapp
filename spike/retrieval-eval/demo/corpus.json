@@ -1,0 +1,27 @@
+{
+  "description": "Fictional demo company for exercising the retrieval and refusal eval end to end before design-partner content exists. Not customer data.",
+  "spaces": [
+    { "name": "Operations", "documents": [
+      { "title": "Refund Policy", "doc_type": "policy", "purpose": "How customers get their money back and who approves it.",
+        "steps": ["Check the order date in the order system.", "Refunds within 30 days of delivery are approved by any support agent.", "Refunds between 31 and 60 days need approval from the support team lead.", "Refunds after 60 days need approval from the finance director.", "Issue the refund from the payments dashboard to the original payment method."] },
+      { "title": "Client Onboarding", "doc_type": "sop", "purpose": "Bring a newly signed client into the company.",
+        "steps": ["Create the client folder in the shared drive using the client's legal name.", "Duplicate the intake template into the folder and rename it with the client name.", "Add the client to the CRM with the account manager as owner.", "Send the welcome email from the shared inbox within one business day of signature.", "Book the kickoff call for the first week."] },
+      { "title": "Shipping a Replacement Order", "doc_type": "sop", "purpose": "Send a replacement when an order arrives damaged.",
+        "steps": ["Ask the customer for a photo of the damage.", "Create a zero-value replacement order linked to the original order number.", "Choose express shipping if the original was express.", "Tag the original order as damaged for the carrier claim."] }
+    ]},
+    { "name": "Finance", "documents": [
+      { "title": "Expense Claims", "doc_type": "policy", "purpose": "Claiming business expenses back.",
+        "steps": ["Submit receipts in the expenses app within 30 days of the purchase.", "Taxis are claimable only after 9 pm or when carrying equipment.", "Meals while travelling are capped at 45 per day.", "Your manager approves claims under 500; the finance director approves anything above."] },
+      { "title": "Month-end Close", "doc_type": "sop", "purpose": "Close the books at the end of every month.",
+        "steps": ["Lock the previous month in the accounting system on the third working day.", "Reconcile every bank account against statements.", "Post accruals for unbilled work.", "Send the management pack to the leadership team by the eighth working day."] },
+      { "title": "Invoice Retention", "doc_type": "policy", "purpose": "How long invoices are kept.",
+        "steps": ["Keep invoices for seven years after the end of the financial year.", "Store them in the finance archive, never in personal drives.", "Delete them only through the quarterly retention review."] }
+    ]},
+    { "name": "People", "documents": [
+      { "title": "Booking Annual Leave", "doc_type": "sop", "purpose": "Requesting time off.",
+        "steps": ["Request leave in the HR system at least two weeks ahead.", "Your manager approves or declines within three working days.", "Leave over ten consecutive days needs department head approval.", "Unused leave carries over up to five days into the next year."] },
+      { "title": "Laptop Setup for New Starters", "doc_type": "sop", "purpose": "Getting a new starter's laptop ready.",
+        "steps": ["Order the standard laptop from the IT portal ten days before the start date.", "Enrol it in device management before handing it over.", "Install the VPN client and the password manager.", "Hand it over on the first morning with the setup checklist."] }
+    ]}
+  ]
+}

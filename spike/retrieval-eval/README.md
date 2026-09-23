@@ -9,6 +9,19 @@ Doc 08 "Retrieval eval set": **50 question/answer pairs built from design-partne
 3. Write 15 questions that sound plausible but that **no** document answers (the assistant must refuse), including a few that name something in a space the evaluating user cannot see.
 4. Save as JSON in the shape of `example-set.json`. Keep the set fixed; add to it deliberately, never edit it to make a run look better.
 
+## Demo corpus (run the whole thing before the real set exists)
+
+`demo/corpus.json` is a small fictional company (8 documents in 3 spaces) and `demo/set.json` has 20 answerable and 15 unanswerable questions over it, including near-misses such as a refund *amount* limit the policy never mentions. It exercises the refusal path with real models (H3-T3) and proves the setup end to end:
+
+```bash
+cd api
+php artisan retrieval:seed-corpus ../spike/retrieval-eval/demo/corpus.json --workspace=<staging slug> --author=<editor email> --approver=<approver email>
+php artisan retrieval:check-index --dry-run          # wait until it reports 0 unindexed
+php artisan retrieval:eval ../spike/retrieval-eval/demo/set.json --workspace=<staging slug> --as=<email> --answer
+```
+
+`retrieval:seed-corpus` refuses to run in production and skips documents that already exist. A design partner's content can be loaded the same way once exported into the same JSON shape.
+
 ## Running
 
 ```bash

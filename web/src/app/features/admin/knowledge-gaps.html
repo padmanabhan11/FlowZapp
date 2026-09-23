@@ -25,7 +25,19 @@
       </div>
       @for (g of gaps(); track g.question) {
         <div class="adm__row">
-          <span>{{ g.question }}</span>
+          <span
+            >{{ g.question }}
+            @if ((g.variants ?? []).length > 1) {
+              <span class="adm__hint gap__variants"
+                >Also asked as:
+                @for (v of g.variants; track v) {
+                  @if (v !== g.question) {
+                    <q>{{ v }}</q>
+                  }
+                }
+              </span>
+            }
+          </span>
           <span class="control-value">{{ g.count }}×</span>
           <span class="control-value">{{ g.last_asked_at | date: 'medium' }}</span>
           <span

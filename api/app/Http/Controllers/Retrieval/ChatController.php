@@ -11,6 +11,8 @@ use App\Models\ChatMessage;
 use App\Models\ChatSession;
 use App\Models\Document;
 use App\Retrieval\Answerer;
+use App\Retrieval\Conversation;
+use App\Retrieval\GapClusters;
 use App\Retrieval\Retriever;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,7 +26,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 final class ChatController extends Controller
 {
-    public function __construct(private readonly Retriever $retriever, private readonly Answerer $answerer, private readonly Usage $usage) {}
+    public function __construct(private readonly Retriever $retriever, private readonly Answerer $answerer, private readonly Usage $usage, private readonly Conversation $conversation) {}
 
     /** POST /v1/chat/sessions  body { scope_document_id?, title? } */
     public function createSession(Request $request): JsonResponse
@@ -63,15 +65,17 @@ final class ChatController extends Controller
         $question = trim($data['content']);
         $started = microtime(true);
 
-        ChatMessage::create(['session_id' => $s->id, 'role' => 'user', 'content' => $question]);
+        $asked = ChatMessage::create(['session_id' => $s->id, 'role' => 'user', 'content' => $question]);
         if ($s->title === null) {
             $s->forceFill(['title' => mb_substr($question, 0, 80)])->save();
         }
-        $history = $s->messages()->get()->map(fn (ChatMessage $m) => ['role' => $m->role, 'content' => $m->content])->slice(0, -1)->values()->all();
+        // H4: bounded, access-checked history; follow-ups are rewritten into a standalone query for retrieval.
+        $history = $this->conversation->history($s, $request->user(), $asked->id)['history'];
+        $standalone = $this->conversation->standaloneQuery($question, $history);
 
         $scope = $this->retriever->scopeFor($request->user(), $request->attributes->get('workspace_role') === 'admin');
         $filters = $s->scope_document_id ? ['document_id' => $s->scope_document_id] : [];
-        $hits = $this->retriever->retrieve($question, $scope, $filters);
+        $hits = $this->retriever->retrieve($standalone['query'], $scope, $filters);
         $answer = $this->answerer->answer($question, $hits, $history);
         $latency = (int) round((microtime(true) - $started) * 1000);
 
@@ -114,27 +118,23 @@ final class ChatController extends Controller
         return response()->json(['data' => ['id' => $m->id, 'rated_helpful' => $m->rated_helpful]]);
     }
 
-    /** GET /v1/analytics/knowledge-gaps — refused questions ranked by frequency (H6, S20). Grouped by normalised text; semantic grouping is FR-614 (C). */
-    public function gaps(Request $request): JsonResponse
+    /** GET /v1/analytics/knowledge-gaps — refused questions grouped by meaning (FR-614), most asked first (H6, S20). */
+    public function gaps(Request $request, GapClusters $clusters): JsonResponse
     {
         $this->authorize('workspace-admin');
-        $refused = ChatMessage::query()->where('role', 'assistant')->where('refused', true)->orderByDesc('created_at')->limit(500)->get();
+        $refused = ChatMessage::query()->where('role', 'assistant')->where('refused', true)->orderByDesc('id')->limit(500)->get();
         $users = ChatMessage::query()->where('role', 'user')->whereIn('session_id', $refused->pluck('session_id')->unique())->orderBy('id')->get()->groupBy('session_id');
-        $rows = $refused->map(function (ChatMessage $a) use ($users) {
+        $asked = [];
+        foreach ($refused as $a) {
             // The question is the last user message in the session before this refusal. ULIDs are
             // monotonic, so id order is insertion order even when timestamps share a second.
-            return $users->get($a->session_id, collect())->filter(fn (ChatMessage $u) => strcmp($u->id, $a->id) < 0)->last();
-        })->filter();
-        $groups = [];
-        foreach ($rows as $m) {
-            $key = preg_replace('/[^a-z0-9 ]/', '', mb_strtolower($m->content)) ?? $m->content;
-            $key = trim(preg_replace('/\s+/', ' ', $key) ?? '');
-            $groups[$key] ??= ['question' => $m->content, 'count' => 0, 'last_asked_at' => $m->created_at];
-            $groups[$key]['count']++;
+            $q = $users->get($a->session_id, collect())->filter(fn (ChatMessage $u) => strcmp($u->id, $a->id) < 0)->last();
+            if ($q !== null) {
+                $asked[] = ['question' => $q->content, 'asked_at' => $q->created_at];
+            }
         }
-        usort($groups, fn ($a, $b) => $b['count'] <=> $a['count']);
 
-        return response()->json(['data' => $groups]);   // usort already re-indexed
+        return response()->json(['data' => $clusters->group($asked)]);
     }
 
     private function own(Request $request, string $sessionId): ChatSession

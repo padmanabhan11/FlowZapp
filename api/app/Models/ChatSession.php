@@ -25,6 +25,6 @@ class ChatSession extends TenantModel
      */
     public function messages(): HasMany
     {
-        return $this->hasMany(ChatMessage::class, 'session_id')->orderBy('created_at');
+        return $this->hasMany(ChatMessage::class, 'session_id')->orderBy('id');   // ULIDs are time-ordered and finer than created_at's seconds
     }
 }
