@@ -7,8 +7,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { Recording, Space } from '../../core/api.types';
 import { RecordingApi } from '../../core/recording.api';
+import { WorkspaceStore } from '../../core/workspace.store';
 import { SpaceApi } from '../../core/workspace.api';
-import { uploadParts } from './multipart-upload';
+import { captureSupport, containerOf, pickRecorderFormat, RecorderFormat } from './capture-support';
+import { UploadProgress } from './multipart-upload';
+import { ResumableUpload } from './resumable-upload';
+import { IdbUploadStore } from './upload-store';
 
 type Mode = 'choose' | 'primer' | 'recording' | 'details' | 'uploading' | 'done';
 
@@ -46,11 +50,23 @@ export class RecordModal {
   readonly durationSec = signal<number | null>(null);
   readonly elapsed = signal(0);
   readonly paused = signal(false);
-  readonly progress = signal({ sent: 0, total: 0, retrying: false });
+  readonly progress = signal<UploadProgress>({ sent: 0, total: 0, retrying: false });
   readonly error = signal<string | null>(null);
   readonly result = signal<Recording | null>(null);
-  readonly percent = computed(() => (this.progress().total ? Math.round((100 * this.progress().sent) / this.progress().total) : 0));
-  readonly captureSupported = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getDisplayMedia && typeof MediaRecorder !== 'undefined';
+  readonly percent = computed(() =>
+    this.progress().total ? Math.round((100 * this.progress().sent) / this.progress().total) : 0,
+  );
+  /** C1-T5: decided per browser; phones and browsers without screen share get the upload path with the reason. */
+  readonly capture = captureSupport(
+    typeof navigator === 'undefined' ? undefined : navigator,
+    typeof MediaRecorder === 'undefined' ? undefined : MediaRecorder,
+  );
+  readonly captureSupported = this.capture.supported;
+  private format: RecorderFormat = { mimeType: '', container: 'video/webm', ext: 'webm' };
+  /** C3: set once the recording exists on the server, so a retry resumes it instead of creating another. */
+  private pendingId: string | null = null;
+  private readonly uploader = new ResumableUpload(this.api, new IdbUploadStore());
+  private readonly workspace = inject(WorkspaceStore);
 
   private recorder: MediaRecorder | null = null;
   private chunks: Blob[] = [];
@@ -94,24 +110,37 @@ export class RecordModal {
   async startRecording(): Promise<void> {
     this.error.set(null);
     try {
-      const screen = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 10 }, audio: false });
+      const screen = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: 10 },
+        audio: false,
+      });
       let mic: MediaStream | null = null;
       try {
-        mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+        mic = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true },
+        });
       } catch {
         screen.getTracks().forEach((t) => t.stop());
-        this.error.set('Your browser blocked the microphone. Allow it in site settings, or upload a file instead.');
+        this.error.set(
+          'Your browser blocked the microphone. Allow it in site settings, or upload a file instead.',
+        );
         return;
       }
       const stream = new MediaStream([...screen.getVideoTracks(), ...mic.getAudioTracks()]);
       this.streams = [screen, mic];
-      const mime = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find((m) => MediaRecorder.isTypeSupported(m)) ?? '';
-      this.recorder = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 2_500_000 } : undefined);
+      this.format = pickRecorderFormat((t) => MediaRecorder.isTypeSupported(t));
+      this.recorder = new MediaRecorder(
+        stream,
+        this.format.mimeType
+          ? { mimeType: this.format.mimeType, videoBitsPerSecond: 2_500_000 }
+          : { videoBitsPerSecond: 2_500_000 },
+      );
       this.chunks = [];
       this.recorder.ondataavailable = (e) => e.data.size && this.chunks.push(e.data);
       this.recorder.onstop = () => this.finishRecording();
       screen.getVideoTracks()[0].addEventListener('ended', () => this.stopRecording()); // user hit the browser's "Stop sharing"
       this.recorder.start(1000);
+      this.format = containerOf(this.recorder.mimeType, this.format); // what this browser actually records (Safari: MP4)
       this.startedAt = Date.now();
       this.elapsed.set(0);
       this.tick = setInterval(() => {
@@ -120,7 +149,9 @@ export class RecordModal {
       }, 500);
       this.mode.set('recording');
     } catch {
-      this.error.set('Your browser blocked screen sharing. Enable it in site settings, or upload a file instead.');
+      this.error.set(
+        'Your browser blocked screen sharing. Enable it in site settings, or upload a file instead.',
+      );
     }
   }
 
@@ -146,12 +177,16 @@ export class RecordModal {
     this.tick = null;
     this.stopStreams();
     if (this.chunks.length) {
-      const blob = new Blob(this.chunks, { type: 'video/webm' });
+      const fmt = containerOf(this.chunks[0]?.type, this.format);
+      const blob = new Blob(this.chunks, { type: fmt.container });
       this.file.set(blob);
-      this.mimeType.set('video/webm');
-      this.fileName.set(`recording-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.webm`);
+      this.mimeType.set(fmt.container);
+      this.fileName.set(
+        `recording-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.${fmt.ext}`,
+      );
       this.durationSec.set(this.elapsed());
-      if (!this.title()) this.title.set(new Date().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }));
+      if (!this.title())
+        this.title.set(new Date().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }));
     }
     this.recorder = null;
     this.mode.set(this.file() ? 'details' : 'choose');
@@ -167,7 +202,13 @@ export class RecordModal {
     const f = (ev.target as HTMLInputElement).files?.[0];
     if (!f) return;
     this.error.set(null);
-    const mime = f.type || (f.name.endsWith('.mov') ? 'video/quicktime' : f.name.endsWith('.mp4') ? 'video/mp4' : 'video/webm');
+    const mime =
+      f.type ||
+      (f.name.endsWith('.mov')
+        ? 'video/quicktime'
+        : f.name.endsWith('.mp4')
+          ? 'video/mp4'
+          : 'video/webm');
     if (!['video/webm', 'video/mp4', 'video/quicktime'].includes(mime)) {
       this.error.set('Accepted formats are .webm, .mp4 and .mov.');
       return;
@@ -177,6 +218,7 @@ export class RecordModal {
       return;
     }
     this.file.set(f);
+    this.pendingId = null;
     this.fileName.set(f.name);
     this.mimeType.set(mime);
     if (!this.title()) this.title.set(f.name.replace(/\.[^.]+$/, ''));
@@ -210,17 +252,37 @@ export class RecordModal {
     this.error.set(null);
     this.mode.set('uploading');
     try {
-      const targets = await this.api.uploadUrl({
-        filename: this.fileName(), mime_type: this.mimeType(), size_bytes: blob.size,
-        duration_sec: this.durationSec() ?? undefined, space_id: spaceId, title: this.title().trim() || undefined,
-      });
-      const parts = await uploadParts(blob, targets, (p) => this.progress.set(p));
-      const rec = await this.api.register(targets.recording_id, parts, this.durationSec() ?? undefined);
+      const rec = this.pendingId
+        ? await this.uploader.resume(
+            this.pendingId,
+            (p) => this.progress.set(p),
+            blob instanceof File ? blob : undefined,
+          )
+        : await this.uploader.start(
+            {
+              blob,
+              filename: this.fileName(),
+              mime_type: this.mimeType(),
+              title: this.title().trim() || undefined,
+              duration_sec: this.durationSec(),
+              space_id: spaceId,
+              workspace_id: this.workspace.id() ?? '',
+              source: blob instanceof File ? 'file' : 'recording',
+            },
+            (p) => this.progress.set(p),
+            (id) => (this.pendingId = id),
+          );
+      this.pendingId = null;
       this.result.set(rec);
       this.mode.set('done');
     } catch (e: unknown) {
       const err = e as { status?: number; error?: { error?: { message?: string } } };
-      this.error.set(err.error?.error?.message ?? 'The upload could not be completed. Your recording is still here — try again.');
+      this.error.set(
+        err.error?.error?.message ??
+          (this.pendingId
+            ? 'The upload stopped. What was sent is kept — press Start processing to continue from where it stopped, even after closing this page.'
+            : 'The upload could not be started. Your recording is still here — try again.'),
+      );
       this.mode.set('details');
     }
   }

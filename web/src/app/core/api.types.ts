@@ -182,6 +182,14 @@ export interface UploadTargets {
   parts: { part_number: number; url: string }[];
 }
 
+/** GET /recordings/{id}/upload — resume an interrupted upload (C3). */
+export interface ResumeTargets extends UploadTargets {
+  size_bytes: number;
+  mime_type: string;
+  title: string;
+  parts_done: { part_number: number; etag: string; size: number }[];
+}
+
 export interface VersionMeta {
   id: string;
   version_number: number;

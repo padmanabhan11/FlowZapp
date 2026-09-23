@@ -130,6 +130,7 @@ Route::prefix('v1')->group(function (): void {
             Route::patch('/recordings/{id}', [RecordingController::class, 'update']);
             Route::get('/recordings/{id}/playback-url', [RecordingController::class, 'playbackUrl']);
             Route::post('/recordings/{id}/retry', [RecordingController::class, 'retry']);
+            Route::get('/recordings/{id}/upload', [RecordingController::class, 'resumeUpload']);
             Route::post('/recordings/{id}/generate', [RecordingController::class, 'generate']);
             Route::delete('/recordings/{id}', [RecordingController::class, 'destroy']);
             Route::get('/assets/{id}/url', [AssetController::class, 'url']);

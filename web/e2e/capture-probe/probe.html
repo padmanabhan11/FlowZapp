@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>FlowZapp capture probe</title>
+<style>body{font:15px system-ui;margin:24px;max-width:720px;color:#1e2761}pre{background:#f2f4f6;padding:12px;white-space:pre-wrap}button{font:inherit;padding:6px 14px}</style></head>
+<body>
+<h1>FlowZapp capture probe (C1-T5)</h1>
+<p>Press <b>Run</b>, share any window, allow the microphone, and speak for three seconds. The result below is what FlowZapp's recorder would upload in this browser.</p>
+<button id="run">Run</button>
+<pre id="out">Not run yet.</pre>
+<script type="module">
+const RECORDER_CANDIDATES=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1,mp4a','video/mp4'];
+window.probe = async () => {
+  const out = { ua: navigator.userAgent, secure: isSecureContext, hasDisplay: !!navigator.mediaDevices?.getDisplayMedia, hasRecorder: typeof MediaRecorder!=='undefined' };
+  out.supported = RECORDER_CANDIDATES.filter(m => MediaRecorder.isTypeSupported(m));
+  try {
+    const screen = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 10 }, audio: false });
+    const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const stream = new MediaStream([...screen.getVideoTracks(), ...mic.getAudioTracks()]);
+    const chosen = RECORDER_CANDIDATES.find(m => MediaRecorder.isTypeSupported(m)) ?? '';
+    const rec = new MediaRecorder(stream, chosen ? { mimeType: chosen } : {});
+    const chunks = [];
+    rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+    const stopped = new Promise(r => rec.onstop = r);
+    rec.start(500); out.recorderMime = rec.mimeType;
+    await new Promise(r => setTimeout(r, 2500)); rec.pause(); await new Promise(r=>setTimeout(r,300)); rec.resume();
+    await new Promise(r => setTimeout(r, 800)); rec.stop(); await stopped;
+    const blob = new Blob(chunks, { type: chunks[0]?.type });
+    out.chunks = chunks.length; out.bytes = blob.size; out.chunkType = chunks[0]?.type;
+    const v = document.createElement('video'); v.src = URL.createObjectURL(blob);
+    out.playable = await new Promise(r => { v.onloadedmetadata = () => r(true); v.onerror = () => r(false); setTimeout(()=>r('timeout'),4000); });
+    out.tracks = { video: screen.getVideoTracks().length, audio: mic.getAudioTracks().length };
+    screen.getTracks().concat(mic.getTracks()).forEach(t => t.stop());
+  } catch (e) { out.error = String(e); }
+  return out;
+};
+const auto = new URLSearchParams(location.search).has('auto');
+const go = async () => { const r = await window.probe(); r.verdict = !r.error && r.bytes > 0 && r.playable === true && r.tracks?.audio === 1 ? 'PASS' : 'FAIL'; document.getElementById('out').textContent = JSON.stringify(r, null, 1); return r; };
+document.getElementById('run').onclick = go;
+if (auto) window.result = go();
+</script></body></html>

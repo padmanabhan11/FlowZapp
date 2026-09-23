@@ -56,10 +56,9 @@ export class SessionStore {
   async acceptInvite(token: string): Promise<WorkspaceSummary> {
     await this.ensureCsrf();
     const res = await firstValueFrom(
-      this.http.post<{ data: { workspace: Omit<WorkspaceSummary, 'role'>; role: WorkspaceSummary['role'] } }>(
-        '/api/v1/invites/accept',
-        { token },
-      ),
+      this.http.post<{
+        data: { workspace: Omit<WorkspaceSummary, 'role'>; role: WorkspaceSummary['role'] };
+      }>('/api/v1/invites/accept', { token }),
     );
     const ws = { ...res.data.workspace, role: res.data.role };
     await this.load();

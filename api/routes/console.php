@@ -8,3 +8,4 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command('documents:review-due')->dailyAt('06:00');
 Schedule::command('notifications:weekly-digest')->weeklyOn(1, '07:00');
 Schedule::command('workspaces:purge-scheduled')->dailyAt('03:00');
+Schedule::command('recordings:abandon-stale')->dailyAt('03:30');

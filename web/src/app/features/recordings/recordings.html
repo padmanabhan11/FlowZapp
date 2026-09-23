@@ -3,7 +3,9 @@
     <h1>Recordings</h1>
     <div class="recs__actions">
       <button pButton type="button" (click)="openModal('record')">Record a process</button>
-      <button pButton type="button" [outlined]="true" (click)="openModal('upload')">Upload a file</button>
+      <button pButton type="button" [outlined]="true" (click)="openModal('upload')">
+        Upload a file
+      </button>
     </div>
   </header>
 
@@ -11,16 +13,77 @@
     <p class="recs__error" role="alert">{{ error() }}</p>
   }
 
+  @if (unfinished().length) {
+    <section class="recs__unfinished document-surface" aria-labelledby="unfinished-h">
+      <h2 id="unfinished-h">Unfinished uploads on this browser</h2>
+      @for (s of unfinished(); track s.recording_id) {
+        <div class="recs__urow">
+          <span>
+            <strong>{{ s.title }}</strong>
+            <small class="control-value"
+              >{{ sentPct(s) }}% sent · {{ s.updated_at | date: 'd MMM HH:mm' }}</small
+            >
+            @if (resumeError()[s.recording_id]; as e) {
+              <small class="recs__uerr" role="alert">{{ e }}</small>
+            }
+          </span>
+          @if (resuming() === s.recording_id) {
+            <span class="control-value" role="status">
+              @if (resumeProgress(); as p) {
+                {{
+                  p.offline
+                    ? 'Waiting for the connection…'
+                    : p.retrying
+                      ? 'Retrying…'
+                      : 'Uploading ' +
+                        (p.total ? ((p.sent / p.total) * 100 | number: '1.0-0') : 0) +
+                        '%'
+                }}
+              }
+            </span>
+          } @else if (s.source === 'recording') {
+            <button pButton type="button" size="small" (click)="resume(s)">Continue upload</button>
+          } @else {
+            <label class="recs__pick">
+              <input
+                type="file"
+                hidden
+                accept="video/webm,video/mp4,video/quicktime,.webm,.mp4,.mov"
+                (change)="resume(s, $event)"
+              />
+              <span class="p-button p-button-sm">Choose “{{ s.filename }}” to continue</span>
+            </label>
+          }
+          <button
+            pButton
+            type="button"
+            size="small"
+            [text]="true"
+            [disabled]="resuming() === s.recording_id"
+            (click)="discardUnfinished(s)"
+          >
+            Discard
+          </button>
+        </div>
+      }
+    </section>
+  }
+
   <div class="document-surface recs__table">
     @if (rows().length === 0) {
       <p class="recs__empty">No recordings yet. Record the process you explain most often.</p>
     } @else {
       <div class="recs__row recs__row--head">
-        <span>Title</span><span>Length</span><span>Status</span><span>Uploaded by</span><span>Draft</span><span></span>
+        <span>Title</span><span>Length</span><span>Status</span><span>Uploaded by</span
+        ><span>Draft</span><span></span>
       </div>
       @for (r of rows(); track r.id) {
         <div class="recs__row">
-          <span class="recs__title">{{ r.title }}<br /><small class="control-value">{{ r.created_at | date: 'd MMM y HH:mm' }}</small></span>
+          <span class="recs__title"
+            >{{ r.title }}<br /><small class="control-value">{{
+              r.created_at | date: 'd MMM y HH:mm'
+            }}</small></span
+          >
           <span class="control-value">{{ fmt(r.duration_sec) }}</span>
           <span class="recs__status">
             @if (r.state === 'failed') {
@@ -29,23 +92,56 @@
             } @else if (r.state === 'draft_ready') {
               <strong>Draft ready</strong>
             } @else {
-              <span class="recs__bar" role="progressbar" [attr.aria-valuenow]="stage(r).pct" aria-valuemin="0" aria-valuemax="100"><span class="recs__bar-fill" [style.width.%]="stage(r).pct"></span></span>
+              <span
+                class="recs__bar"
+                role="progressbar"
+                [attr.aria-valuenow]="stage(r).pct"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                ><span class="recs__bar-fill" [style.width.%]="stage(r).pct"></span
+              ></span>
               <small>{{ stage(r).label }}…</small>
             }
           </span>
           <span>{{ r.uploaded_by?.name ?? '—' }}</span>
           <span>
-            @if (r.document_id) { <a [routerLink]="['/r', r.id, 'draft']">Review draft</a> } @else if (r.state !== 'failed' && r.state !== 'pending_upload') { <a [routerLink]="['/r', r.id, 'draft']">Watch progress</a> } @else { — }
+            @if (r.document_id) {
+              <a [routerLink]="['/r', r.id, 'draft']">Review draft</a>
+            } @else if (r.state !== 'failed' && r.state !== 'pending_upload') {
+              <a [routerLink]="['/r', r.id, 'draft']">Watch progress</a>
+            } @else {
+              —
+            }
           </span>
           <span class="recs__menu">
-            @if (r.state === 'failed') { <button pButton type="button" size="small" (click)="retry(r)">Retry</button> }
-            @if (r.state === 'draft_ready') { <button pButton type="button" [text]="true" size="small" (click)="generateAgain(r)">Generate again</button> }
-            <button pButton type="button" [text]="true" size="small" aria-label="Delete recording" (click)="remove(r)">Delete</button>
+            @if (r.state === 'failed') {
+              <button pButton type="button" size="small" (click)="retry(r)">Retry</button>
+            }
+            @if (r.state === 'draft_ready') {
+              <button pButton type="button" [text]="true" size="small" (click)="generateAgain(r)">
+                Generate again
+              </button>
+            }
+            <button
+              pButton
+              type="button"
+              [text]="true"
+              size="small"
+              aria-label="Delete recording"
+              (click)="remove(r)"
+            >
+              Delete
+            </button>
           </span>
         </div>
       }
     }
   </div>
 
-  <app-record-modal [visible]="modalOpen()" [initialMode]="modalMode()" [initialTitle]="modalTitle()" (closed)="onModalClosed($event)" />
+  <app-record-modal
+    [visible]="modalOpen()"
+    [initialMode]="modalMode()"
+    [initialTitle]="modalTitle()"
+    (closed)="onModalClosed($event)"
+  />
 </section>

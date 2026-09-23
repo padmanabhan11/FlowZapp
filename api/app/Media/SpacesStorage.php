@@ -50,6 +50,30 @@ final class SpacesStorage implements MediaStorage
         ]);
     }
 
+    public function listParts(string $key, string $uploadId): array
+    {
+        $out = [];
+        $marker = 0;
+        do {
+            $r = $this->client->listParts(['Bucket' => $this->bucket, 'Key' => $key, 'UploadId' => $uploadId, 'PartNumberMarker' => $marker, 'MaxParts' => 1000]);
+            foreach ($r['Parts'] ?? [] as $p) {
+                $out[] = ['part_number' => (int) $p['PartNumber'], 'etag' => trim((string) $p['ETag'], '"'), 'size' => (int) $p['Size']];
+            }
+            $marker = (int) ($r['NextPartNumberMarker'] ?? 0);
+        } while (! empty($r['IsTruncated']));
+
+        return $out;
+    }
+
+    public function presignParts(string $key, string $uploadId, array $partNumbers): array
+    {
+        return array_map(function (int $n) use ($key, $uploadId): array {
+            $cmd = $this->client->getCommand('UploadPart', ['Bucket' => $this->bucket, 'Key' => $key, 'UploadId' => $uploadId, 'PartNumber' => $n]);
+
+            return ['part_number' => $n, 'url' => (string) $this->client->createPresignedRequest($cmd, '+6 hours')->getUri()];
+        }, $partNumbers);
+    }
+
     public function abortMultipartUpload(string $key, string $uploadId): void
     {
         $this->client->abortMultipartUpload(['Bucket' => $this->bucket, 'Key' => $key, 'UploadId' => $uploadId]);

@@ -10,6 +10,7 @@ use App\Billing\Usage;
 use App\Http\Controllers\Controller;
 use App\Jobs\Pipeline\TranscribeRecording;
 use App\Media\MediaStorage;
+use App\Media\SpacesStorage;
 use App\Models\Recording;
 use App\Models\Space;
 use App\Models\Workspace;
@@ -174,10 +175,37 @@ final class RecordingController extends Controller
     }
 
     /** DELETE /v1/recordings/{id} — cascades to media, transcript, segments, frames (and embeddings from M3). */
+    /**
+     * GET /v1/recordings/{id}/upload — resume an interrupted upload (C3). Tells the
+     * client which parts the storage already holds (authoritative, from ListParts)
+     * and re-signs URLs for the ones still missing. Only for pending_upload.
+     */
+    public function resumeUpload(string $id): JsonResponse
+    {
+        $rec = Recording::query()->findOrFail($id);
+        $this->authorize('manage', $rec);
+        abort_unless($rec->state === 'pending_upload' && $rec->upload_id, 409, 'This recording is not waiting for an upload.');
+
+        $partSize = SpacesStorage::PART_SIZE;
+        $total = max(1, (int) ceil(((int) $rec->size_bytes) / $partSize));
+        $done = $this->storage->listParts($rec->storage_key, (string) $rec->upload_id);
+        $have = array_column($done, 'part_number');
+        $missing = array_values(array_diff(range(1, $total), $have));
+
+        return response()->json(['data' => [
+            'recording_id' => $rec->id, 'upload_id' => $rec->upload_id, 'part_size' => $partSize,
+            'size_bytes' => (int) $rec->size_bytes, 'mime_type' => $rec->mime_type, 'title' => $rec->title,
+            'parts_done' => $done, 'parts' => $this->storage->presignParts($rec->storage_key, (string) $rec->upload_id, $missing),
+        ]]);
+    }
+
     public function destroy(string $id): JsonResponse
     {
         $rec = Recording::query()->findOrFail($id);
         $this->authorize('manage', $rec);
+        if ($rec->state === 'pending_upload' && $rec->upload_id) {
+            $this->storage->abortMultipartUpload($rec->storage_key, (string) $rec->upload_id);   // an abandoned upload frees its parts
+        }
 
         $this->storage->deletePrefix("{$rec->workspace_id}/{$rec->id}/");
         $rec->delete(); // FK cascades: transcript, segments, media_assets, pipeline_jobs; documents.source_recording_id → null

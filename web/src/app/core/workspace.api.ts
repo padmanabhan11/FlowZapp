@@ -11,13 +11,17 @@ export class WorkspaceApi {
 
   async slugAvailable(slug: string): Promise<{ slug: string; available: boolean }> {
     return firstValueFrom(
-      this.http.get<{ slug: string; available: boolean }>('/api/v1/workspaces/slug-available', { params: { slug } }),
+      this.http.get<{ slug: string; available: boolean }>('/api/v1/workspaces/slug-available', {
+        params: { slug },
+      }),
     );
   }
 
   async create(name: string, slug?: string): Promise<WorkspaceSummary> {
     await this.session.ensureCsrf();
-    const res = await firstValueFrom(this.http.post<{ data: WorkspaceSummary }>('/api/v1/workspaces', { name, slug }));
+    const res = await firstValueFrom(
+      this.http.post<{ data: WorkspaceSummary }>('/api/v1/workspaces', { name, slug }),
+    );
     return res.data;
   }
 
@@ -29,7 +33,9 @@ export class WorkspaceApi {
   async invite(workspaceId: string, invites: InviteRow[]): Promise<InviteResult[]> {
     await this.session.ensureCsrf();
     const res = await firstValueFrom(
-      this.http.post<{ data: InviteResult[] }>(`/api/v1/workspaces/${workspaceId}/invites`, { invites }),
+      this.http.post<{ data: InviteResult[] }>(`/api/v1/workspaces/${workspaceId}/invites`, {
+        invites,
+      }),
     );
     return res.data;
   }
@@ -51,25 +57,37 @@ export class SpaceApi {
   }
 
   async folders(spaceId: string): Promise<Folder[]> {
-    const res = await firstValueFrom(this.http.get<{ data: Folder[] }>('/api/v1/folders', { params: { space_id: spaceId } }));
+    const res = await firstValueFrom(
+      this.http.get<{ data: Folder[] }>('/api/v1/folders', { params: { space_id: spaceId } }),
+    );
     return res.data;
   }
 
   async createFolder(spaceId: string, name: string, parentId: string | null): Promise<Folder> {
     await this.session.ensureCsrf();
     const res = await firstValueFrom(
-      this.http.post<{ data: Folder }>('/api/v1/folders', { space_id: spaceId, name, parent_id: parentId }),
+      this.http.post<{ data: Folder }>('/api/v1/folders', {
+        space_id: spaceId,
+        name,
+        parent_id: parentId,
+      }),
     );
     return res.data;
   }
 
   async renameFolder(id: string, name: string): Promise<Folder> {
     await this.session.ensureCsrf();
-    const res = await firstValueFrom(this.http.patch<{ data: Folder }>(`/api/v1/folders/${id}`, { name }));
+    const res = await firstValueFrom(
+      this.http.patch<{ data: Folder }>(`/api/v1/folders/${id}`, { name }),
+    );
     return res.data;
   }
 
-  async deleteFolder(id: string, strategy: 'archive' | 'move', targetFolderId?: string | null): Promise<void> {
+  async deleteFolder(
+    id: string,
+    strategy: 'archive' | 'move',
+    targetFolderId?: string | null,
+  ): Promise<void> {
     await this.session.ensureCsrf();
     const params: Record<string, string> = { strategy };
     if (targetFolderId) params['target_folder_id'] = targetFolderId;

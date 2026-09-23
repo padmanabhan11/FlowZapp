@@ -13,6 +13,9 @@ final class FakeMediaStorage implements MediaStorage
     /** @var array<string, string> uploadId => key */
     public array $uploads = [];
 
+    /** @var array<string, array<int, array{etag: string, size: int}>> uploadId => part number => stored part (tests set this to simulate parts that arrived) */
+    public array $parts = [];
+
     public function createMultipartUpload(string $key, string $mimeType, int $sizeBytes): array
     {
         $id = 'upl_'.substr(hash('sha256', $key), 0, 16);
@@ -33,6 +36,25 @@ final class FakeMediaStorage implements MediaStorage
         }
         unset($this->uploads[$uploadId]);
         $this->objects[$key] = count($parts) * SpacesStorage::PART_SIZE;
+    }
+
+    public function listParts(string $key, string $uploadId): array
+    {
+        if (($this->uploads[$uploadId] ?? null) !== $key) {
+            throw new \RuntimeException('Unknown upload');
+        }
+        $out = [];
+        foreach ($this->parts[$uploadId] ?? [] as $n => $p) {
+            $out[] = ['part_number' => (int) $n, 'etag' => $p['etag'], 'size' => $p['size']];
+        }
+        usort($out, fn ($a, $b) => $a['part_number'] <=> $b['part_number']);
+
+        return $out;
+    }
+
+    public function presignParts(string $key, string $uploadId, array $partNumbers): array
+    {
+        return array_map(fn (int $n) => ['part_number' => $n, 'url' => "https://fake.spaces.test/$key?partNumber=$n&uploadId=$uploadId&resumed=1"], $partNumbers);
     }
 
     public function abortMultipartUpload(string $key, string $uploadId): void

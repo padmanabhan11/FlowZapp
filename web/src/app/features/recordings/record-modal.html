@@ -1,4 +1,13 @@
-<p-dialog [visible]="visible()" (visibleChange)="$event ? open() : close()" [modal]="true" [closable]="mode() !== 'recording'" [draggable]="false" header="Record or upload" [style]="{ width: '560px', maxWidth: '95vw' }" (onShow)="open()">
+<p-dialog
+  [visible]="visible()"
+  (visibleChange)="$event ? open() : close()"
+  [modal]="true"
+  [closable]="mode() !== 'recording'"
+  [draggable]="false"
+  header="Record or upload"
+  [style]="{ width: '560px', maxWidth: '95vw' }"
+  (onShow)="open()"
+>
   @if (error()) {
     <p class="rm__error" role="alert">{{ error() }}</p>
   }
@@ -8,9 +17,16 @@
       <div class="rm__choose">
         @if (captureSupported) {
           <button pButton type="button" (click)="mode.set('primer')">Record now</button>
+        } @else if (capture.reason) {
+          <p class="rm__note">{{ capture.reason }}</p>
         }
         <label class="rm__drop">
-          <input type="file" accept="video/webm,video/mp4,video/quicktime,.webm,.mp4,.mov" (change)="onFile($event)" hidden />
+          <input
+            type="file"
+            accept="video/webm,video/mp4,video/quicktime,.webm,.mp4,.mov"
+            (change)="onFile($event)"
+            hidden
+          />
           <span>Upload a file</span>
           <small>.webm, .mp4 or .mov · up to 60 minutes · up to 2 GB</small>
         </label>
@@ -19,11 +35,20 @@
     @case ('primer') {
       <div class="rm__primer">
         <p><strong>Your browser will ask for two permissions.</strong></p>
-        <p>Screen — so FlowZapp can see what you click. Microphone — so it can hear you explain each step. Both are needed to generate a procedure; nothing is uploaded until you press <em>Start processing</em>.</p>
-        <p class="rm__tip">Pick the window or tab where the work happens, then narrate as you go — as if explaining it to a new colleague.</p>
+        <p>
+          Screen — so FlowZapp can see what you click. Microphone — so it can hear you explain each
+          step. Both are needed to generate a procedure; nothing is uploaded until you press
+          <em>Start processing</em>.
+        </p>
+        <p class="rm__tip">
+          Pick the window or tab where the work happens, then narrate as you go — as if explaining
+          it to a new colleague.
+        </p>
         <div class="rm__actions">
           <button pButton type="button" (click)="startRecording()">Start recording</button>
-          <button pButton type="button" [text]="true" (click)="mode.set('choose')">Upload a file instead</button>
+          <button pButton type="button" [text]="true" (click)="mode.set('choose')">
+            Upload a file instead
+          </button>
         </div>
       </div>
     }
@@ -31,7 +56,9 @@
       <div class="rm__pill" role="status" aria-live="polite">
         <span class="rm__dot" [class.rm__dot--paused]="paused()"></span>
         <span class="control-value">{{ fmt(elapsed()) }}</span>
-        <button pButton type="button" [text]="true" size="small" (click)="togglePause()">{{ paused() ? 'Resume' : 'Pause' }}</button>
+        <button pButton type="button" [text]="true" size="small" (click)="togglePause()">
+          {{ paused() ? 'Resume' : 'Pause' }}
+        </button>
         <button pButton type="button" size="small" (click)="stopRecording()">Stop</button>
       </div>
     }
@@ -40,23 +67,52 @@
         <label for="rec-title">Title</label>
         <input pInputText id="rec-title" [ngModel]="title()" (ngModelChange)="title.set($event)" />
         <label for="rec-space">Target space</label>
-        <p-select inputId="rec-space" [options]="spaces()" optionLabel="name" optionValue="id" [ngModel]="spaceId()" (ngModelChange)="spaceId.set($event)" placeholder="Where the draft will live" />
-        <p class="rm__meta control-value">{{ fileName() }} · {{ file()?.size ? ((file()!.size / 1048576) | number: '1.0-0') + ' MB' : '' }}@if (durationSec() !== null) { · {{ fmt(durationSec()!) }}}</p>
+        <p-select
+          inputId="rec-space"
+          [options]="spaces()"
+          optionLabel="name"
+          optionValue="id"
+          [ngModel]="spaceId()"
+          (ngModelChange)="spaceId.set($event)"
+          placeholder="Where the draft will live"
+        />
+        <p class="rm__meta control-value">
+          {{ fileName() }} ·
+          {{ file()?.size ? (file()!.size / 1048576 | number: '1.0-0') + ' MB' : '' }}
+          @if (durationSec() !== null) {
+            · {{ fmt(durationSec()!) }}
+          }
+        </p>
         <div class="rm__actions">
-          <button pButton type="button" [disabled]="!spaceId()" (click)="startProcessing()">Start processing</button>
-          <button pButton type="button" [text]="true" (click)="reset(); mode.set('choose')">Discard</button>
+          <button pButton type="button" [disabled]="!spaceId()" (click)="startProcessing()">
+            Start processing
+          </button>
+          <button pButton type="button" [text]="true" (click)="reset(); mode.set('choose')">
+            Discard
+          </button>
         </div>
       </div>
     }
     @case ('uploading') {
       <div class="rm__uploading" role="status" aria-live="polite">
         <div class="rm__bar"><div class="rm__bar-fill" [style.width.%]="percent()"></div></div>
-        <p>{{ progress().retrying ? 'Connection interrupted — retrying…' : 'Uploading ' + percent() + '%' }}</p>
+        <p>
+          {{
+            progress().offline
+              ? 'You are offline — the upload continues when the connection returns.'
+              : progress().retrying
+                ? 'Connection interrupted — retrying…'
+                : 'Uploading ' + percent() + '%'
+          }}
+        </p>
       </div>
     }
     @case ('done') {
       <div class="rm__done">
-        <p><strong>Uploaded.</strong> Processing continues on the server — you can close this and come back; the Recordings list shows progress.</p>
+        <p>
+          <strong>Uploaded.</strong> Processing continues on the server — you can close this and
+          come back; the Recordings list shows progress.
+        </p>
         <button pButton type="button" (click)="close()">Done</button>
       </div>
     }

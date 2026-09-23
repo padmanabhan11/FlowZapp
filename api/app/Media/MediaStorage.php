@@ -21,6 +21,21 @@ interface MediaStorage
 
     public function abortMultipartUpload(string $key, string $uploadId): void;
 
+    /**
+     * Parts already stored for an open multipart upload (C3: resume after a reload).
+     *
+     * @return list<array{part_number: int, etag: string, size: int}>
+     */
+    public function listParts(string $key, string $uploadId): array;
+
+    /**
+     * Fresh presigned URLs for the given part numbers of an open upload.
+     *
+     * @param  list<int>  $partNumbers
+     * @return list<array{part_number: int, url: string}>
+     */
+    public function presignParts(string $key, string $uploadId, array $partNumbers): array;
+
     public function exists(string $key): bool;
 
     public function size(string $key): ?int;
