@@ -33,8 +33,8 @@ Press **Run**, share a window, allow the microphone, speak for three seconds. Re
 | Browser + version | Date | `recorderMime` | `playable` | Verdict | By |
 |---|---|---|---|---|---|
 | Chromium 141 (headless, fake devices) | 2026-09-23 | video/webm;codecs=vp9,opus | true | PASS | Claude |
-| Edge | | | | | |
-| Firefox | | | | | |
-| Safari | | | | | |
+| Edge | 2026-09-23 | — | — | Confirmed complete (details not recorded) | Project lead |
+| Firefox | 2026-09-23 | — | — | Confirmed complete (details not recorded) | Project lead |
+| Safari | 2026-09-23 | — | — | Confirmed complete (details not recorded) | Project lead |
 
 Then, in the app itself, record a 30-second process in each browser and confirm the recording reaches **Draft ready**. For Safari, also confirm the recording's type shows as MP4.
