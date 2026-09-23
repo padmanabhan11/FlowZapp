@@ -188,6 +188,99 @@
     color: var(--ink-soft);
     font-size: 0.85rem;
   }
+  &__error {
+    margin: 0 0 6px;
+    color: var(--danger);
+    font-size: 0.9rem;
+  }
+  &__grip {
+    cursor: grab;
+  }
+  &__g--text {
+    font-size: 0.85rem;
+    text-decoration: underline;
+  }
+  &__asset--pick {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    background: var(--rail);
+    font: inherit;
+    color: var(--ink-soft);
+    &:hover {
+      background: var(--select);
+    }
+  }
+  &__asset--file {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    border-style: solid;
+  }
+  &__figure {
+    margin: 0;
+    display: grid;
+    gap: 4px;
+    img {
+      max-width: 100%;
+      border: 1px solid var(--line);
+    }
+  }
+  &__caption {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+  &__doclink {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    flex-wrap: wrap;
+    padding: 4px 6px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control);
+  }
+  &__doclink-t {
+    font-weight: 600;
+    &--broken {
+      text-decoration: line-through;
+      color: var(--ink-soft);
+    }
+  }
+  &__picker {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    padding: 6px;
+    margin-top: 4px;
+    display: grid;
+    gap: 4px;
+  }
+  &__picker-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 220px;
+    overflow: auto;
+    button {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      background: none;
+      border: 0;
+      text-align: left;
+      padding: 4px 6px;
+      cursor: pointer;
+      font: inherit;
+      color: var(--ink);
+      &:hover {
+        background: var(--select);
+      }
+    }
+  }
+  &__list-wrap {
+    display: grid;
+    gap: 4px;
+  }
   &__add {
     display: flex;
     gap: 10px;
@@ -205,5 +298,23 @@
     &:focus {
       outline: 2px solid var(--select);
     }
+  }
+}
+
+.cdk-drag-preview {
+  background: var(--paper);
+  box-shadow: 0 4px 16px rgba(30, 39, 97, 0.18);
+}
+.cdk-drag-placeholder {
+  opacity: 0.35;
+}
+.cdk-drag-animating,
+.be__list-wrap.cdk-drop-list-dragging .be__block:not(.cdk-drag-placeholder) {
+  transition: transform 150ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cdk-drag-animating,
+  .be__list-wrap.cdk-drop-list-dragging .be__block {
+    transition: none !important;
   }
 }

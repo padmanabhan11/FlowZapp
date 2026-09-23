@@ -1,4 +1,5 @@
-import { Block, BlockType } from '../../core/api.types';
+import { Block, BlockType, ListItem } from '../../core/api.types';
+import { makeItem } from '../../core/list-tree';
 
 let seq = 0;
 export function newBlockId(): string {
@@ -49,6 +50,27 @@ export function makeBlock(type: BlockType): Block {
  * formatting is dropped on purpose — the document model is structured JSON,
  * never HTML (non-negotiable 7).
  */
+interface Marker {
+  kind: 'bullet_list' | 'numbered_list' | 'checklist';
+  indent: number;
+  text: string;
+  checked?: boolean;
+}
+
+/** Recognises "- x", "* x", "• x", "1. x", "1) x", "- [ ] x" with their indentation (a tab counts as two spaces). */
+export function listMarker(line: string): Marker | null {
+  const lead = /^[ \t]*/.exec(line)?.[0] ?? '';
+  const indent = lead.replace(/\t/g, '  ').length;
+  const t = line.slice(lead.length);
+  let m = /^[-*]\s+\[( |x|X)\]\s+(.*)$/.exec(t);
+  if (m) return { kind: 'checklist', indent, text: m[2].trim(), checked: m[1] !== ' ' };
+  m = /^[-*•◦▪]\s+(.*)$/.exec(t);
+  if (m) return { kind: 'bullet_list', indent, text: m[1].trim() };
+  m = /^(\d+|[a-z])[.)]\s+(.*)$/.exec(t);
+  if (m) return { kind: 'numbered_list', indent, text: m[2].trim() };
+  return null;
+}
+
 export function blocksFromPlainText(text: string): Block[] {
   const lines = text.replace(/\r\n?/g, '\n').split('\n');
   const out: Block[] = [];
@@ -93,40 +115,27 @@ export function blocksFromPlainText(text: string): Block[] {
       i++;
       continue;
     }
-    const chk = /^[-*]\s+\[( |x|X)\]\s+(.*)$/.exec(t);
-    if (chk) {
+    const marker = listMarker(line);
+    if (marker) {
       flushPara(para);
       para = [];
-      const items: { text: string; checked: boolean }[] = [];
+      const kind = marker.kind;
+      const items: (string | ListItem)[] = [];
+      const base = marker.indent;
       while (i < lines.length) {
-        const m = /^[-*]\s+\[( |x|X)\]\s+(.*)$/.exec(lines[i].trim());
+        const m = listMarker(lines[i]);
         if (!m) break;
-        items.push({ text: m[2], checked: m[1] !== ' ' });
+        // A different marker at the top level starts a new list; nested items join this one.
+        if (m.indent <= base && m.kind !== kind) break;
+        const level = Math.max(0, Math.min(3, Math.floor((m.indent - base) / 2)));
+        items.push(
+          kind === 'checklist'
+            ? makeItem(m.text, level, m.checked ?? false)
+            : makeItem(m.text, level),
+        );
         i++;
       }
-      out.push({ id: newBlockId(), type: 'checklist', items });
-      continue;
-    }
-    if (/^[-*•]\s+/.test(t)) {
-      flushPara(para);
-      para = [];
-      const items: string[] = [];
-      while (i < lines.length && /^[-*•]\s+/.test(lines[i].trim())) {
-        items.push(lines[i].trim().replace(/^[-*•]\s+/, ''));
-        i++;
-      }
-      out.push({ id: newBlockId(), type: 'bullet_list', items });
-      continue;
-    }
-    if (/^\d+[.)]\s+/.test(t)) {
-      flushPara(para);
-      para = [];
-      const items: string[] = [];
-      while (i < lines.length && /^\d+[.)]\s+/.test(lines[i].trim())) {
-        items.push(lines[i].trim().replace(/^\d+[.)]\s+/, ''));
-        i++;
-      }
-      out.push({ id: newBlockId(), type: 'numbered_list', items });
+      out.push({ id: newBlockId(), type: kind, items });
       continue;
     }
     if (/^(>|NOTE:|WARNING:|CAUTION:)/i.test(t)) {
@@ -164,6 +173,43 @@ export function blocksFromHtml(html: string): Block[] {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const out: Block[] = [];
   const text = (el: Element): string => (el.textContent ?? '').replace(/\s+/g, ' ').trim();
+  const consumed = new Set<Element>();
+  /** An li's own text, without the text of lists nested inside it. */
+  const ownText = (li: Element): string => {
+    const clone = li.cloneNode(true) as Element;
+    clone.querySelectorAll('ul, ol').forEach((n) => n.remove());
+    return text(clone);
+  };
+  /**
+   * Walks a list into flat levelled items. Handles Notion/HTML (ul inside li),
+   * Google Docs (ul placed directly inside ul, and aria-level on li) and
+   * checkboxes. Deeper than three levels is clamped to three.
+   */
+  const collectList = (
+    list: Element,
+    level: number,
+    items: (string | ListItem)[],
+    check: boolean,
+  ): void => {
+    for (const child of Array.from(list.children)) {
+      const tag = child.tagName.toLowerCase();
+      if (tag === 'ul' || tag === 'ol') {
+        collectList(child, level + 1, items, check);
+        continue;
+      }
+      if (tag !== 'li') continue;
+      const aria = Number(child.getAttribute('aria-level') ?? 0);
+      const lvl = aria > 0 ? aria - 1 : level;
+      const box = child.querySelector(
+        ':scope > input[type=checkbox], :scope > label > input[type=checkbox]',
+      ) as HTMLInputElement | null;
+      const t = ownText(child);
+      if (t) items.push(check ? makeItem(t, lvl, !!box?.checked) : makeItem(t, lvl));
+      child
+        .querySelectorAll(':scope > ul, :scope > ol')
+        .forEach((nested) => collectList(nested, lvl + 1, items, check));
+    }
+  };
   const walk = (node: Node): void => {
     if (node.nodeType === Node.TEXT_NODE) {
       const t = (node.textContent ?? '').trim();
@@ -173,7 +219,7 @@ export function blocksFromHtml(html: string): Block[] {
     if (node.nodeType !== Node.ELEMENT_NODE) return;
     const el = node as Element;
     const tag = el.tagName.toLowerCase();
-    if (['script', 'style', 'meta', 'head'].includes(tag)) return;
+    if (['script', 'style', 'meta', 'head'].includes(tag) || consumed.has(el)) return;
     if (/^h[1-6]$/.test(tag)) {
       out.push({
         id: newBlockId(),
@@ -184,24 +230,39 @@ export function blocksFromHtml(html: string): Block[] {
       return;
     }
     if (tag === 'ul' || tag === 'ol') {
-      const lis = Array.from(el.children).filter((c) => c.tagName.toLowerCase() === 'li');
-      const asCheck = lis.length > 0 && lis.every((li) => li.querySelector('input[type=checkbox]'));
-      if (asCheck) {
-        out.push({
-          id: newBlockId(),
-          type: 'checklist',
-          items: lis.map((li) => ({
-            text: text(li),
-            checked: (li.querySelector('input[type=checkbox]') as HTMLInputElement).checked,
-          })),
-        });
-      } else {
-        out.push({
-          id: newBlockId(),
-          type: tag === 'ul' ? 'bullet_list' : 'numbered_list',
-          items: lis.map(text),
-        });
+      const items: (string | ListItem)[] = [];
+      const isCheck = !!el.querySelector(':scope > li input[type=checkbox]');
+      collectList(el, 0, items, isCheck);
+      out.push({
+        id: newBlockId(),
+        type: isCheck ? 'checklist' : tag === 'ul' ? 'bullet_list' : 'numbered_list',
+        items,
+      });
+      return;
+    }
+    // Word: list paragraphs carry mso-list:lN levelN and a bullet/number in an mso-list:Ignore span.
+    if (tag === 'p' && /mso-list:\s*l\d+\s+level\d/i.test(el.getAttribute('style') ?? '')) {
+      const items: (string | ListItem)[] = [];
+      let numbered = false;
+      let cur: Element | null = el;
+      while (
+        cur &&
+        cur.tagName.toLowerCase() === 'p' &&
+        /mso-list:\s*l\d+\s+level(\d)/i.test(cur.getAttribute('style') ?? '')
+      ) {
+        const level = Number(/level(\d)/i.exec(cur.getAttribute('style') ?? '')![1]) - 1;
+        const ignore = cur.querySelector('[style*="mso-list:Ignore"], [style*="mso-list: Ignore"]');
+        if (ignore && /\d|[a-z][.)]/i.test(ignore.textContent ?? '') && items.length === 0)
+          numbered = true;
+        const clone = cur.cloneNode(true) as Element;
+        clone
+          .querySelectorAll('[style*="mso-list:Ignore"], [style*="mso-list: Ignore"]')
+          .forEach((n) => n.remove());
+        items.push(makeItem(text(clone), level));
+        consumed.add(cur);
+        cur = cur.nextElementSibling;
       }
+      out.push({ id: newBlockId(), type: numbered ? 'numbered_list' : 'bullet_list', items });
       return;
     }
     if (tag === 'pre') {
@@ -210,9 +271,16 @@ export function blocksFromHtml(html: string): Block[] {
     }
     if (tag === 'table') {
       const rows = Array.from(el.querySelectorAll('tr')).map((tr) =>
-        Array.from(tr.querySelectorAll('th,td')).map(text),
+        Array.from(tr.querySelectorAll(':scope > th, :scope > td')).flatMap((c) => [
+          text(c),
+          ...Array(Math.max(0, Number(c.getAttribute('colspan') ?? 1) - 1)).fill(''),
+        ]),
       );
-      if (rows.length) out.push({ id: newBlockId(), type: 'table', rows });
+      const width = Math.max(0, ...rows.map((r) => r.length));
+      const square = rows
+        .filter((r) => r.length)
+        .map((r) => [...r, ...Array(width - r.length).fill('')]);
+      if (square.length) out.push({ id: newBlockId(), type: 'table', rows: square });
       return;
     }
     if (tag === 'hr') {

@@ -193,3 +193,31 @@
     margin-left: 6px;
   }
 }
+
+.reader__figure {
+  margin: 8px 0;
+  figcaption {
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+    margin-top: 4px;
+  }
+}
+.reader__file a {
+  font-weight: 600;
+}
+.reader__doclink {
+  a {
+    font-weight: 600;
+  }
+  &--gone {
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+}
+.reader__backlinks ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.reader__checklist .reader__checklist {
+  padding-left: 20px;
+}

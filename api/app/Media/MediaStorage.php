@@ -28,6 +28,9 @@ interface MediaStorage
     /** Write an object (frames, generated assets). */
     public function put(string $key, string $contents, string $mimeType): void;
 
+    /** Presigned single PUT for small objects (editor images and attachments). The browser uploads directly; the API never proxies bytes. */
+    public function presignedPut(string $key, string $mimeType, int $ttlSeconds = 900): string;
+
     /** Signed GET URL; TTL ≤ 15 minutes (03 §4.3). */
     public function signedUrl(string $key, int $ttlSeconds = 900): string;
 

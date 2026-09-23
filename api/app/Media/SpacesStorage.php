@@ -72,6 +72,14 @@ final class SpacesStorage implements MediaStorage
         $this->client->putObject(['Bucket' => $this->bucket, 'Key' => $key, 'Body' => $contents, 'ContentType' => $mimeType, 'ACL' => 'private']);
     }
 
+    public function presignedPut(string $key, string $mimeType, int $ttlSeconds = 900): string
+    {
+        $ttl = min($ttlSeconds, 900);
+        $cmd = $this->client->getCommand('PutObject', ['Bucket' => $this->bucket, 'Key' => $key, 'ContentType' => $mimeType, 'ACL' => 'private']);
+
+        return (string) $this->client->createPresignedRequest($cmd, "+{$ttl} seconds")->getUri();
+    }
+
     public function signedUrl(string $key, int $ttlSeconds = 900): string
     {
         $ttl = min($ttlSeconds, 900);

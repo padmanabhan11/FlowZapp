@@ -1,5 +1,7 @@
 <section class="browser">
-  @if (isAdmin()) { <a class="browser__perm" [routerLink]="['/admin/spaces', spaceId()]">Permissions</a> }
+  @if (isAdmin()) {
+    <a class="browser__perm" [routerLink]="['/admin/spaces', spaceId()]">Permissions</a>
+  }
   <nav class="browser__crumbs" aria-label="Breadcrumb">
     <a [routerLink]="['/s', spaceId()]">{{ space()?.name ?? '…' }}</a>
     @for (c of crumbs(); track c.id) {
@@ -13,7 +15,16 @@
   }
 
   <div class="browser__filters">
-    <p-select [options]="stateOptions" optionLabel="label" optionValue="value" [ngModel]="stateFilter()" (ngModelChange)="setStateFilter($event)" placeholder="All states" [showClear]="true" aria-label="Filter by state" />
+    <p-select
+      [options]="stateOptions"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="stateFilter()"
+      (ngModelChange)="setStateFilter($event)"
+      placeholder="All states"
+      [showClear]="true"
+      aria-label="Filter by state"
+    />
   </div>
 
   <div class="browser__list document-surface">
@@ -35,14 +46,20 @@
         } @else {
           <a class="browser__folder" [routerLink]="['/s', spaceId(), 'f', f.id]">📁 {{ f.name }}</a>
           @if (canEdit()) {
-            <button pButton type="button" [text]="true" size="small" (click)="startRename(f)">Rename</button>
+            <button pButton type="button" [text]="true" size="small" (click)="startRename(f)">
+              Rename
+            </button>
           }
         }
       </div>
     }
     @for (d of documents(); track d.id) {
       <div class="browser__row browser__row--doc">
-        <a class="browser__doc" [routerLink]="d.approved_version_id ? ['/d', d.id] : ['/d', d.id, 'edit']">{{ d.title }}</a>
+        <a
+          class="browser__doc"
+          [routerLink]="d.approved_version_id ? ['/d', d.id] : ['/d', d.id, 'edit']"
+          >{{ d.title }}</a
+        >
         <span class="state-pill state-pill--{{ d.state }}">{{ stateLabel(d.state) }}</span>
         <span class="browser__meta">{{ d.owner?.name ?? '—' }}</span>
         <span class="browser__meta control-value">{{ d.updated_at | date: 'd MMM y' }}</span>
@@ -52,13 +69,51 @@
 
   @if (canEdit()) {
     <form class="browser__new" (ngSubmit)="createDocument()">
-      <input pInputText name="doctitle" [ngModel]="newDocTitle()" (ngModelChange)="newDocTitle.set($event)" placeholder="New document title" aria-label="New document title" />
-      <p-select [options]="templates()" optionLabel="name" optionValue="id" [ngModel]="newDocTemplate()" (ngModelChange)="newDocTemplate.set($event)" aria-label="Template" />
+      <input
+        pInputText
+        name="doctitle"
+        [ngModel]="newDocTitle()"
+        (ngModelChange)="newDocTitle.set($event)"
+        placeholder="New document title"
+        aria-label="New document title"
+      />
+      <p-select
+        [options]="templateGroups()"
+        [group]="true"
+        optionLabel="name"
+        optionValue="id"
+        [ngModel]="newDocTemplate()"
+        (ngModelChange)="newDocTemplate.set($event)"
+        aria-label="Template"
+      />
       <button pButton type="submit" [disabled]="!newDocTitle().trim()">Create document</button>
+      @if (selectedTemplate(); as t) {
+        @if (t.custom && canDeleteTemplate(t)) {
+          <button pButton type="button" [text]="true" size="small" (click)="deleteTemplate(t)">
+            Delete template
+          </button>
+        }
+      }
     </form>
+    @if (selectedTemplate()?.custom) {
+      <p class="browser__hint">
+        Workspace template{{
+          selectedTemplate()?.created_by ? ' by ' + selectedTemplate()?.created_by?.name : ''
+        }}{{ selectedTemplate()?.description ? ' — ' + selectedTemplate()?.description : '' }}
+      </p>
+    }
     <form class="browser__new" (ngSubmit)="createFolder()">
-      <input pInputText name="folder" [ngModel]="newName()" (ngModelChange)="newName.set($event)" placeholder="New folder name" aria-label="New folder name" />
-      <button pButton type="submit" [outlined]="true" [disabled]="!newName().trim()">Create folder</button>
+      <input
+        pInputText
+        name="folder"
+        [ngModel]="newName()"
+        (ngModelChange)="newName.set($event)"
+        placeholder="New folder name"
+        aria-label="New folder name"
+      />
+      <button pButton type="submit" [outlined]="true" [disabled]="!newName().trim()">
+        Create folder
+      </button>
     </form>
   }
 </section>

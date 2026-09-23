@@ -21,6 +21,17 @@
           type="button"
           [text]="true"
           size="small"
+          (click)="templateForm.set(!templateForm())"
+        >
+          Save as template
+        </button>
+      }
+      @if (d.state !== 'archived') {
+        <button
+          pButton
+          type="button"
+          [text]="true"
+          size="small"
           (click)="assist.set(!assist())"
           [attr.aria-pressed]="assist()"
         >
@@ -53,6 +64,49 @@
       </p>
     }
 
+    @if (recovered(); as r) {
+      <div class="editor__banner editor__banner--recover" role="status">
+        @if (r.kind === 'restore') {
+          Unsaved changes from {{ r.entry.savedAt | date: 'MMM d, HH:mm' }} were kept on this device
+          when the page closed.
+          <button pButton type="button" size="small" (click)="restoreBackup()">Restore them</button>
+          <button pButton type="button" size="small" [text]="true" (click)="discardBackup()">
+            Discard
+          </button>
+        } @else {
+          Unsaved changes from {{ r.entry.savedAt | date: 'MMM d, HH:mm' }} were kept on this
+          device, but the document has changed since, so they can't be applied safely.
+          <button pButton type="button" size="small" [text]="true" (click)="discardBackup()">
+            Discard them
+          </button>
+        }
+      </div>
+    }
+    @if (templateForm()) {
+      <form class="editor__tpl" (ngSubmit)="saveTemplate()">
+        <label for="tpl-name">Template name</label>
+        <input
+          pInputText
+          id="tpl-name"
+          name="tplName"
+          [ngModel]="templateName()"
+          (ngModelChange)="templateName.set($event)"
+          placeholder="e.g. Month-end close"
+        />
+        <button pButton type="submit" size="small" [disabled]="templateName().trim().length < 2">
+          Save template
+        </button>
+        <button pButton type="button" size="small" [text]="true" (click)="templateForm.set(false)">
+          Cancel
+        </button>
+        <span class="editor__hint"
+          >Copies the structure, text and steps — not images — for everyone in the workspace.</span
+        >
+      </form>
+    }
+    @if (templateNotice(); as n) {
+      <p class="editor__hint" role="status">{{ n }}</p>
+    }
     @if (liveVersionBanner()) {
       <div class="editor__banner" role="status">
         You're editing a new draft. The approved version stays live until this is approved.
@@ -133,91 +187,106 @@
         @if (d.doc_type === 'sop') {
           <section class="steps">
             <h2>Steps</h2>
-            @for (s of steps(); track s.id; let i = $index) {
-              <div class="step" [class.step--critical]="s.is_critical">
-                <span class="step__n control-value">{{ s.position }}</span>
-                <div class="step__body">
-                  <textarea
-                    pTextarea
-                    rows="1"
-                    [ngModel]="s.instruction"
-                    (ngModelChange)="patchStep(s, { instruction: $event })"
-                    aria-label="Step instruction"
-                  ></textarea>
-                  <input
-                    pInputText
-                    [ngModel]="s.note ?? ''"
-                    (ngModelChange)="patchStep(s, { note: $event || null })"
-                    placeholder="Note or warning (optional)"
-                    aria-label="Step note"
-                  />
-                  <input
-                    pInputText
-                    [ngModel]="s.expected_result ?? ''"
-                    (ngModelChange)="patchStep(s, { expected_result: $event || null })"
-                    placeholder="Expected result (optional)"
-                    aria-label="Expected result"
-                  />
-                  <div class="step__flags">
-                    <label [attr.for]="'crit-' + s.id"
-                      ><p-checkbox
-                        [inputId]="'crit-' + s.id"
-                        [binary]="true"
-                        [ngModel]="s.is_critical"
-                        (ngModelChange)="patchStep(s, { is_critical: $event })"
-                      />
-                      Critical</label
+            <div
+              cdkDropList
+              [cdkDropListData]="steps()"
+              (cdkDropListDropped)="dropStep($event)"
+              cdkDropListLockAxis="y"
+            >
+              @for (s of steps(); track s.id; let i = $index) {
+                <div class="step" [class.step--critical]="s.is_critical" cdkDrag [cdkDragData]="s">
+                  <span class="step__n control-value"
+                    ><span
+                      class="step__grip"
+                      cdkDragHandle
+                      aria-label="Drag to reorder"
+                      title="Drag to reorder"
+                      >⠿</span
+                    >{{ s.position }}</span
+                  >
+                  <div class="step__body">
+                    <textarea
+                      pTextarea
+                      rows="1"
+                      [ngModel]="s.instruction"
+                      (ngModelChange)="patchStep(s, { instruction: $event })"
+                      aria-label="Step instruction"
+                    ></textarea>
+                    <input
+                      pInputText
+                      [ngModel]="s.note ?? ''"
+                      (ngModelChange)="patchStep(s, { note: $event || null })"
+                      placeholder="Note or warning (optional)"
+                      aria-label="Step note"
+                    />
+                    <input
+                      pInputText
+                      [ngModel]="s.expected_result ?? ''"
+                      (ngModelChange)="patchStep(s, { expected_result: $event || null })"
+                      placeholder="Expected result (optional)"
+                      aria-label="Expected result"
+                    />
+                    <div class="step__flags">
+                      <label [attr.for]="'crit-' + s.id"
+                        ><p-checkbox
+                          [inputId]="'crit-' + s.id"
+                          [binary]="true"
+                          [ngModel]="s.is_critical"
+                          (ngModelChange)="patchStep(s, { is_critical: $event })"
+                        />
+                        Critical</label
+                      >
+                      <label [attr.for]="'chk-' + s.id"
+                        ><p-checkbox
+                          [inputId]="'chk-' + s.id"
+                          [binary]="true"
+                          [ngModel]="s.is_checkpoint"
+                          (ngModelChange)="patchStep(s, { is_checkpoint: $event })"
+                        />
+                        Checkpoint</label
+                      >
+                      @if (s.source_ts_start !== null) {
+                        <span class="control-value">⏱ {{ s.source_ts_start }}s</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="step__actions">
+                    <button
+                      pButton
+                      type="button"
+                      [text]="true"
+                      size="small"
+                      aria-label="Move up"
+                      [disabled]="i === 0"
+                      (click)="moveStep(s, -1)"
                     >
-                    <label [attr.for]="'chk-' + s.id"
-                      ><p-checkbox
-                        [inputId]="'chk-' + s.id"
-                        [binary]="true"
-                        [ngModel]="s.is_checkpoint"
-                        (ngModelChange)="patchStep(s, { is_checkpoint: $event })"
-                      />
-                      Checkpoint</label
+                      ↑
+                    </button>
+                    <button
+                      pButton
+                      type="button"
+                      [text]="true"
+                      size="small"
+                      aria-label="Move down"
+                      [disabled]="i === steps().length - 1"
+                      (click)="moveStep(s, 1)"
                     >
-                    @if (s.source_ts_start !== null) {
-                      <span class="control-value">⏱ {{ s.source_ts_start }}s</span>
-                    }
+                      ↓
+                    </button>
+                    <button
+                      pButton
+                      type="button"
+                      [text]="true"
+                      size="small"
+                      aria-label="Delete step"
+                      (click)="deleteStep(s)"
+                    >
+                      ✕
+                    </button>
                   </div>
                 </div>
-                <div class="step__actions">
-                  <button
-                    pButton
-                    type="button"
-                    [text]="true"
-                    size="small"
-                    aria-label="Move up"
-                    [disabled]="i === 0"
-                    (click)="moveStep(s, -1)"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    pButton
-                    type="button"
-                    [text]="true"
-                    size="small"
-                    aria-label="Move down"
-                    [disabled]="i === steps().length - 1"
-                    (click)="moveStep(s, 1)"
-                  >
-                    ↓
-                  </button>
-                  <button
-                    pButton
-                    type="button"
-                    [text]="true"
-                    size="small"
-                    aria-label="Delete step"
-                    (click)="deleteStep(s)"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            }
+              }
+            </div>
             <form class="step__new" (ngSubmit)="addStep()">
               <span class="step__n control-value">{{ steps().length + 1 }}</span>
               <input
@@ -245,7 +314,11 @@
           @if (d.doc_type === 'sop') {
             <h2 class="blocks__h">Additional content</h2>
           }
-          <app-block-editor [blocks]="d.content.blocks" (changed)="setBlocks($event)" />
+          <app-block-editor
+            [blocks]="d.content.blocks"
+            [documentId]="d.id"
+            (changed)="setBlocks($event)"
+          />
         </section>
 
         <section class="slot">

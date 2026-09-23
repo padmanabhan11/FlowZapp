@@ -11,8 +11,11 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Ai\AiController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Billing\BillingController;
+use App\Http\Controllers\Documents\DocumentAssetController;
 use App\Http\Controllers\Documents\DocumentController;
+use App\Http\Controllers\Documents\DocumentLinkController;
 use App\Http\Controllers\Documents\StepController;
+use App\Http\Controllers\Documents\TemplateController;
 use App\Http\Controllers\Governance\ApprovalController;
 use App\Http\Controllers\Handbook\AcknowledgementController;
 use App\Http\Controllers\Handbook\HandbookController;
@@ -86,7 +89,13 @@ Route::prefix('v1')->group(function (): void {
             Route::delete('/folders/{id}/permissions/{user_id}', [FolderPermissionController::class, 'unset']);
             Route::get('/spaces/{id}/access', [FolderPermissionController::class, 'spaceAccess']);
 
-            Route::get('/templates', [DocumentController::class, 'templates']);
+            Route::get('/templates', [TemplateController::class, 'index']);
+            Route::post('/templates', [TemplateController::class, 'store']);
+            Route::delete('/templates/{id}', [TemplateController::class, 'destroy']);
+            Route::post('/document-links/resolve', [DocumentLinkController::class, 'resolve']);
+            Route::get('/documents/{id}/backlinks', [DocumentLinkController::class, 'backlinks']);
+            Route::post('/documents/{id}/assets', [DocumentAssetController::class, 'store']);
+            Route::post('/documents/{id}/assets/{asset_id}/complete', [DocumentAssetController::class, 'complete']);
             Route::get('/documents', [DocumentController::class, 'index']);
             Route::post('/documents', [DocumentController::class, 'store']);
             Route::get('/documents/{id}', [DocumentController::class, 'show']);

@@ -72,12 +72,19 @@ export type BlockType =
   | 'divider'
   | 'link';
 
+export interface ListItem {
+  text: string;
+  checked?: boolean;
+  level?: number;
+}
+
 export interface Block {
   id: string;
   type: BlockType;
   text?: string | null;
   level?: 1 | 2 | 3;
-  items?: (string | { text: string; checked?: boolean })[];
+  /** Plain strings, or objects when an item is checked (checklist) or nested (level 1–3, B6). */
+  items?: (string | ListItem)[];
   variant?: 'info' | 'warning' | 'danger';
   asset_id?: string | null;
   document_id?: string | null;
@@ -138,6 +145,9 @@ export interface Template {
   name: string;
   doc_type: DocType;
   description: string;
+  custom?: boolean;
+  created_by?: { id: string; name: string } | null;
+  step_count?: number;
 }
 
 export type RecordingState =

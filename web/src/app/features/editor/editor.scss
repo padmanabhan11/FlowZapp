@@ -149,3 +149,31 @@
     margin: 0;
   }
 }
+
+.step.cdk-drag-preview {
+  background: var(--paper);
+  box-shadow: 0 4px 16px rgba(30, 39, 97, 0.18);
+  padding: 10px;
+}
+.step.cdk-drag-placeholder {
+  opacity: 0.35;
+}
+.cdk-drop-list-dragging .step:not(.cdk-drag-placeholder) {
+  transition: transform 150ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cdk-drop-list-dragging .step {
+    transition: none !important;
+  }
+}
+
+.step__n {
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+}
+.step__grip {
+  cursor: grab;
+  color: var(--ink-soft);
+  user-select: none;
+}

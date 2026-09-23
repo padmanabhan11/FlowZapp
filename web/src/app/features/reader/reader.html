@@ -129,28 +129,19 @@
             <hr />
           }
           @case ('bullet_list') {
-            <ul>
-              @for (i of b.items ?? []; track $index) {
-                <li>{{ $any(i).text ?? i }}</li>
-              }
-            </ul>
+            <ng-container
+              *ngTemplateOutlet="listTpl; context: { $implicit: tree(b), kind: 'ul' }"
+            />
           }
           @case ('numbered_list') {
-            <ol>
-              @for (i of b.items ?? []; track $index) {
-                <li>{{ $any(i).text ?? i }}</li>
-              }
-            </ol>
+            <ng-container
+              *ngTemplateOutlet="listTpl; context: { $implicit: tree(b), kind: 'ol' }"
+            />
           }
           @case ('checklist') {
-            <ul class="reader__checklist">
-              @for (i of b.items ?? []; track $index) {
-                <li>
-                  <span class="reader__box control-value">{{ $any(i).checked ? '☑' : '☐' }}</span>
-                  {{ $any(i).text ?? i }}
-                </li>
-              }
-            </ul>
+            <ng-container
+              *ngTemplateOutlet="listTpl; context: { $implicit: tree(b), kind: 'check' }"
+            />
           }
           @case ('callout') {
             <aside class="reader__callout reader__callout--{{ b.variant ?? 'info' }}">
@@ -180,13 +171,43 @@
           }
           @case ('image') {
             @if (b.asset_id && frames()[b.asset_id]) {
-              <img class="rs__frame" [src]="frames()[b.asset_id]" alt="" loading="lazy" />
+              <figure class="reader__figure">
+                <img
+                  class="rs__frame"
+                  [src]="frames()[b.asset_id]"
+                  [alt]="b.text || ''"
+                  loading="lazy"
+                />
+                @if (b.text) {
+                  <figcaption>{{ b.text }}</figcaption>
+                }
+              </figure>
+            }
+          }
+          @case ('file') {
+            @if (b.asset_id && frames()[b.asset_id]) {
+              <p class="reader__file">
+                <span class="control-value">📎</span>
+                <a [href]="frames()[b.asset_id]" target="_blank" rel="noopener">{{
+                  b.text || 'Attachment'
+                }}</a>
+              </p>
             }
           }
           @case ('link') {
-            <p>
-              <a [href]="b.text" rel="noopener" target="_blank">{{ b.text }}</a>
-            </p>
+            @if (b.document_id) {
+              @if (linkTargets()[b.document_id]; as t) {
+                <p class="reader__doclink">
+                  ↪ <a [routerLink]="['/d', t.id]">{{ t.title }}</a>
+                </p>
+              } @else if (linksResolved()) {
+                <p class="reader__doclink reader__doclink--gone">↪ Linked document unavailable</p>
+              }
+            } @else {
+              <p>
+                <a [href]="b.text" rel="noopener" target="_blank">{{ b.text }}</a>
+              </p>
+            }
           }
           @default {
             <p>{{ b.text }}</p>
@@ -201,5 +222,50 @@
         <p>{{ d.content.outcome }}</p>
       </section>
     }
+    @if (backlinks().length) {
+      <section class="reader__slot reader__backlinks" aria-labelledby="backlinks-h">
+        <h2 id="backlinks-h">Linked from</h2>
+        <ul>
+          @for (l of backlinks(); track l.id) {
+            <li>
+              <a [routerLink]="['/d', l.id]">{{ l.title }}</a>
+            </li>
+          }
+        </ul>
+      </section>
+    }
   </article>
+
+  <ng-template #listTpl let-nodes let-kind="kind">
+    @if (kind === 'ol') {
+      <ol>
+        @for (n of nodes; track $index) {
+          <li>
+            {{ n.text }}
+            @if (n.children.length) {
+              <ng-container
+                *ngTemplateOutlet="listTpl; context: { $implicit: n.children, kind: kind }"
+              />
+            }
+          </li>
+        }
+      </ol>
+    } @else {
+      <ul [class.reader__checklist]="kind === 'check'">
+        @for (n of nodes; track $index) {
+          <li>
+            @if (kind === 'check') {
+              <span class="reader__box control-value">{{ n.checked ? '☑' : '☐' }}</span>
+            }
+            {{ n.text }}
+            @if (n.children.length) {
+              <ng-container
+                *ngTemplateOutlet="listTpl; context: { $implicit: n.children, kind: kind }"
+              />
+            }
+          </li>
+        }
+      </ul>
+    }
+  </ng-template>
 }

@@ -1,93 +1,82 @@
-<div class="be">
-  @for (b of blocks(); track b.id; let i = $index) {
-    <div class="be__block" [class]="'be__block be__block--' + b.type">
-      <div class="be__gutter">
-        <button
-          type="button"
-          class="be__g"
-          (click)="move(i, -1)"
-          [disabled]="i === 0"
-          aria-label="Move block up"
-        >
-          ↑
-        </button>
-        <button
-          type="button"
-          class="be__g"
-          (click)="move(i, 1)"
-          [disabled]="i === blocks().length - 1"
-          aria-label="Move block down"
-        >
-          ↓
-        </button>
-        <button type="button" class="be__g" (click)="remove(i)" aria-label="Remove block">✕</button>
-      </div>
+<div class="be" (drop)="onFileDrop($event, null)" (dragover)="onDragOver($event)">
+  @if (uploadError(); as e) {
+    <p class="be__error" role="alert">{{ e }}</p>
+  }
+  <div
+    cdkDropList
+    [cdkDropListData]="blocks()"
+    (cdkDropListDropped)="drop($event)"
+    cdkDropListLockAxis="y"
+    class="be__list-wrap"
+  >
+    @for (b of blocks(); track b.id; let i = $index) {
+      <div
+        class="be__block"
+        [class]="'be__block be__block--' + b.type"
+        cdkDrag
+        [cdkDragData]="b"
+        (drop)="onFileDrop($event, i)"
+      >
+        <div class="be__gutter">
+          <button
+            type="button"
+            class="be__g be__grip"
+            cdkDragHandle
+            aria-label="Drag to reorder"
+            title="Drag to reorder"
+          >
+            ⠿
+          </button>
+          <button
+            type="button"
+            class="be__g"
+            (click)="move(i, -1)"
+            [disabled]="i === 0"
+            aria-label="Move block up"
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            class="be__g"
+            (click)="move(i, 1)"
+            [disabled]="i === blocks().length - 1"
+            aria-label="Move block down"
+          >
+            ↓
+          </button>
+          <button type="button" class="be__g" (click)="remove(i)" aria-label="Remove block">
+            ✕
+          </button>
+        </div>
 
-      <div class="be__body">
-        @switch (b.type) {
-          @case ('heading') {
-            <div class="be__row">
-              <select
-                class="be__mini"
-                [ngModel]="b.level ?? 2"
-                (ngModelChange)="setLevel(i, $event)"
-                aria-label="Heading level"
-              >
-                <option [ngValue]="1">H1</option>
-                <option [ngValue]="2">H2</option>
-                <option [ngValue]="3">H3</option>
-              </select>
-              <input
-                #field
-                class="be__heading"
-                [class]="'be__heading be__heading--' + (b.level ?? 2)"
-                [ngModel]="b.text ?? ''"
-                (ngModelChange)="setText(i, $event)"
-                (keydown)="onKey($event, i)"
-                (paste)="onPaste($event, i)"
-                placeholder="Heading"
-                aria-label="Heading"
-              />
-            </div>
-          }
-          @case ('bullet_list') {
-            <textarea
-              #field
-              class="be__list"
-              rows="2"
-              [value]="itemsText(b)"
-              (input)="setItems(i, $any($event.target).value); autosize($event.target)"
-              (keydown)="onKey($event, i)"
-              (paste)="onPaste($event, i)"
-              placeholder="One item per line"
-              aria-label="Bullet list items"
-            ></textarea>
-          }
-          @case ('numbered_list') {
-            <textarea
-              #field
-              class="be__list be__list--num"
-              rows="2"
-              [value]="itemsText(b)"
-              (input)="setItems(i, $any($event.target).value); autosize($event.target)"
-              (keydown)="onKey($event, i)"
-              (paste)="onPaste($event, i)"
-              placeholder="One item per line, numbered automatically"
-              aria-label="Numbered list items"
-            ></textarea>
-          }
-          @case ('checklist') {
-            <div class="be__check">
-              <div class="be__check-boxes" aria-hidden="true">
-                @for (it of b.items ?? []; track $index) {
-                  <input
-                    type="checkbox"
-                    [checked]="itemChecked(it)"
-                    (change)="toggleItem(i, $index)"
-                    tabindex="-1"
-                  />
-                }
+        <div class="be__body">
+          @switch (b.type) {
+            @case ('heading') {
+              <div class="be__row">
+                <select
+                  class="be__mini"
+                  [ngModel]="b.level ?? 2"
+                  (ngModelChange)="setLevel(i, $event)"
+                  aria-label="Heading level"
+                >
+                  <option [ngValue]="1">H1</option>
+                  <option [ngValue]="2">H2</option>
+                  <option [ngValue]="3">H3</option>
+                </select>
+                <input
+                  #field
+                  [class]="'be__heading be__heading--' + (b.level ?? 2)"
+                  [ngModel]="b.text ?? ''"
+                  (ngModelChange)="setText(i, $event)"
+                  (keydown)="onKey($event, i)"
+                  (paste)="onPaste($event, i)"
+                  placeholder="Heading"
+                  aria-label="Heading"
+                />
               </div>
+            }
+            @case ('bullet_list') {
               <textarea
                 #field
                 class="be__list"
@@ -96,158 +85,311 @@
                 (input)="setItems(i, $any($event.target).value); autosize($event.target)"
                 (keydown)="onKey($event, i)"
                 (paste)="onPaste($event, i)"
-                placeholder="One item per line"
-                aria-label="Checklist items"
+                placeholder="One item per line — Tab to nest"
+                aria-label="Bullet list items"
               ></textarea>
-            </div>
-          }
-          @case ('callout') {
-            <div class="be__row be__row--top">
-              <select
-                class="be__mini"
-                [ngModel]="b.variant ?? 'info'"
-                (ngModelChange)="setVariant(i, $event)"
-                aria-label="Callout kind"
-              >
-                <option value="info">Info</option>
-                <option value="warning">Warning</option>
-                <option value="danger">Danger</option>
-              </select>
+            }
+            @case ('numbered_list') {
               <textarea
                 #field
-                class="be__callout"
-                [class]="'be__callout be__callout--' + (b.variant ?? 'info')"
+                class="be__list be__list--num"
                 rows="2"
+                [value]="itemsText(b)"
+                (input)="setItems(i, $any($event.target).value); autosize($event.target)"
+                (keydown)="onKey($event, i)"
+                (paste)="onPaste($event, i)"
+                placeholder="One item per line — Tab to nest"
+                aria-label="Numbered list items"
+              ></textarea>
+            }
+            @case ('checklist') {
+              <div class="be__check">
+                <div class="be__check-boxes" aria-hidden="true">
+                  @for (it of b.items ?? []; track $index) {
+                    <input
+                      type="checkbox"
+                      [checked]="itemChecked(it)"
+                      (change)="toggleItem(i, $index)"
+                      tabindex="-1"
+                    />
+                  }
+                </div>
+                <textarea
+                  #field
+                  class="be__list"
+                  rows="2"
+                  [value]="itemsText(b)"
+                  (input)="setItems(i, $any($event.target).value); autosize($event.target)"
+                  (keydown)="onKey($event, i)"
+                  (paste)="onPaste($event, i)"
+                  placeholder="One item per line — Tab to nest"
+                  aria-label="Checklist items"
+                ></textarea>
+              </div>
+            }
+            @case ('callout') {
+              <div class="be__row be__row--top">
+                <select
+                  class="be__mini"
+                  [ngModel]="b.variant ?? 'info'"
+                  (ngModelChange)="setVariant(i, $event)"
+                  aria-label="Callout kind"
+                >
+                  <option value="info">Info</option>
+                  <option value="warning">Warning</option>
+                  <option value="danger">Danger</option>
+                </select>
+                <textarea
+                  #field
+                  [class]="'be__callout be__callout--' + (b.variant ?? 'info')"
+                  rows="2"
+                  [ngModel]="b.text ?? ''"
+                  (ngModelChange)="setText(i, $event)"
+                  (keydown)="onKey($event, i)"
+                  (paste)="onPaste($event, i)"
+                  (input)="autosize($event.target)"
+                  placeholder="Something the reader must not miss"
+                  aria-label="Callout"
+                ></textarea>
+              </div>
+            }
+            @case ('code') {
+              <div class="be__row be__row--top">
+                <input
+                  class="be__mini be__mini--lang"
+                  [ngModel]="b.language ?? ''"
+                  (ngModelChange)="setLanguage(i, $event)"
+                  placeholder="lang"
+                  aria-label="Code language"
+                />
+                <textarea
+                  #field
+                  class="be__code"
+                  rows="3"
+                  spellcheck="false"
+                  [ngModel]="b.text ?? ''"
+                  (ngModelChange)="setText(i, $event)"
+                  (input)="autosize($event.target)"
+                  aria-label="Code"
+                ></textarea>
+              </div>
+            }
+            @case ('table') {
+              <div class="be__table" role="group" aria-label="Table">
+                @for (row of b.rows ?? []; track $index; let r = $index) {
+                  <div class="be__tr">
+                    @for (cell of row; track $index; let c = $index) {
+                      <input
+                        class="be__td"
+                        [class.be__td--head]="r === 0"
+                        [value]="cell"
+                        (input)="setCell(i, r, c, $any($event.target).value)"
+                        [attr.aria-label]="'Row ' + (r + 1) + ' column ' + (c + 1)"
+                      />
+                    }
+                    <button
+                      type="button"
+                      class="be__g"
+                      (click)="removeRow(i, r)"
+                      [disabled]="(b.rows ?? []).length <= 1"
+                      aria-label="Remove row"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                }
+                <div class="be__tbtns">
+                  <button pButton type="button" [text]="true" size="small" (click)="addRow(i)">
+                    + Row
+                  </button>
+                  <button pButton type="button" [text]="true" size="small" (click)="addCol(i)">
+                    + Column
+                  </button>
+                </div>
+              </div>
+            }
+            @case ('divider') {
+              <hr #field tabindex="0" (keydown)="onKey($event, i)" aria-label="Divider" />
+            }
+            @case ('image') {
+              @if (uploading().has(b.id)) {
+                <p class="be__asset">Uploading image…</p>
+              } @else if (b.asset_id) {
+                <figure class="be__figure">
+                  @if (assetUrls()[b.asset_id]; as url) {
+                    <img [src]="url" [alt]="b.text || 'Image'" />
+                  } @else {
+                    <p class="be__asset">Loading preview…</p>
+                  }
+                  <input
+                    #field
+                    class="be__caption"
+                    [ngModel]="b.text ?? ''"
+                    (ngModelChange)="setText(i, $event)"
+                    placeholder="Caption and alt text (what the image shows)"
+                    aria-label="Image caption"
+                  />
+                </figure>
+              } @else {
+                <button
+                  #field
+                  type="button"
+                  class="be__asset be__asset--pick"
+                  (click)="pickFile(b.id, 'image')"
+                >
+                  Choose an image, paste one, or drop it here
+                </button>
+              }
+            }
+            @case ('file') {
+              @if (uploading().has(b.id)) {
+                <p class="be__asset">Uploading file…</p>
+              } @else if (b.asset_id) {
+                <p class="be__asset be__asset--file">
+                  <span class="control-value">📎</span>
+                  <input
+                    #field
+                    class="be__caption"
+                    [ngModel]="b.text ?? ''"
+                    (ngModelChange)="setText(i, $event)"
+                    placeholder="File name"
+                    aria-label="File name"
+                  />
+                  @if (assetUrls()[b.asset_id]; as url) {
+                    <a [href]="url" target="_blank" rel="noopener">Open</a>
+                  }
+                </p>
+              } @else {
+                <button
+                  #field
+                  type="button"
+                  class="be__asset be__asset--pick"
+                  (click)="pickFile(b.id, 'file')"
+                >
+                  Choose a file or drop it here
+                </button>
+              }
+            }
+            @case ('link') {
+              @if (
+                (b.document_id !== undefined && b.document_id !== null) || pickerFor() === b.id
+              ) {
+                <div class="be__doclink">
+                  @switch (linkState(b)) {
+                    @case ('ok') {
+                      <span class="be__doclink-t">↪ {{ links()[b.document_id!].title }}</span>
+                      <span class="be__hint">{{
+                        links()[b.document_id!].state === 'approved'
+                          ? 'published'
+                          : links()[b.document_id!].state
+                      }}</span>
+                    }
+                    @case ('unavailable') {
+                      <span class="be__doclink-t be__doclink-t--broken"
+                        >↪ {{ b.text || 'Linked document' }}</span
+                      >
+                      <span class="be__hint"
+                        >Unavailable — deleted, or not visible to you. Readers will see it as
+                        unavailable.</span
+                      >
+                    }
+                    @default {
+                      @if (b.document_id) {
+                        <span class="be__hint">Checking link…</span>
+                      }
+                    }
+                  }
+                  <button #field type="button" class="be__g be__g--text" (click)="openPicker(b.id)">
+                    {{ b.document_id ? 'Change' : 'Choose document' }}
+                  </button>
+                </div>
+                @if (pickerFor() === b.id) {
+                  <div class="be__picker" role="dialog" aria-label="Link to a document">
+                    <input
+                      class="be__picker-q"
+                      [ngModel]="pickerQuery()"
+                      (ngModelChange)="setPickerQuery($event)"
+                      placeholder="Search documents by title"
+                      aria-label="Search documents"
+                    />
+                    <ul class="be__picker-list">
+                      @for (d of pickerResults(); track d.id) {
+                        <li>
+                          <button type="button" (click)="chooseTarget(b.id, d)">
+                            <span>{{ d.title }}</span
+                            ><span class="be__hint">{{
+                              d.state === 'in_review' ? 'in review' : d.state
+                            }}</span>
+                          </button>
+                        </li>
+                      }
+                      @if (pickerResults().length === 0) {
+                        <li class="be__hint">No documents match.</li>
+                      }
+                    </ul>
+                    <button type="button" class="be__g be__g--text" (click)="pickerFor.set(null)">
+                      Cancel
+                    </button>
+                  </div>
+                }
+              } @else {
+                <input
+                  #field
+                  class="be__para"
+                  [ngModel]="b.text ?? ''"
+                  (ngModelChange)="setText(i, $event)"
+                  placeholder="https://…"
+                  aria-label="Web link"
+                />
+              }
+            }
+            @case ('video') {
+              <p class="be__asset control-value">Video · {{ b.asset_id }}</p>
+            }
+            @default {
+              <textarea
+                #field
+                class="be__para"
+                rows="1"
                 [ngModel]="b.text ?? ''"
                 (ngModelChange)="setText(i, $event)"
                 (keydown)="onKey($event, i)"
                 (paste)="onPaste($event, i)"
                 (input)="autosize($event.target)"
-                placeholder="Something the reader must not miss"
-                aria-label="Callout"
+                placeholder="Type, or / for a block"
+                aria-label="Paragraph"
               ></textarea>
-            </div>
-          }
-          @case ('code') {
-            <div class="be__row be__row--top">
-              <input
-                class="be__mini be__mini--lang"
-                [ngModel]="b.language ?? ''"
-                (ngModelChange)="setLanguage(i, $event)"
-                placeholder="lang"
-                aria-label="Code language"
-              />
-              <textarea
-                #field
-                class="be__code"
-                rows="3"
-                spellcheck="false"
-                [ngModel]="b.text ?? ''"
-                (ngModelChange)="setText(i, $event)"
-                (input)="autosize($event.target)"
-                aria-label="Code"
-              ></textarea>
-            </div>
-          }
-          @case ('table') {
-            <div class="be__table" role="group" aria-label="Table">
-              @for (row of b.rows ?? []; track $index; let r = $index) {
-                <div class="be__tr">
-                  @for (cell of row; track $index; let c = $index) {
-                    <input
-                      class="be__td"
-                      [class.be__td--head]="r === 0"
-                      [value]="cell"
-                      (input)="setCell(i, r, c, $any($event.target).value)"
-                      [attr.aria-label]="'Row ' + (r + 1) + ' column ' + (c + 1)"
-                    />
+              @if (menuFor() === i) {
+                <ul class="be__menu" role="listbox" aria-label="Block type">
+                  @for (m of filteredMenu(); track m.type; let k = $index) {
+                    <li
+                      role="option"
+                      [attr.aria-selected]="k === menuIndex()"
+                      [class.is-on]="k === menuIndex()"
+                      (mousedown)="$event.preventDefault(); convert(i, m.type)"
+                    >
+                      <span>{{ m.label }}</span
+                      ><span class="be__menu-hint">{{ m.hint }}</span>
+                    </li>
                   }
-                  <button
-                    type="button"
-                    class="be__g"
-                    (click)="removeRow(i, r)"
-                    [disabled]="(b.rows ?? []).length <= 1"
-                    aria-label="Remove row"
-                  >
-                    ✕
-                  </button>
-                </div>
+                  @if (filteredMenu().length === 0) {
+                    <li class="be__menu-hint">No block matches “{{ menuFilter() }}”</li>
+                  }
+                </ul>
               }
-              <div class="be__tbtns">
-                <button pButton type="button" [text]="true" size="small" (click)="addRow(i)">
-                  + Row
-                </button>
-                <button pButton type="button" [text]="true" size="small" (click)="addCol(i)">
-                  + Column
-                </button>
-              </div>
-            </div>
-          }
-          @case ('divider') {
-            <hr #field tabindex="0" (keydown)="onKey($event, i)" aria-label="Divider" />
-          }
-          @case ('image') {
-            <p class="be__asset control-value">Image · {{ b.asset_id }}</p>
-          }
-          @case ('video') {
-            <p class="be__asset control-value">Video · {{ b.asset_id }}</p>
-          }
-          @case ('file') {
-            <p class="be__asset control-value">File · {{ b.asset_id }}</p>
-          }
-          @case ('link') {
-            <input
-              #field
-              class="be__para"
-              [ngModel]="b.text ?? ''"
-              (ngModelChange)="setText(i, $event)"
-              placeholder="https://…"
-              aria-label="Link"
-            />
-          }
-          @default {
-            <textarea
-              #field
-              class="be__para"
-              rows="1"
-              [ngModel]="b.text ?? ''"
-              (ngModelChange)="setText(i, $event)"
-              (keydown)="onKey($event, i)"
-              (paste)="onPaste($event, i)"
-              (input)="autosize($event.target)"
-              placeholder="Type, or / for a block"
-              aria-label="Paragraph"
-            ></textarea>
-            @if (menuFor() === i) {
-              <ul class="be__menu" role="listbox" aria-label="Block type">
-                @for (m of filteredMenu(); track m.type; let k = $index) {
-                  <li
-                    role="option"
-                    [attr.aria-selected]="k === menuIndex()"
-                    [class.is-on]="k === menuIndex()"
-                    (mousedown)="$event.preventDefault(); convert(i, m.type)"
-                  >
-                    <span>{{ m.label }}</span
-                    ><span class="be__menu-hint">{{ m.hint }}</span>
-                  </li>
-                }
-                @if (filteredMenu().length === 0) {
-                  <li class="be__menu-hint">No block matches “{{ menuFilter() }}”</li>
-                }
-              </ul>
             }
           }
-        }
+        </div>
       </div>
-    </div>
-  }
+    }
+  </div>
   <div class="be__add">
     <button pButton type="button" [text]="true" size="small" (click)="append('paragraph')">
       + Paragraph
     </button>
     <span class="be__hint"
-      >Type <span class="control-value">/</span> in an empty paragraph for headings, lists,
-      callouts, code and tables. Paste keeps structure.</span
+      >Type <span class="control-value">/</span> for headings, lists, images, files, links and
+      tables. Drag ⠿ to reorder. Paste and drop keep structure.</span
     >
   </div>
 </div>

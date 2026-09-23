@@ -1,9 +1,10 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { PublishedDocument, Step } from '../../core/api.types';
-import { DocumentApi, GovernanceApi } from '../../core/document.api';
+import { Block, PublishedDocument, Step } from '../../core/api.types';
+import { ListNode, toTree } from '../../core/list-tree';
+import { DocumentApi, EditorApi, GovernanceApi, LinkTarget } from '../../core/document.api';
 import { AssetApi } from '../../core/recording.api';
 import { SessionStore } from '../../core/session.store';
 
@@ -15,7 +16,7 @@ import { SessionStore } from '../../core/session.store';
  */
 @Component({
   selector: 'app-reader',
-  imports: [DatePipe, ButtonModule, RouterLink],
+  imports: [DatePipe, NgTemplateOutlet, ButtonModule, RouterLink],
   templateUrl: './reader.html',
   styleUrl: './reader.scss',
 })
@@ -31,6 +32,10 @@ export class Reader implements OnInit {
   readonly doc = signal<PublishedDocument | null>(null);
   readonly frames = signal<Record<string, string>>({});
   readonly checked = signal<Set<string>>(new Set());
+  private readonly editorApi = inject(EditorApi);
+  readonly linkTargets = signal<Record<string, LinkTarget>>({});
+  readonly linksResolved = signal(false);
+  readonly backlinks = signal<LinkTarget[]>([]);
   readonly notPublished = signal(false);
   readonly error = signal<string | null>(null);
   readonly canEdit = computed(() =>
@@ -51,6 +56,20 @@ export class Reader implements OnInit {
             .then((u) => this.frames.update((f) => ({ ...f, [s.media_asset_id!]: u })))
             .catch(() => undefined);
       }
+      for (const b of d.content.blocks) {
+        if ((b.type === 'image' || b.type === 'file') && b.asset_id) {
+          const id = b.asset_id;
+          this.assets
+            .url(id)
+            .then((u) => this.frames.update((f) => ({ ...f, [id]: u })))
+            .catch(() => undefined);
+        }
+      }
+      void this.resolveLinks(d.content.blocks);
+      this.editorApi
+        .backlinks(d.id)
+        .then((l) => this.backlinks.set(l))
+        .catch(() => this.backlinks.set([]));
       this.scrollToCitation();
     } catch (e: unknown) {
       const err = e as { status?: number };
@@ -75,6 +94,29 @@ export class Reader implements OnInit {
         el.classList.add('is-cited');
       }
     });
+  }
+
+  /** B7: link targets the reader can open; anything else renders as unavailable, whatever the reason. */
+  private async resolveLinks(blocks: Block[]): Promise<void> {
+    const ids = [
+      ...new Set(
+        blocks
+          .filter((b) => b.type === 'link' && b.document_id)
+          .map((b) => b.document_id as string),
+      ),
+    ];
+    try {
+      const found = await this.editorApi.resolveLinks(ids);
+      this.linkTargets.set(Object.fromEntries(found.map((t) => [t.id, t])));
+    } catch {
+      this.linkTargets.set({});
+    } finally {
+      this.linksResolved.set(true);
+    }
+  }
+
+  tree(b: Block): ListNode[] {
+    return toTree(b.items ?? []);
   }
 
   toggle(s: Step): void {

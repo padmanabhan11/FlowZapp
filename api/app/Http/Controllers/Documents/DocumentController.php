@@ -85,12 +85,6 @@ final class DocumentController extends Controller
         return response()->json(['data' => $rows->map(fn (Document $d) => $this->summary($d))]);
     }
 
-    /** GET /v1/templates */
-    public function templates(): JsonResponse
-    {
-        return response()->json(['data' => array_map(fn ($t) => ['id' => $t['id'], 'name' => $t['name'], 'doc_type' => $t['doc_type'], 'description' => $t['description']], Templates::all())]);
-    }
-
     /** POST /v1/documents  body { space_id, folder_id?, title, doc_type?, template_id?, owner_id? } */
     public function store(Request $request): JsonResponse
     {

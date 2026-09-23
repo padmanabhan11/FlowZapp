@@ -1,5 +1,22 @@
+import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
+import {
+  CdkDrag,
+  CdkDragDrop,
+  CdkDragHandle,
+  CdkDropList,
+  moveItemInArray,
+} from '@angular/cdk/drag-drop';
+import {
+  Component,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -9,7 +26,8 @@ import { TextareaModule } from 'primeng/textarea';
 import { Block, DocumentFull, Step } from '../../core/api.types';
 import { Accepted, AssistPanel } from './assist-panel';
 import { BlockEditor } from './block-editor';
-import { DocumentApi, GovernanceApi } from '../../core/document.api';
+import { DocumentApi, EditorApi, GovernanceApi } from '../../core/document.api';
+import { DraftBackup, DraftBackupEntry } from './draft-backup';
 import { Router } from '@angular/router';
 
 /**
@@ -27,6 +45,7 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'app-editor',
   imports: [
+    DatePipe,
     FormsModule,
     ButtonModule,
     CheckboxModule,
@@ -34,6 +53,9 @@ import { Router } from '@angular/router';
     TextareaModule,
     RouterLink,
     BlockEditor,
+    CdkDropList,
+    CdkDrag,
+    CdkDragHandle,
     AssistPanel,
   ],
   templateUrl: './editor.html',
@@ -61,6 +83,16 @@ export class Editor implements OnInit, OnDestroy {
   readonly isApproved = computed(() => this.doc()?.state === 'approved');
   readonly prereqText = signal('');
   readonly assist = signal(false);
+  private readonly editorApi = inject(EditorApi);
+  private readonly backup = new DraftBackup();
+  /** B2-T3: an unsaved local copy found on open. */
+  readonly recovered = signal<{ entry: DraftBackupEntry; kind: 'restore' | 'conflict' } | null>(
+    null,
+  );
+  /** B5-T3: save-as-template form. */
+  readonly templateForm = signal(false);
+  readonly templateName = signal('');
+  readonly templateNotice = signal<string | null>(null);
   readonly newStep = signal('');
 
   /** Submit is blocked when: zero steps, missing Purpose, or missing Owner (S8 rules). */
@@ -86,6 +118,20 @@ export class Editor implements OnInit, OnDestroy {
     if (this.dirty()) void this.flush();
   }
 
+  /** B2-T3: the tab is being hidden or closed — send what is pending with keepalive; the local backup covers a failure. */
+  @HostListener('window:pagehide')
+  onPageHide(): void {
+    const d = this.doc();
+    if (!d || !this.dirty() || this.conflict()) return;
+    this.api.patchKeepalive(d.id, { ...this.pending, expected_updated_at: d.updated_at });
+  }
+
+  /** Warn before closing with unsaved edits (the browser shows its own wording). */
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(ev: BeforeUnloadEvent): void {
+    if (this.dirty() || this.saving()) ev.preventDefault();
+  }
+
   async load(): Promise<void> {
     try {
       const d = await this.api.get(this.id());
@@ -95,6 +141,9 @@ export class Editor implements OnInit, OnDestroy {
       this.conflict.set(null);
       this.dirty.set(false);
       this.pending = {};
+      const entry = this.backup.read(d.id);
+      const kind = DraftBackup.recovery(entry, d.updated_at);
+      this.recovered.set(entry && kind !== 'none' ? { entry, kind } : null);
     } catch {
       this.error.set('This document could not be loaded.');
     }
@@ -157,7 +206,28 @@ export class Editor implements OnInit, OnDestroy {
     }
   }
 
+  /** Apply a recovered local copy through the normal save path (same expected_updated_at guard). */
+  restoreBackup(): void {
+    const r = this.recovered();
+    if (!r || r.kind !== 'restore') return;
+    if (r.entry.title !== undefined) this.setTitle(r.entry.title);
+    const c = r.entry.content ?? {};
+    for (const k of ['purpose', 'scope', 'outcome'] as const)
+      if (c[k] !== undefined) this.setSection(k, c[k] as string);
+    if (c.prerequisites) this.setPrereqs(c.prerequisites.join('\n'));
+    if (c.blocks) this.setBlocks(c.blocks);
+    this.recovered.set(null);
+  }
+
+  discardBackup(): void {
+    const d = this.doc();
+    if (d) this.backup.clear(d.id);
+    this.recovered.set(null);
+  }
+
   private schedule(): void {
+    const d0 = this.doc();
+    if (d0) this.backup.write(d0.id, d0.updated_at, this.pending);
     this.dirty.set(true);
     if (this.timer) clearTimeout(this.timer);
     this.timer = setTimeout(() => void this.flush(), 2000);
@@ -180,6 +250,7 @@ export class Editor implements OnInit, OnDestroy {
       this.savedAt.set(new Date());
       this.dirty.set(Object.keys(this.pending).length > 0);
       if (this.dirty()) this.schedule();
+      else this.backup.clear(d.id);
     } catch (e: unknown) {
       if (e instanceof HttpErrorResponse && e.status === 409) {
         this.conflict.set((e.error?.error?.details?.current as DocumentFull) ?? null);
@@ -219,6 +290,46 @@ export class Editor implements OnInit, OnDestroy {
       this.afterStepWrite();
     } catch {
       this.error.set('The step could not be saved.');
+    }
+  }
+
+  /** B3-T2 — drag reorder; the server renumbers and returns the list. */
+  async dropStep(ev: CdkDragDrop<Step[]>): Promise<void> {
+    const d = this.doc();
+    if (!d || ev.previousIndex === ev.currentIndex) return;
+    const list = [...this.steps()];
+    moveItemInArray(list, ev.previousIndex, ev.currentIndex);
+    this.steps.set(list.map((s, k) => ({ ...s, position: k + 1 }))); // renumber live, before the round trip
+    try {
+      this.steps.set(
+        await this.api.reorderSteps(
+          d.id,
+          list.map((s) => s.id),
+        ),
+      );
+      this.afterStepWrite();
+    } catch {
+      this.error.set('The steps could not be reordered.');
+      void this.load();
+    }
+  }
+
+  // ---- templates (B5-T3) ----
+  async saveTemplate(): Promise<void> {
+    const d = this.doc();
+    const name = this.templateName().trim();
+    if (!d || name.length < 2) return;
+    if (this.dirty()) await this.flush();
+    try {
+      await this.editorApi.saveTemplate(d.id, name);
+      this.templateNotice.set(
+        `Saved as template “${name}”. It appears in the template list for everyone in this workspace.`,
+      );
+      this.templateForm.set(false);
+      this.templateName.set('');
+    } catch (e: unknown) {
+      const err = e as { error?: { error?: { message?: string } } };
+      this.templateNotice.set(err.error?.error?.message ?? 'The template could not be saved.');
     }
   }
 

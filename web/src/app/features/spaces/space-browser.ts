@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
 import { DocumentSummary, Folder, Space, Template } from '../../core/api.types';
-import { DocumentApi } from '../../core/document.api';
+import { DocumentApi, EditorApi } from '../../core/document.api';
 import { SessionStore } from '../../core/session.store';
 import { SpaceApi } from '../../core/workspace.api';
 
@@ -37,6 +37,18 @@ export class SpaceBrowser implements OnChanges {
   readonly templates = signal<Template[]>([]);
   readonly newDocTitle = signal('');
   readonly newDocTemplate = signal<string>('blank-sop');
+  private readonly editorApi = inject(EditorApi);
+  /** Built-ins first, then this workspace's own (B5-T3). */
+  readonly templateGroups = computed(() => {
+    const t = this.templates();
+    const groups = [{ label: 'Built-in', items: t.filter((x) => !x.custom) }];
+    const custom = t.filter((x) => x.custom);
+    if (custom.length) groups.push({ label: 'This workspace', items: custom });
+    return groups;
+  });
+  readonly selectedTemplate = computed(
+    () => this.templates().find((t) => t.id === this.newDocTemplate()) ?? null,
+  );
   readonly stateFilter = signal<string>('');
   readonly stateOptions = [
     { label: 'Draft', value: 'draft' },
@@ -47,11 +59,35 @@ export class SpaceBrowser implements OnChanges {
   readonly newName = signal('');
   readonly renaming = signal<{ id: string; name: string } | null>(null);
   readonly isAdmin = computed(() => this.session.current()?.role === 'admin');
-  readonly canEdit = computed(() => ['admin', 'approver', 'editor'].includes(this.session.current()?.role ?? ''));
+  readonly canEdit = computed(() =>
+    ['admin', 'approver', 'editor'].includes(this.session.current()?.role ?? ''),
+  );
+
+  canDeleteTemplate(t: Template): boolean {
+    return this.isAdmin() || t.created_by?.id === this.session.user()?.id;
+  }
+
+  async deleteTemplate(t: Template): Promise<void> {
+    if (
+      !confirm(
+        `Delete the template “${t.name}”? Documents already created from it are not affected.`,
+      )
+    )
+      return;
+    try {
+      await this.editorApi.deleteTemplate(t.id);
+      this.templates.update((list) => list.filter((x) => x.id !== t.id));
+      this.newDocTemplate.set('blank-sop');
+    } catch {
+      this.error.set('The template could not be deleted.');
+    }
+  }
 
   private lastLoaded: string | null = null;
 
-  readonly current = computed<Folder | null>(() => (this.folderId() ? this.find(this.tree(), this.folderId()!) : null));
+  readonly current = computed<Folder | null>(() =>
+    this.folderId() ? this.find(this.tree(), this.folderId()!) : null,
+  );
   readonly crumbs = computed<Folder[]>(() => {
     const out: Folder[] = [];
     let f = this.current();
@@ -61,7 +97,9 @@ export class SpaceBrowser implements OnChanges {
     }
     return out;
   });
-  readonly children = computed<Folder[]>(() => (this.current() ? (this.current()!.children ?? []) : this.tree()));
+  readonly children = computed<Folder[]>(() =>
+    this.current() ? (this.current()!.children ?? []) : this.tree(),
+  );
 
   private lastFolder: string | null | undefined = undefined;
 
@@ -78,7 +116,13 @@ export class SpaceBrowser implements OnChanges {
 
   async loadDocuments(): Promise<void> {
     try {
-      this.documents.set(await this.docs.list({ space_id: this.spaceId(), folder_id: this.folderId() ?? undefined, state: this.stateFilter() || undefined }));
+      this.documents.set(
+        await this.docs.list({
+          space_id: this.spaceId(),
+          folder_id: this.folderId() ?? undefined,
+          state: this.stateFilter() || undefined,
+        }),
+      );
     } catch {
       this.documents.set([]);
     }
@@ -93,7 +137,12 @@ export class SpaceBrowser implements OnChanges {
     const title = this.newDocTitle().trim();
     if (!title) return;
     try {
-      const d = await this.docs.create({ space_id: this.spaceId(), folder_id: this.folderId(), title, template_id: this.newDocTemplate() });
+      const d = await this.docs.create({
+        space_id: this.spaceId(),
+        folder_id: this.folderId(),
+        title,
+        template_id: this.newDocTemplate(),
+      });
       this.newDocTitle.set('');
       await this.router.navigate(['/d', d.id, 'edit']);
     } catch {
@@ -102,13 +151,21 @@ export class SpaceBrowser implements OnChanges {
   }
 
   stateLabel(state: string): string {
-    return { draft: 'Draft', in_review: 'In review', approved: 'Approved', archived: 'Archived' }[state] ?? state;
+    return (
+      { draft: 'Draft', in_review: 'In review', approved: 'Approved', archived: 'Archived' }[
+        state
+      ] ?? state
+    );
   }
 
   async load(): Promise<void> {
     this.error.set(null);
     try {
-      const [space, tree, templates] = await Promise.all([this.api.get(this.spaceId()), this.api.folders(this.spaceId()), this.docs.templates()]);
+      const [space, tree, templates] = await Promise.all([
+        this.api.get(this.spaceId()),
+        this.api.folders(this.spaceId()),
+        this.docs.templates(),
+      ]);
       this.space.set(space);
       this.tree.set(tree);
       this.templates.set(templates);

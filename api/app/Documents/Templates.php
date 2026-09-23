@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Documents;
 
+use App\Models\DocumentTemplate;
+
 /**
  * Built-in templates (F1: at minimum Blank SOP, Onboarding, Client Delivery
- * Playbook, Policy). Workspace-saved templates arrive later; these are static.
+ * Playbook, Policy), plus the current workspace's own templates (B5-T3),
+ * which are tenant rows in document_templates and have ULID ids.
  * Templates are offered second — the first-run screen pushes to recording (S4).
  */
 final class Templates
@@ -82,7 +85,27 @@ final class Templates
                 return $t;
             }
         }
+        $custom = DocumentTemplate::query()->find($id);   // tenant-scoped: another workspace's template is simply absent
 
-        return null;
+        return $custom ? self::present($custom) : null;
+    }
+
+    /** Built-ins followed by this workspace's templates. @return list<array<string, mixed>> */
+    public static function forWorkspace(): array
+    {
+        $builtIn = array_map(fn (array $t) => $t + ['custom' => false], self::all());
+        $custom = DocumentTemplate::query()->with('creator:id,name')->orderBy('name')->get()->map(fn (DocumentTemplate $t) => self::present($t))->all();
+
+        return array_values(array_merge($builtIn, $custom));
+    }
+
+    /** @return array<string, mixed> */
+    public static function present(DocumentTemplate $t): array
+    {
+        return [
+            'id' => $t->id, 'name' => $t->name, 'doc_type' => $t->doc_type, 'description' => (string) $t->description,
+            'content' => Content::merge(Content::empty(), $t->content ?? []), 'steps' => $t->steps ?? [],
+            'custom' => true, 'created_by' => $t->creator?->only(['id', 'name']),
+        ];
     }
 }
