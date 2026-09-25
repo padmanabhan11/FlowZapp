@@ -24,6 +24,14 @@ php artisan test
 vendor/bin/pint --test && vendor/bin/phpstan analyse
 ```
 
+## Demo mode (no keys, no Docker)
+
+`./scripts/demo-up.sh` from the repo root: SQLite, fake AI/transcription/storage/billing
+drivers, a seeded Team workspace (`northgate-ops`, admin `demo@flowzapp.local`, self-approval on)
+with the 8-document demo corpus. Sign-in links are written to `api/storage/logs/laravel.log`.
+Recording, generation and the assistant use scripted fakes, so drafts and answers are placeholders;
+search, approval, versions, the reader, the handbook, billing screens and dashboards are real.
+
 ## Local development
 
 ```bash
