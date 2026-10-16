@@ -34,7 +34,7 @@ final class FakeEmbeddings implements Embeddings
             }
             $norm = sqrt(array_sum(array_map(fn ($x) => $x * $x, $v))) ?: 1.0;
 
-            return array_map(fn ($x) => $x / $norm, $v);
+            return array_values(array_map(fn ($x) => $x / $norm, $v));   // array_fill + indexed writes: re-index so the shape is a plain list
         }, $texts);
     }
 }

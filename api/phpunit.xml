@@ -33,6 +33,7 @@
         <env name="LLM_DRIVER" value="fake"/>
         <env name="EMBEDDINGS_DRIVER" value="fake"/>
         <env name="VECTOR_DRIVER" value="fake"/>
+        <env name="BILLING_DRIVER" value="null"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
